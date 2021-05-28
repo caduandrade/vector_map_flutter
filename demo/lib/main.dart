@@ -8,6 +8,7 @@ import 'package:demo/default_colors_page.dart';
 import 'package:demo/enable_hover_by_value_page.dart';
 import 'package:demo/get_started_page.dart';
 import 'package:demo/gradient_page.dart';
+import 'package:demo/hover_layer_page.dart';
 import 'package:demo/hover_page.dart';
 import 'package:demo/label_page.dart';
 import 'package:demo/menu.dart';
@@ -61,7 +62,8 @@ class VectorMapDemoPageState extends State<VectorMapDemoPage> {
       MenuItem('Parser', _parserPage),
       MenuItem('Hover', _hoverPage),
       MenuItem('Label', _labelPage),
-      MenuItem('Multi layer', _multiLayerPage)
+      MenuItem('Multi layer', _multiLayerPage),
+      MenuItem('Hover layer', _hoverLayerPage)
     ];
     if (_menuItems.isNotEmpty) {
       _currentExampleBuilder = _menuItems.first.builder;
@@ -183,5 +185,9 @@ class VectorMapDemoPageState extends State<VectorMapDemoPage> {
 
   MultiLayerPage _multiLayerPage() {
     return MultiLayerPage();
+  }
+
+  HoverLayerPage _hoverLayerPage() {
+    return HoverLayerPage();
   }
 }

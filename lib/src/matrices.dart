@@ -64,6 +64,11 @@ class CanvasMatrix {
   final Size widgetSize;
   final Matrix4 geometryToScreen;
   final Matrix4 screenToGeometry;
+
+  applyOn(Canvas canvas) {
+    canvas.translate(translateX, translateY);
+    canvas.scale(scale, -scale);
+  }
 }
 
 /// Matrix used to create a buffer image of the map.

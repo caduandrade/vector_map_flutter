@@ -21,6 +21,7 @@ class MultiLayerPageState extends ExamplePageState {
   @override
   Widget buildContent() {
     MapTheme hoverTheme = MapTheme(color: Colors.green);
+
     MapLayer polygonsLayer =
         MapLayer(dataSource: polygons, hoverTheme: hoverTheme);
     MapLayer pointsLayer = MapLayer(

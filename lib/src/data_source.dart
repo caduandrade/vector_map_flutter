@@ -221,6 +221,18 @@ class MapLinearRing with MapGeometry {
 
   MapLinearRing._(this.points, this.bounds);
 
+  factory MapLinearRing.coordinates(List<double> coordinates) {
+    List<MapPoint> points = [];
+    for (int i = 0; i < coordinates.length; i = i + 2) {
+      if (i < coordinates.length - 1) {
+        double x = coordinates[i];
+        double y = coordinates[i + 1];
+        points.add(MapPoint(x, y));
+      }
+    }
+    return MapLinearRing(points);
+  }
+
   factory MapLinearRing(List<MapPoint> points) {
     //TODO exception for insufficient number of points?
     MapPoint first = points.first;
@@ -276,14 +288,41 @@ class MapPolygon with MapGeometry {
 
   MapPolygon._(this.externalRing, this.internalRings, this.bounds);
 
+  factory MapPolygon.coordinates(List<double> coordinates) {
+    List<MapPoint> externalPoints = [];
+    List<MapLinearRing> internalRings = [];
+    List<MapPoint> points = [];
+    for (int i = 0; i < coordinates.length; i = i + 2) {
+      if (i < coordinates.length - 1) {
+        double x = coordinates[i];
+        double y = coordinates[i + 1];
+        points.add(MapPoint(x, y));
+        if (points.length >= 3) {
+          if (points.first.x == x && points.first.y == y) {
+            // closing ring
+            if (externalPoints.length == 0) {
+              externalPoints = points;
+            } else {
+              internalRings.add(MapLinearRing(points));
+            }
+            points = [];
+          }
+        }
+      }
+    }
+    return MapPolygon(MapLinearRing(externalPoints), internalRings);
+  }
+
   factory MapPolygon(
-      MapLinearRing externalRing, List<MapLinearRing> internalRings) {
+      MapLinearRing externalRing, List<MapLinearRing>? internalRings) {
     Rect bounds = externalRing.bounds;
-    for (MapLinearRing linearRing in internalRings) {
+
+    List<MapLinearRing> internal = internalRings != null ? internalRings : [];
+    for (MapLinearRing linearRing in internal) {
       bounds = bounds.expandToInclude(linearRing.bounds);
     }
-    return MapPolygon._(externalRing,
-        UnmodifiableListView<MapLinearRing>(internalRings), bounds);
+    return MapPolygon._(
+        externalRing, UnmodifiableListView<MapLinearRing>(internal), bounds);
   }
 
   @override

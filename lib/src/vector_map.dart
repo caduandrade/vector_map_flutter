@@ -25,7 +25,8 @@ class VectorMap extends StatefulWidget {
       this.padding = 8,
       this.hoverRule,
       this.hoverListener,
-      this.clickListener})
+      this.clickListener,
+      this.overlayHoverContour = false})
       : this.layers = layers != null ? layers : [],
         this.layersBounds = layers != null ? MapLayer.boundsOf(layers) : null,
         super(key: key);
@@ -40,6 +41,7 @@ class VectorMap extends StatefulWidget {
   final HoverRule? hoverRule;
   final HoverListener? hoverListener;
   final FeatureClickListener? clickListener;
+  final bool overlayHoverContour;
 
   @override
   State<StatefulWidget> createState() => VectorMapState();
@@ -150,7 +152,8 @@ class VectorMapState extends State<VectorMap> {
             mapResolution: _mapResolution!,
             hover: _hover,
             mapMatrices: mapMatrices,
-            contourThickness: widget.contourThickness);
+            contourThickness: widget.contourThickness,
+            overlayHoverContour: widget.overlayHoverContour);
 
         Widget map = CustomPaint(painter: mapPainter, child: Container());
 
@@ -248,12 +251,14 @@ class _MapPainter extends CustomPainter {
       {required this.mapResolution,
       required this.mapMatrices,
       required this.contourThickness,
+      required this.overlayHoverContour,
       this.hover});
 
   final MapMatrices mapMatrices;
   final double contourThickness;
   final _HoverFeature? hover;
   final MapResolution mapResolution;
+  final bool overlayHoverContour;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -282,8 +287,7 @@ class _MapPainter extends CustomPainter {
             canvas.save();
 
             CanvasMatrix canvasMatrix = mapMatrices.canvasMatrix;
-            canvas.translate(canvasMatrix.translateX, canvasMatrix.translateY);
-            canvas.scale(canvasMatrix.scale, -canvasMatrix.scale);
+            canvasMatrix.applyOn(canvas);
 
             int featureId = feature.id;
             if (paintableLayer.paintableGeometries.containsKey(featureId) ==
@@ -302,24 +306,33 @@ class _MapPainter extends CustomPainter {
             }
 
             if (contourThickness > 0) {
-              Color contourColor = MapTheme.defaultContourColor;
-              if (hoverTheme.contourColor != null) {
-                contourColor = hoverTheme.contourColor!;
-              } else if (layer.theme.contourColor != null) {
-                contourColor = layer.theme.contourColor!;
-              }
-
-              var paint = Paint()
-                ..style = PaintingStyle.stroke
-                ..color = contourColor
-                ..strokeWidth = contourThickness / canvasMatrix.scale
-                ..isAntiAlias = true;
-              paintableGeometry.draw(canvas, paint);
+              _drawHoverContour(canvas, paintableLayer.layer, hoverTheme,
+                  paintableGeometry, canvasMatrix);
             }
 
             canvas.restore();
           }
         }
+      }
+    }
+
+    if (contourThickness > 0 && overlayHoverContour && hover != null) {
+      PaintableLayer paintableLayer =
+          mapResolution.paintableLayers[hover!.layerIndex];
+      MapLayer layer = paintableLayer.layer;
+      if (layer.hoverTheme != null) {
+        canvas.save();
+
+        CanvasMatrix canvasMatrix = mapMatrices.canvasMatrix;
+        canvasMatrix.applyOn(canvas);
+
+        MapTheme hoverTheme = layer.hoverTheme!;
+        PaintableGeometry paintableGeometry =
+            paintableLayer.paintableGeometries[hover!.feature.id]!;
+        _drawHoverContour(canvas, paintableLayer.layer, hoverTheme,
+            paintableGeometry, canvasMatrix);
+
+        canvas.restore();
       }
     }
 
@@ -374,6 +387,23 @@ class _MapPainter extends CustomPainter {
         }
       }
     }
+  }
+
+  _drawHoverContour(Canvas canvas, MapLayer layer, MapTheme hoverTheme,
+      PaintableGeometry paintableGeometry, CanvasMatrix canvasMatrix) {
+    Color contourColor = MapTheme.defaultContourColor;
+    if (hoverTheme.contourColor != null) {
+      contourColor = hoverTheme.contourColor!;
+    } else if (layer.theme.contourColor != null) {
+      contourColor = layer.theme.contourColor!;
+    }
+
+    var paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..color = contourColor
+      ..strokeWidth = contourThickness / canvasMatrix.scale
+      ..isAntiAlias = true;
+    paintableGeometry.draw(canvas, paint);
   }
 
   _drawLabel(Canvas canvas, int layerIndex, MapFeature feature,
