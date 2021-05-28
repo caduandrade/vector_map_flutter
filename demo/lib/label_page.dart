@@ -1,4 +1,5 @@
 import 'package:demo/menu.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:vector_map/vector_map.dart';
 
@@ -11,10 +12,11 @@ class LabelPage extends StatefulWidget {
 
 class LabelPageState extends ExamplePageState {
   @override
-  Future<VectorMapDataSource> loadDataSource(String geojson) async {
-    VectorMapDataSource dataSource =
-        await VectorMapDataSource.geoJSON(geojson: geojson, labelKey: 'Name');
-    return dataSource;
+  Future<DataSources> loadDataSources(
+      String polygonsGeoJSON, String pointsGeoJSON) async {
+    MapDataSource polygons =
+        await MapDataSource.geoJSON(geojson: polygonsGeoJSON, labelKey: 'Name');
+    return DataSources(polygons: polygons);
   }
 
   List<MenuItem> buildMenuItems() {
@@ -26,26 +28,30 @@ class LabelPageState extends ExamplePageState {
   }
 
   Widget _allVisible() {
-    VectorMap map = VectorMap(
-        dataSource: dataSource,
-        theme: VectorMapTheme(labelVisibility: (feature) => true));
+    MapLayer layer = MapLayer(
+        dataSource: polygons,
+        theme: MapTheme(labelVisibility: (feature) => true));
+
+    VectorMap map = VectorMap(layers: [layer]);
 
     return map;
   }
 
   Widget _visibleRule() {
-    VectorMap map = VectorMap(
-        dataSource: dataSource,
-        theme: VectorMapTheme(
-            labelVisibility: (feature) => feature.label == 'Darwin'));
+    MapLayer layer = MapLayer(
+        dataSource: polygons,
+        theme:
+            MapTheme(labelVisibility: (feature) => feature.label == 'Darwin'));
+
+    VectorMap map = VectorMap(layers: [layer]);
 
     return map;
   }
 
   Widget _labelStyle() {
-    VectorMap map = VectorMap(
-        dataSource: dataSource,
-        theme: VectorMapTheme(
+    MapLayer layer = MapLayer(
+        dataSource: polygons,
+        theme: MapTheme(
             labelVisibility: (feature) => true,
             labelStyleBuilder: (feature, featureColor, labelColor) {
               if (feature.label == 'Darwin') {
@@ -60,6 +66,8 @@ class LabelPageState extends ExamplePageState {
                 fontSize: 11,
               );
             }));
+
+    VectorMap map = VectorMap(layers: [layer]);
 
     return map;
   }

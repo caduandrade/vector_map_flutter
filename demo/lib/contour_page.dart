@@ -11,10 +11,11 @@ class ContourPage extends StatefulWidget {
 
 class ContourPageState extends ExamplePageState {
   @override
-  Future<VectorMapDataSource> loadDataSource(String geojson) async {
-    VectorMapDataSource dataSource =
-        await VectorMapDataSource.geoJSON(geojson: geojson);
-    return dataSource;
+  Future<DataSources> loadDataSources(
+      String polygonsGeoJSON, String pointsGeoJSON) async {
+    MapDataSource polygons =
+        await MapDataSource.geoJSON(geojson: polygonsGeoJSON);
+    return DataSources(polygons: polygons);
   }
 
   @override
@@ -26,13 +27,15 @@ class ContourPageState extends ExamplePageState {
   }
 
   Widget _thickness() {
-    VectorMap map = VectorMap(dataSource: dataSource, contourThickness: 3);
+    VectorMap map = VectorMap(
+        layers: [MapLayer(dataSource: polygons)], contourThickness: 3);
 
     return map;
   }
 
   Widget _noContour() {
-    VectorMap map = VectorMap(dataSource: dataSource, contourThickness: 0);
+    VectorMap map = VectorMap(
+        layers: [MapLayer(dataSource: polygons)], contourThickness: 0);
 
     return map;
   }

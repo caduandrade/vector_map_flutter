@@ -7,4 +7,5 @@ export 'src/simplifier.dart';
 export 'src/map_resolution.dart';
 export 'src/data_source.dart';
 export 'src/data_reader.dart';
+export 'src/layer.dart';
 export 'src/vector_map.dart';

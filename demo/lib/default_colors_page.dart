@@ -10,17 +10,20 @@ class DefaultColorsPage extends StatefulWidget {
 
 class DefaultColorsPageState extends ExamplePageState {
   @override
-  Future<VectorMapDataSource> loadDataSource(String geojson) async {
-    VectorMapDataSource dataSource =
-        await VectorMapDataSource.geoJSON(geojson: geojson);
-    return dataSource;
+  Future<DataSources> loadDataSources(
+      String polygonsGeoJSON, String pointsGeoJSON) async {
+    MapDataSource polygons =
+        await MapDataSource.geoJSON(geojson: polygonsGeoJSON);
+    return DataSources(polygons: polygons);
   }
 
   @override
   Widget buildContent() {
-    VectorMap map = VectorMap(
-        dataSource: dataSource,
-        theme: VectorMapTheme(color: Colors.yellow, contourColor: Colors.red));
+    MapLayer layer = MapLayer(
+        dataSource: polygons,
+        theme: MapTheme(color: Colors.yellow, contourColor: Colors.red));
+
+    VectorMap map = VectorMap(layers: [layer]);
 
     return map;
   }

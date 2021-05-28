@@ -10,25 +10,25 @@ class ColorByValuePage extends StatefulWidget {
 
 class ColorByValuePageState extends ExamplePageState {
   @override
-  Future<VectorMapDataSource> loadDataSource(String geojson) async {
-    VectorMapDataSource dataSource =
-        await VectorMapDataSource.geoJSON(geojson: geojson, keys: ['Seq']);
-    return dataSource;
+  Future<DataSources> loadDataSources(
+      String polygonsGeoJSON, String pointsGeoJSON) async {
+    MapDataSource polygons =
+        await MapDataSource.geoJSON(geojson: polygonsGeoJSON, keys: ['Seq']);
+    return DataSources(polygons: polygons);
   }
 
   @override
   Widget buildContent() {
-    VectorMapTheme theme = VectorMapTheme.value(
-        contourColor: Colors.white,
-        key: 'Seq',
-        colors: {
+    MapLayer layer = MapLayer(
+        dataSource: polygons,
+        theme: MapTheme.value(contourColor: Colors.white, key: 'Seq', colors: {
           2: Colors.green,
           4: Colors.red,
           6: Colors.orange,
           8: Colors.blue
-        });
+        }));
 
-    VectorMap map = VectorMap(dataSource: dataSource, theme: theme);
+    VectorMap map = VectorMap(layers: [layer]);
 
     return map;
   }

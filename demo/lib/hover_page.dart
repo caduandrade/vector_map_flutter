@@ -11,10 +11,11 @@ class HoverPage extends StatefulWidget {
 
 class HoverPageState extends ExamplePageState {
   @override
-  Future<VectorMapDataSource> loadDataSource(String geojson) async {
-    VectorMapDataSource dataSource =
-        await VectorMapDataSource.geoJSON(geojson: geojson, labelKey: 'Name');
-    return dataSource;
+  Future<DataSources> loadDataSources(
+      String polygonsGeoJSON, String pointsGeoJSON) async {
+    MapDataSource polygons =
+        await MapDataSource.geoJSON(geojson: polygonsGeoJSON, labelKey: 'Name');
+    return DataSources(polygons: polygons);
   }
 
   @override
@@ -29,9 +30,11 @@ class HoverPageState extends ExamplePageState {
   }
 
   Widget _listener() {
+    MapLayer layer = MapLayer(
+        dataSource: polygons, hoverTheme: MapTheme(color: Colors.grey[700]));
+
     VectorMap map = VectorMap(
-        dataSource: dataSource,
-        hoverTheme: VectorMapTheme(color: Colors.grey[700]),
+        layers: [layer],
         hoverListener: (MapFeature? feature) {
           if (feature != null) {
             int id = feature.id;
@@ -43,39 +46,45 @@ class HoverPageState extends ExamplePageState {
   }
 
   Widget _color() {
-    VectorMap map = VectorMap(
-        dataSource: dataSource,
-        hoverTheme: VectorMapTheme(color: Colors.green));
+    MapLayer layer = MapLayer(
+        dataSource: polygons, hoverTheme: MapTheme(color: Colors.green));
+
+    VectorMap map = VectorMap(layers: [layer]);
 
     return map;
   }
 
   Widget _contourColor() {
-    VectorMap map = VectorMap(
-        dataSource: dataSource,
-        hoverTheme: VectorMapTheme(contourColor: Colors.red));
+    MapLayer layer = MapLayer(
+        dataSource: polygons, hoverTheme: MapTheme(contourColor: Colors.red));
+
+    VectorMap map = VectorMap(layers: [layer]);
 
     return map;
   }
 
   Widget _label() {
-    VectorMap map = VectorMap(
-        dataSource: dataSource,
-        hoverTheme: VectorMapTheme(labelVisibility: (feature) => true));
+    MapLayer layer = MapLayer(
+        dataSource: polygons,
+        hoverTheme: MapTheme(labelVisibility: (feature) => true));
+
+    VectorMap map = VectorMap(layers: [layer]);
 
     return map;
   }
 
   Widget _override() {
-    VectorMap map = VectorMap(
-        dataSource: dataSource,
-        theme: VectorMapTheme(
-            color: Colors.white, labelVisibility: (feature) => false),
-        hoverTheme: VectorMapTheme.rule(colorRules: [
+    MapLayer layer = MapLayer(
+        dataSource: polygons,
+        theme:
+            MapTheme(color: Colors.white, labelVisibility: (feature) => false),
+        hoverTheme: MapTheme.rule(colorRules: [
           (feature) {
             return feature.label == 'Galileu' ? Colors.blue : null;
           }
         ], labelVisibility: (feature) => feature.label == 'Galileu'));
+
+    VectorMap map = VectorMap(layers: [layer]);
 
     return map;
   }

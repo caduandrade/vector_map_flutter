@@ -1,6 +1,6 @@
 name: vector_map
 description: Vector map for Flutter. Highly customizable. Compatible with GeoJSON. Pure Flutter.
-version: 0.1.0
+version: 0.2.0
 homepage: https://github.com/caduandrade/vector_map_flutter
 
 environment:

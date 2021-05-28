@@ -10,15 +10,18 @@ class GetStartedPage extends StatefulWidget {
 
 class GetStartedPageState extends ExamplePageState {
   @override
-  Future<VectorMapDataSource> loadDataSource(String geojson) async {
-    VectorMapDataSource dataSource =
-        await VectorMapDataSource.geoJSON(geojson: geojson);
-    return dataSource;
+  Future<DataSources> loadDataSources(
+      String polygonsGeoJSON, String pointsGeoJSON) async {
+    MapDataSource polygons =
+        await MapDataSource.geoJSON(geojson: polygonsGeoJSON);
+    return DataSources(polygons: polygons);
   }
 
   @override
   Widget buildContent() {
-    VectorMap map = VectorMap(dataSource: dataSource);
+    MapLayer layer = MapLayer(dataSource: polygons);
+
+    VectorMap map = VectorMap(layers: [layer]);
     return map;
   }
 }

@@ -6,6 +6,7 @@ import 'package:flutter/painting.dart';
 import 'package:flutter/widgets.dart';
 import 'package:vector_map/src/data_source.dart';
 import 'package:vector_map/src/error.dart';
+import 'package:vector_map/src/layer.dart';
 import 'package:vector_map/src/map_resolution.dart';
 import 'package:vector_map/src/matrices.dart';
 import 'package:vector_map/src/simplifier.dart';
@@ -16,10 +17,8 @@ class VectorMap extends StatefulWidget {
   /// The default [contourThickness] value is 1.
   VectorMap(
       {Key? key,
-      this.dataSource,
+      List<MapLayer>? layers,
       this.delayToRefreshResolution = 1000,
-      VectorMapTheme? theme,
-      this.hoverTheme,
       this.borderColor = Colors.black54,
       this.borderThickness = 1,
       this.contourThickness = 1,
@@ -27,12 +26,12 @@ class VectorMap extends StatefulWidget {
       this.hoverRule,
       this.hoverListener,
       this.clickListener})
-      : this.theme = theme != null ? theme : VectorMapTheme(),
+      : this.layers = layers != null ? layers : [],
+        this.layersBounds = layers != null ? MapLayer.boundsOf(layers) : null,
         super(key: key);
 
-  final VectorMapDataSource? dataSource;
-  final VectorMapTheme theme;
-  final VectorMapTheme? hoverTheme;
+  final List<MapLayer> layers;
+  final Rect? layersBounds;
   final double contourThickness;
   final int delayToRefreshResolution;
   final Color? borderColor;
@@ -44,6 +43,15 @@ class VectorMap extends StatefulWidget {
 
   @override
   State<StatefulWidget> createState() => VectorMapState();
+
+  bool get hoverPaintable {
+    for (MapLayer layer in layers) {
+      if (layer.hoverPaintable) {
+        return true;
+      }
+    }
+    return false;
+  }
 }
 
 typedef FeatureClickListener = Function(MapFeature feature);
@@ -52,8 +60,9 @@ typedef HoverRule = bool Function(MapFeature feature);
 
 typedef HoverListener = Function(MapFeature? feature);
 
+/// [VectorMap] state.
 class VectorMapState extends State<VectorMap> {
-  MapFeature? _hover;
+  _HoverFeature? _hover;
 
   MapResolution? _mapResolution;
 
@@ -66,8 +75,7 @@ class VectorMapState extends State<VectorMap> {
         _mapResolutionBuilder!.stop();
       }
       _mapResolutionBuilder = MapResolutionBuilder(
-          dataSource: widget.dataSource!,
-          theme: widget.theme,
+          layers: widget.layers,
           contourThickness: widget.contourThickness,
           mapMatrices: mapMatrices,
           simplifier: IntegerSimplifier(),
@@ -101,7 +109,7 @@ class VectorMapState extends State<VectorMap> {
     }
 
     Widget? content;
-    if (widget.dataSource != null) {
+    if (widget.layers.isNotEmpty) {
       content = LayoutBuilder(
           builder: (BuildContext context, BoxConstraints constraints) {
         int? bufferWidth;
@@ -113,7 +121,7 @@ class VectorMapState extends State<VectorMap> {
         MapMatrices mapMatrices = MapMatrices(
             widgetWidth: constraints.maxWidth,
             widgetHeight: constraints.maxHeight,
-            geometryBounds: widget.dataSource!.bounds,
+            geometryBounds: widget.layersBounds!,
             bufferWidth: bufferWidth,
             bufferHeight: bufferHeight);
 
@@ -138,18 +146,15 @@ class VectorMapState extends State<VectorMap> {
           }
         }
 
-        MapPainter mapPainter = MapPainter(
-            dataSource: widget.dataSource!,
+        _MapPainter mapPainter = _MapPainter(
             mapResolution: _mapResolution!,
             hover: _hover,
             mapMatrices: mapMatrices,
-            contourThickness: widget.contourThickness,
-            theme: widget.theme,
-            hoverTheme: widget.hoverTheme);
+            contourThickness: widget.contourThickness);
 
         Widget map = CustomPaint(painter: mapPainter, child: Container());
 
-        if ((widget.hoverTheme != null && widget.hoverTheme!.hasValue()) ||
+        if (widget.hoverPaintable ||
             widget.hoverListener != null ||
             widget.clickListener != null) {
           map = MouseRegion(
@@ -174,7 +179,7 @@ class VectorMapState extends State<VectorMap> {
 
   _onClick() {
     if (_hover != null && widget.clickListener != null) {
-      widget.clickListener!(_hover!);
+      widget.clickListener!(_hover!.feature);
     }
   }
 
@@ -184,20 +189,33 @@ class VectorMapState extends State<VectorMap> {
           mapMatrices.canvasMatrix.screenToGeometry, event.localPosition);
 
       bool found = false;
-      for (MapFeature feature in widget.dataSource!.features.values) {
-        if (widget.hoverRule != null && widget.hoverRule!(feature) == false) {
-          continue;
-        }
-        if (_mapResolution!.paths.containsKey(feature.id) == false) {
-          throw VectorMapError('No path for id: ' + feature.id.toString());
-        }
-        Path path = _mapResolution!.paths[feature.id]!;
-        found = path.contains(o);
-        if (found) {
-          if (_hover != feature) {
-            _updateHover(feature);
+      if (widget.layers.isNotEmpty) {
+        for (int layerIndex = widget.layers.length - 1;
+            found == false && layerIndex >= 0;
+            layerIndex--) {
+          MapLayer layer = widget.layers[layerIndex];
+          for (MapFeature feature in layer.dataSource.features.values) {
+            if (widget.hoverRule != null &&
+                widget.hoverRule!(feature) == false) {
+              continue;
+            }
+
+            PaintableLayer paintableLayer =
+                _mapResolution!.paintableLayers[layerIndex];
+            if (paintableLayer.paintableGeometries.containsKey(feature.id) ==
+                false) {
+              throw VectorMapError('No path for id: ' + feature.id.toString());
+            }
+            PaintableGeometry paintableGeometry =
+                paintableLayer.paintableGeometries[feature.id]!;
+            found = paintableGeometry.contains(o);
+            if (found) {
+              if (_hover == null || _hover!.feature != feature) {
+                _updateHover(_HoverFeature(layerIndex, feature));
+              }
+              break;
+            }
           }
-          break;
         }
       }
       if (found == false && _hover != null) {
@@ -206,8 +224,8 @@ class VectorMapState extends State<VectorMap> {
     }
   }
 
-  _updateHover(MapFeature? newHover) {
-    if (widget.hoverTheme != null && widget.hoverTheme!.hasValue()) {
+  _updateHover(_HoverFeature? newHover) {
+    if (widget.hoverPaintable) {
       // repaint
       setState(() {
         _hover = newHover;
@@ -216,28 +234,22 @@ class VectorMapState extends State<VectorMap> {
       _hover = newHover;
     }
     if (widget.hoverListener != null) {
-      widget.hoverListener!(newHover);
+      widget.hoverListener!(newHover?.feature);
     }
   }
 }
 
 /// Painter for [VectorMap].
-class MapPainter extends CustomPainter {
-  MapPainter(
+class _MapPainter extends CustomPainter {
+  _MapPainter(
       {required this.mapResolution,
       required this.mapMatrices,
-      required this.dataSource,
       required this.contourThickness,
-      required this.theme,
-      this.hoverTheme,
       this.hover});
 
   final MapMatrices mapMatrices;
   final double contourThickness;
-  final VectorMapTheme theme;
-  final VectorMapTheme? hoverTheme;
-  final MapFeature? hover;
-  final VectorMapDataSource dataSource;
+  final _HoverFeature? hover;
   final MapResolution mapResolution;
 
   @override
@@ -252,91 +264,113 @@ class MapPainter extends CustomPainter {
     canvas.restore();
 
     // drawing the hover
-    if (hover != null && hoverTheme != null) {
-      Color? hoverColor = hoverTheme!.getColor(dataSource, hover!);
-      if (hoverColor != null || hoverTheme!.contourColor != null) {
-        canvas.save();
+    if (hover != null) {
+      PaintableLayer paintableLayer =
+          mapResolution.paintableLayers[hover!.layerIndex];
+      MapLayer layer = paintableLayer.layer;
+      if (layer.hoverTheme != null) {
+        MapFeature feature = hover!.feature;
+        MapTheme hoverTheme = layer.hoverTheme!;
+        Color? hoverColor = hoverTheme.getColor(layer.dataSource, feature);
+        if (hoverColor != null || hoverTheme.contourColor != null) {
+          canvas.save();
 
-        CanvasMatrix canvasMatrix = mapMatrices.canvasMatrix;
-        canvas.translate(canvasMatrix.translateX, canvasMatrix.translateY);
-        canvas.scale(canvasMatrix.scale, -canvasMatrix.scale);
+          CanvasMatrix canvasMatrix = mapMatrices.canvasMatrix;
+          canvas.translate(canvasMatrix.translateX, canvasMatrix.translateY);
+          canvas.scale(canvasMatrix.scale, -canvasMatrix.scale);
 
-        int featureId = hover!.id;
-        if (mapResolution.paths.containsKey(featureId) == false) {
-          throw VectorMapError('No path for id: $featureId');
-        }
-
-        Path path = mapResolution.paths[featureId]!;
-
-        if (hoverColor != null) {
-          var paint = Paint()
-            ..style = PaintingStyle.fill
-            ..color = hoverColor
-            ..isAntiAlias = true;
-
-          canvas.drawPath(path, paint);
-        }
-
-        if (contourThickness > 0) {
-          Color contourColor = VectorMapTheme.defaultContourColor;
-          if (hoverTheme != null && hoverTheme!.contourColor != null) {
-            contourColor = hoverTheme!.contourColor!;
-          } else if (theme.contourColor != null) {
-            contourColor = theme.contourColor!;
+          int featureId = feature.id;
+          if (paintableLayer.paintableGeometries.containsKey(featureId) ==
+              false) {
+            throw VectorMapError('No path for id: $featureId');
           }
 
-          var paint = Paint()
-            ..style = PaintingStyle.stroke
-            ..color = contourColor
-            ..strokeWidth = contourThickness / canvasMatrix.scale
-            ..isAntiAlias = true;
+          PaintableGeometry paintableGeometry =
+              paintableLayer.paintableGeometries[featureId]!;
+          if (hoverColor != null) {
+            var paint = Paint()
+              ..style = PaintingStyle.fill
+              ..color = hoverColor
+              ..isAntiAlias = true;
+            paintableGeometry.draw(canvas, paint);
+          }
 
-          canvas.drawPath(path, paint);
+          if (contourThickness > 0) {
+            Color contourColor = MapTheme.defaultContourColor;
+            if (hoverTheme.contourColor != null) {
+              contourColor = hoverTheme.contourColor!;
+            } else if (layer.theme.contourColor != null) {
+              contourColor = layer.theme.contourColor!;
+            }
+
+            var paint = Paint()
+              ..style = PaintingStyle.stroke
+              ..color = contourColor
+              ..strokeWidth = contourThickness / canvasMatrix.scale
+              ..isAntiAlias = true;
+            paintableGeometry.draw(canvas, paint);
+          }
+
+          canvas.restore();
         }
-
-        canvas.restore();
       }
     }
 
-    if (theme.labelVisibility != null ||
-        (hoverTheme != null && hoverTheme!.labelVisibility != null)) {
-      for (MapFeature feature in dataSource.features.values) {
-        if (feature.label != null) {
-          LabelVisibility? labelVisibility;
-          if (hoverTheme != null &&
-              hoverTheme!.labelVisibility != null &&
-              hover == feature) {
-            labelVisibility = hoverTheme!.labelVisibility;
-          } else {
-            labelVisibility = theme.labelVisibility;
-          }
-
-          if (labelVisibility != null && labelVisibility(feature)) {
-            Color? featureColor;
-            LabelStyleBuilder? labelStyleBuilder;
-
-            if (hoverTheme != null && hover == feature) {
-              featureColor = hoverTheme!.getColor(dataSource, feature);
-              labelStyleBuilder = hoverTheme!.labelStyleBuilder;
+    // drawing labels
+    for (int layerIndex = 0;
+        layerIndex < mapResolution.paintableLayers.length;
+        layerIndex++) {
+      PaintableLayer paintableLayer = mapResolution.paintableLayers[layerIndex];
+      MapLayer layer = paintableLayer.layer;
+      MapDataSource dataSource = layer.dataSource;
+      MapTheme theme = layer.theme;
+      MapTheme? hoverTheme = layer.hoverTheme;
+      if (theme.labelVisibility != null ||
+          (hoverTheme != null && hoverTheme.labelVisibility != null)) {
+        for (MapFeature feature in dataSource.features.values) {
+          if (feature.label != null) {
+            LabelVisibility? labelVisibility;
+            if (hover != null &&
+                layerIndex == hover!.layerIndex &&
+                hover!.feature == feature &&
+                hoverTheme != null &&
+                hoverTheme.labelVisibility != null) {
+              labelVisibility = hoverTheme.labelVisibility;
+            } else {
+              labelVisibility = theme.labelVisibility;
             }
 
-            if (featureColor == null) {
-              featureColor = VectorMapTheme.getThemeOrDefaultColor(
-                  dataSource, feature, theme);
-            }
-            if (labelStyleBuilder == null) {
-              labelStyleBuilder = theme.labelStyleBuilder;
-            }
+            if (labelVisibility != null && labelVisibility(feature)) {
+              Color? featureColor;
+              LabelStyleBuilder? labelStyleBuilder;
 
-            _drawLabel(canvas, feature, featureColor, labelStyleBuilder);
+              if (hover != null &&
+                  layerIndex == hover!.layerIndex &&
+                  hover!.feature == feature &&
+                  hoverTheme != null) {
+                featureColor = hoverTheme.getColor(dataSource, feature);
+                labelStyleBuilder = hoverTheme.labelStyleBuilder;
+              }
+
+              if (featureColor == null) {
+                featureColor =
+                    MapTheme.getThemeOrDefaultColor(dataSource, feature, theme);
+              }
+              if (labelStyleBuilder == null) {
+                labelStyleBuilder = theme.labelStyleBuilder;
+              }
+
+              _drawLabel(
+                  canvas, layerIndex, feature, featureColor, labelStyleBuilder);
+            }
           }
         }
       }
     }
   }
 
-  _drawLabel(Canvas canvas, MapFeature feature, Color featureColor,
-      LabelStyleBuilder? labelStyleBuilder) {
+  _drawLabel(Canvas canvas, int layerIndex, MapFeature feature,
+      Color featureColor, LabelStyleBuilder? labelStyleBuilder) {
     Color labelColor = _labelColorFrom(featureColor);
 
     TextStyle? labelStyle;
@@ -350,9 +384,12 @@ class MapPainter extends CustomPainter {
       );
     }
 
-    Path path = mapResolution.paths[feature.id]!;
+    PaintableLayer paintableLayer = mapResolution.paintableLayers[layerIndex];
+    PaintableGeometry paintableGeometry =
+        paintableLayer.paintableGeometries[feature.id]!;
     Rect bounds = MatrixUtils.transformRect(
-        mapMatrices.canvasMatrix.geometryToScreen, path.getBounds());
+        mapMatrices.canvasMatrix.geometryToScreen,
+        paintableGeometry.getBounds());
     _drawText(canvas, bounds.center, feature.label!, labelStyle);
   }
 
@@ -388,4 +425,11 @@ class MapPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
     return false;
   }
+}
+
+class _HoverFeature {
+  _HoverFeature(this.layerIndex, this.feature);
+
+  final MapFeature feature;
+  final int layerIndex;
 }

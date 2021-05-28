@@ -5,6 +5,13 @@ import 'package:vector_map/vector_map.dart';
 
 import 'menu.dart';
 
+class DataSources {
+  DataSources({this.polygons, this.points});
+
+  final MapDataSource? polygons;
+  final MapDataSource? points;
+}
+
 abstract class ExamplePageState extends State<StatefulWidget> {
   late List<MenuItem> _menuItems;
   ContentBuilder? _currentBuilder;
@@ -12,9 +19,7 @@ abstract class ExamplePageState extends State<StatefulWidget> {
   late MultiSplitViewController _horizontalController;
   late MultiSplitViewController _verticalController;
 
-  late String geojson;
-
-  VectorMapDataSource? dataSource;
+  DataSources? _dataSources;
 
   @override
   void initState() {
@@ -25,18 +30,24 @@ abstract class ExamplePageState extends State<StatefulWidget> {
     if (_menuItems.isNotEmpty) {
       _currentBuilder = _menuItems.first.builder;
     }
-    MapChartDemoPageState? state =
-        context.findAncestorStateOfType<MapChartDemoPageState>();
-    geojson = state!.geojson!;
+    VectorMapDemoPageState? state =
+        context.findAncestorStateOfType<VectorMapDemoPageState>();
+    if (state != null) {
+      String polygonsGeoJSON = state.polygons!;
+      String pointsGeoJSON = state.points!;
 
-    loadDataSource(geojson).then((value) {
-      setState(() {
-        dataSource = value;
+      loadDataSources(polygonsGeoJSON, pointsGeoJSON).then((value) {
+        setState(() {
+          _dataSources = value;
+        });
       });
-    });
+    } else {
+      throw StateError('VectorMapDemoPageState should not be null');
+    }
   }
 
-  Future<VectorMapDataSource> loadDataSource(String geojson);
+  Future<DataSources> loadDataSources(
+      String polygonsGeoJSON, String pointsGeoJSON);
 
   _updateContentBuilder(ContentBuilder contentBuilder) {
     setState(() {
@@ -46,8 +57,12 @@ abstract class ExamplePageState extends State<StatefulWidget> {
 
   @override
   Widget build(BuildContext context) {
+    Widget? content;
+    if (_dataSources != null) {
+      content = buildContent();
+    }
     Scaffold scaffold =
-        Scaffold(key: UniqueKey(), body: Center(child: buildContent()));
+        Scaffold(key: UniqueKey(), body: Center(child: content));
 
     MaterialApp materialApp = MaterialApp(
         theme: buildThemeData(),
@@ -92,6 +107,14 @@ abstract class ExamplePageState extends State<StatefulWidget> {
 
   List<MenuItem> buildMenuItems() {
     return [];
+  }
+
+  MapDataSource get polygons {
+    return _dataSources!.polygons!;
+  }
+
+  MapDataSource get points {
+    return _dataSources!.points!;
   }
 
   Widget buildContent() {

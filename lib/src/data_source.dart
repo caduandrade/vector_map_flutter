@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:vector_map/src/data_reader.dart';
+import 'package:vector_map/src/map_resolution.dart';
 import 'package:vector_map/src/matrices.dart';
 import 'package:vector_map/src/simplifier.dart';
 
@@ -29,7 +30,7 @@ class MapFeature {
   @override
   int get hashCode => id.hashCode;
 
-  dynamic? getValue(String key) {
+  dynamic getValue(String key) {
     if (_properties != null && _properties!.containsKey(key)) {
       return _properties![key];
     }
@@ -37,7 +38,7 @@ class MapFeature {
   }
 
   double? getDoubleValue(String key) {
-    dynamic? d = getValue(key);
+    dynamic d = getValue(key);
     if (d != null) {
       if (d is double) {
         return d;
@@ -68,8 +69,8 @@ class PropertyLimits {
 }
 
 /// [VectorMap] data source.
-class VectorMapDataSource {
-  VectorMapDataSource._(
+class MapDataSource {
+  MapDataSource._(
       {required this.features,
       required this.bounds,
       required this.pointsCount,
@@ -81,7 +82,7 @@ class VectorMapDataSource {
   final int pointsCount;
   final Map<String, PropertyLimits>? _limits;
 
-  static VectorMapDataSource fromFeatures(List<MapFeature> features) {
+  static MapDataSource fromFeatures(List<MapFeature> features) {
     Rect boundsFromGeometry = Rect.zero;
     int pointsCount = 0;
     if (features.isNotEmpty) {
@@ -116,19 +117,19 @@ class VectorMapDataSource {
       }
     }
 
-    return VectorMapDataSource._(
+    return MapDataSource._(
         features: UnmodifiableMapView<int, MapFeature>(featuresMap),
         bounds: boundsFromGeometry,
         pointsCount: pointsCount,
         limits: limits.isNotEmpty ? limits : null);
   }
 
-  /// Loads a [VectorMapDataSource] from GeoJSON.
+  /// Loads a [MapDataSource] from GeoJSON.
   /// Geometries are always loaded.
   /// The [keys] argument defines which properties must be loaded.
   /// The [parseToNumber] argument defines which properties will have
   /// numeric values in quotes parsed to numbers.
-  static Future<VectorMapDataSource> geoJSON(
+  static Future<MapDataSource> geoJSON(
       {required String geojson,
       String? labelKey,
       List<String>? keys,
@@ -146,9 +147,9 @@ class VectorMapDataSource {
     return fromFeatures(features);
   }
 
-  /// Loads a [VectorMapDataSource] from geometries.
-  /// [VectorMapDataSource] features will have no properties.
-  factory VectorMapDataSource.geometries(List<MapGeometry> geometries) {
+  /// Loads a [MapDataSource] from geometries.
+  /// [MapDataSource] features will have no properties.
+  factory MapDataSource.geometries(List<MapGeometry> geometries) {
     Rect boundsFromGeometry = Rect.zero;
     int pointsCount = 0;
     if (geometries.isNotEmpty) {
@@ -163,7 +164,7 @@ class VectorMapDataSource {
       id++;
     }
 
-    return VectorMapDataSource._(
+    return MapDataSource._(
         features: UnmodifiableMapView<int, MapFeature>(featuresMap),
         bounds: boundsFromGeometry,
         pointsCount: pointsCount);
@@ -177,25 +178,25 @@ class VectorMapDataSource {
   }
 }
 
-/// Generated path from a geometry simplification.
 class SimplifiedPath {
+  SimplifiedPath(this.path, this.pointsCount);
+
   final Path path;
   final int pointsCount;
-
-  SimplifiedPath(this.path, this.pointsCount);
 }
 
 /// Abstract map geometry.
-abstract class MapGeometry {
-  SimplifiedPath toPath(
-      CanvasMatrix canvasMatrix, GeometrySimplifier simplifier);
+mixin MapGeometry {
+  PaintableGeometry toPaintableGeometry(
+      CanvasMatrix canvasMatrix, GeometrySimplifier simplifier, Color color);
 
   Rect get bounds;
 
   int get pointsCount;
 }
 
-class MapPoint extends Offset {
+/// Point geometry.
+class MapPoint extends Offset with MapGeometry {
   MapPoint(double x, double y) : super(x, y);
 
   double get x => dx;
@@ -206,10 +207,23 @@ class MapPoint extends Offset {
   String toString() {
     return 'MapPoint{x: $x, y: $y}';
   }
+
+  @override
+  Rect get bounds => Rect.fromLTWH(x, y, 0, 0);
+
+  @override
+  int get pointsCount => 1;
+
+  @override
+  PaintableGeometry toPaintableGeometry(
+      CanvasMatrix canvasMatrix, GeometrySimplifier simplifier, Color color) {
+    return PaintableGeometry.circle(
+        Offset(x, y), 5 / canvasMatrix.scale, color);
+  }
 }
 
 /// Line ring geometry.
-class MapLinearRing extends MapGeometry {
+class MapLinearRing with MapGeometry {
   final UnmodifiableListView<MapPoint> points;
   final Rect bounds;
 
@@ -235,7 +249,9 @@ class MapLinearRing extends MapGeometry {
   }
 
   @override
-  SimplifiedPath toPath(
+  int get pointsCount => points.length;
+
+  SimplifiedPath toSimplifiedPath(
       CanvasMatrix canvasMatrix, GeometrySimplifier simplifier) {
     Path path = Path();
     List<MapPoint> simplifiedPoints = simplifier.simplify(canvasMatrix, points);
@@ -252,11 +268,16 @@ class MapLinearRing extends MapGeometry {
   }
 
   @override
-  int get pointsCount => points.length;
+  PaintableGeometry toPaintableGeometry(
+      CanvasMatrix canvasMatrix, GeometrySimplifier simplifier, Color color) {
+    SimplifiedPath simplifiedPath = toSimplifiedPath(canvasMatrix, simplifier);
+    return PaintableGeometry.path(
+        simplifiedPath.path, simplifiedPath.pointsCount, color);
+  }
 }
 
 /// Polygon geometry.
-class MapPolygon extends MapGeometry {
+class MapPolygon with MapGeometry {
   final MapLinearRing externalRing;
   final UnmodifiableListView<MapLinearRing> internalRings;
   final Rect bounds;
@@ -274,22 +295,6 @@ class MapPolygon extends MapGeometry {
   }
 
   @override
-  SimplifiedPath toPath(
-      CanvasMatrix canvasMatrix, GeometrySimplifier simplifier) {
-    Path path = Path()..fillType = PathFillType.evenOdd;
-    SimplifiedPath simplifiedPath =
-        externalRing.toPath(canvasMatrix, simplifier);
-    int pointsCount = simplifiedPath.pointsCount;
-    path.addPath(simplifiedPath.path, Offset.zero);
-    for (MapLinearRing ring in internalRings) {
-      simplifiedPath = ring.toPath(canvasMatrix, simplifier);
-      pointsCount += simplifiedPath.pointsCount;
-      path.addPath(simplifiedPath.path, Offset.zero);
-    }
-    return SimplifiedPath(path, pointsCount);
-  }
-
-  @override
   int get pointsCount => _getPointsCount();
 
   int _getPointsCount() {
@@ -299,10 +304,34 @@ class MapPolygon extends MapGeometry {
     }
     return count;
   }
+
+  SimplifiedPath toSimplifiedPath(
+      CanvasMatrix canvasMatrix, GeometrySimplifier simplifier) {
+    Path path = Path()..fillType = PathFillType.evenOdd;
+
+    SimplifiedPath simplifiedPath =
+        externalRing.toSimplifiedPath(canvasMatrix, simplifier);
+    int pointsCount = simplifiedPath.pointsCount;
+    path.addPath(simplifiedPath.path, Offset.zero);
+    for (MapLinearRing ring in internalRings) {
+      simplifiedPath = ring.toSimplifiedPath(canvasMatrix, simplifier);
+      pointsCount += simplifiedPath.pointsCount;
+      path.addPath(simplifiedPath.path, Offset.zero);
+    }
+    return SimplifiedPath(path, pointsCount);
+  }
+
+  @override
+  PaintableGeometry toPaintableGeometry(
+      CanvasMatrix canvasMatrix, GeometrySimplifier simplifier, Color color) {
+    SimplifiedPath simplifiedPath = toSimplifiedPath(canvasMatrix, simplifier);
+    return PaintableGeometry.path(
+        simplifiedPath.path, simplifiedPath.pointsCount, color);
+  }
 }
 
 /// Multi polygon geometry.
-class MapMultiPolygon extends MapGeometry {
+class MapMultiPolygon with MapGeometry {
   final UnmodifiableListView<MapPolygon> polygons;
   final Rect bounds;
 
@@ -318,19 +347,6 @@ class MapMultiPolygon extends MapGeometry {
   }
 
   @override
-  SimplifiedPath toPath(
-      CanvasMatrix canvasMatrix, GeometrySimplifier simplifier) {
-    Path path = Path();
-    int pointsCount = 0;
-    for (MapPolygon polygon in polygons) {
-      SimplifiedPath simplifiedPath = polygon.toPath(canvasMatrix, simplifier);
-      pointsCount += simplifiedPath.pointsCount;
-      path.addPath(simplifiedPath.path, Offset.zero);
-    }
-    return SimplifiedPath(path, pointsCount);
-  }
-
-  @override
   int get pointsCount => _getPointsCount();
 
   int _getPointsCount() {
@@ -339,5 +355,19 @@ class MapMultiPolygon extends MapGeometry {
       count += polygon.pointsCount;
     }
     return count;
+  }
+
+  @override
+  PaintableGeometry toPaintableGeometry(
+      CanvasMatrix canvasMatrix, GeometrySimplifier simplifier, Color color) {
+    Path path = Path();
+    int pointsCount = 0;
+    for (MapPolygon polygon in polygons) {
+      SimplifiedPath simplifiedPath =
+          polygon.toSimplifiedPath(canvasMatrix, simplifier);
+      pointsCount += simplifiedPath.pointsCount;
+      path.addPath(simplifiedPath.path, Offset.zero);
+    }
+    return PaintableGeometry.path(path, pointsCount, color);
   }
 }

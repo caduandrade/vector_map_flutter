@@ -10,31 +10,33 @@ class ColorByRulePage extends StatefulWidget {
 
 class ColorByRulePageState extends ExamplePageState {
   @override
-  Future<VectorMapDataSource> loadDataSource(String geojson) async {
-    VectorMapDataSource dataSource = await VectorMapDataSource.geoJSON(
-        geojson: geojson, keys: ['Name', 'Seq']);
-    return dataSource;
+  Future<DataSources> loadDataSources(
+      String polygonsGeoJSON, String pointsGeoJSON) async {
+    MapDataSource polygons = await MapDataSource.geoJSON(
+        geojson: polygonsGeoJSON, keys: ['Name', 'Seq']);
+    return DataSources(polygons: polygons);
   }
 
   @override
   Widget buildContent() {
-    VectorMapTheme theme =
-        VectorMapTheme.rule(contourColor: Colors.white, colorRules: [
-      (feature) {
-        String? value = feature.getValue('Name');
-        return value == 'Faraday' ? Colors.red : null;
-      },
-      (feature) {
-        double? value = feature.getDoubleValue('Seq');
-        return value != null && value < 3 ? Colors.green : null;
-      },
-      (feature) {
-        double? value = feature.getDoubleValue('Seq');
-        return value != null && value > 9 ? Colors.blue : null;
-      }
-    ]);
+    MapLayer layer = MapLayer(
+        dataSource: polygons,
+        theme: MapTheme.rule(contourColor: Colors.white, colorRules: [
+          (feature) {
+            String? value = feature.getValue('Name');
+            return value == 'Faraday' ? Colors.red : null;
+          },
+          (feature) {
+            double? value = feature.getDoubleValue('Seq');
+            return value != null && value < 3 ? Colors.green : null;
+          },
+          (feature) {
+            double? value = feature.getDoubleValue('Seq');
+            return value != null && value > 9 ? Colors.blue : null;
+          }
+        ]));
 
-    VectorMap map = VectorMap(dataSource: dataSource, theme: theme);
+    VectorMap map = VectorMap(layers: [layer]);
 
     return map;
   }

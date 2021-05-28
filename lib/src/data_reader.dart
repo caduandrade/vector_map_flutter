@@ -18,13 +18,13 @@ class _GeoJSONReaderBase {
     switch (type) {
       //TODO other geometries
       case 'Point':
-        return _readPolygon(map);
+        return _readPoint(map);
       case 'MultiPoint':
-        return _readPolygon(map);
+        throw UnimplementedError();
       case 'LineString':
-        return _readPolygon(map);
+        throw UnimplementedError();
       case 'MultiLineString':
-        return _readPolygon(map);
+        throw UnimplementedError();
       case 'Polygon':
         return _readPolygon(map);
       case 'MultiPolygon':
@@ -36,6 +36,19 @@ class _GeoJSONReaderBase {
           throw VectorMapError.invalidType(type);
         }
     }
+  }
+
+  MapGeometry _readPoint(Map<String, dynamic> map) {
+    _checkKeyOn(map, 'coordinates');
+    List coordinates = map['coordinates'];
+    if (coordinates.length == 2) {
+      double x = double.parse(coordinates[0].toString());
+      double y = double.parse(coordinates[1].toString());
+      return MapPoint(x, y);
+    }
+
+    throw VectorMapError(
+        'Expected 2 coordinates but received ' + coordinates.length.toString());
   }
 
   MapGeometry _readPolygon(Map<String, dynamic> map) {

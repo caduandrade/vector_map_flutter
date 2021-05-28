@@ -11,6 +11,7 @@ import 'package:demo/gradient_page.dart';
 import 'package:demo/hover_page.dart';
 import 'package:demo/label_page.dart';
 import 'package:demo/menu.dart';
+import 'package:demo/multi_layer_page.dart';
 import 'package:demo/parser_page.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -29,20 +30,21 @@ class VectorMapDemoApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: MapChartDemoPage(),
+      home: VectorMapDemoPage(),
     );
   }
 }
 
-class MapChartDemoPage extends StatefulWidget {
+class VectorMapDemoPage extends StatefulWidget {
   @override
-  MapChartDemoPageState createState() => MapChartDemoPageState();
+  VectorMapDemoPageState createState() => VectorMapDemoPageState();
 }
 
-class MapChartDemoPageState extends State<MapChartDemoPage> {
+class VectorMapDemoPageState extends State<VectorMapDemoPage> {
   late List<MenuItem> _menuItems;
   ContentBuilder? _currentExampleBuilder;
-  String? geojson;
+  String? polygons;
+  String? points;
 
   @override
   void initState() {
@@ -58,20 +60,26 @@ class MapChartDemoPageState extends State<MapChartDemoPage> {
       MenuItem('Gradient', _gradientPage),
       MenuItem('Parser', _parserPage),
       MenuItem('Hover', _hoverPage),
-      MenuItem('Label', _labelPage)
+      MenuItem('Label', _labelPage),
+      MenuItem('Multi layer', _multiLayerPage)
     ];
     if (_menuItems.isNotEmpty) {
       _currentExampleBuilder = _menuItems.first.builder;
     }
-    rootBundle.loadString('assets/example.json').then((json) {
-      // _printProperties(json);
+    rootBundle.loadString('assets/polygons.json').then((json) {
+      // _printPolygonProperties(json);
       setState(() {
-        geojson = json;
+        polygons = json;
+      });
+    });
+    rootBundle.loadString('assets/points.json').then((json) {
+      setState(() {
+        points = json;
       });
     });
   }
 
-  _printProperties(String geojson) async {
+  _printPolygonProperties(String geojson) async {
     print('Name | Seq | Rnd');
     print('--- | --- | ---');
     Map<String, dynamic> map = await json.decode(geojson);
@@ -91,19 +99,19 @@ class MapChartDemoPageState extends State<MapChartDemoPage> {
 
   @override
   Widget build(BuildContext context) {
-    Widget exampleMenu = Container(
-      child: MenuWidget(
-          contentBuilderUpdater: _updateExampleContentBuilder,
-          menuItems: _menuItems),
-      padding: EdgeInsets.all(8),
-      decoration:
-          BoxDecoration(border: Border(right: BorderSide(color: Colors.blue))),
-    );
-
     Widget? body;
-    if (geojson == null) {
+    if (polygons == null && points == null) {
       body = Center(child: Text('Loading...'));
     } else {
+      Widget exampleMenu = Container(
+        child: MenuWidget(
+            contentBuilderUpdater: _updateExampleContentBuilder,
+            menuItems: _menuItems),
+        padding: EdgeInsets.all(8),
+        decoration: BoxDecoration(
+            border: Border(right: BorderSide(color: Colors.blue))),
+      );
+
       body = Row(
           children: [exampleMenu, Expanded(child: _buildExample())],
           crossAxisAlignment: CrossAxisAlignment.stretch);
@@ -171,5 +179,9 @@ class MapChartDemoPageState extends State<MapChartDemoPage> {
 
   LabelPage _labelPage() {
     return LabelPage();
+  }
+
+  MultiLayerPage _multiLayerPage() {
+    return MultiLayerPage();
   }
 }

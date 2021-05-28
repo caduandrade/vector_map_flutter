@@ -11,10 +11,11 @@ class GradientPage extends StatefulWidget {
 
 class GradientPageState extends ExamplePageState {
   @override
-  Future<VectorMapDataSource> loadDataSource(String geojson) async {
-    VectorMapDataSource dataSource =
-        await VectorMapDataSource.geoJSON(geojson: geojson, keys: ['Seq']);
-    return dataSource;
+  Future<DataSources> loadDataSources(
+      String polygonsGeoJSON, String pointsGeoJSON) async {
+    MapDataSource polygons =
+        await MapDataSource.geoJSON(geojson: polygonsGeoJSON, keys: ['Seq']);
+    return DataSources(polygons: polygons);
   }
 
   @override
@@ -26,29 +27,29 @@ class GradientPageState extends ExamplePageState {
   }
 
   Widget _autoMinMax() {
-    if (dataSource == null) {
-      return VectorMap();
-    }
+    MapLayer layer = MapLayer(
+        dataSource: polygons,
+        theme: MapTheme.gradient(
+            contourColor: Colors.white,
+            key: 'Seq',
+            colors: [Colors.blue, Colors.yellow, Colors.red]));
 
-    VectorMapTheme theme = VectorMapTheme.gradient(
-        contourColor: Colors.white,
-        key: 'Seq',
-        colors: [Colors.blue, Colors.yellow, Colors.red]);
-
-    VectorMap map = VectorMap(dataSource: dataSource, theme: theme);
+    VectorMap map = VectorMap(layers: [layer]);
 
     return map;
   }
 
   Widget _minMax() {
-    VectorMapTheme theme = VectorMapTheme.gradient(
-        contourColor: Colors.white,
-        key: 'Seq',
-        min: 3,
-        max: 9,
-        colors: [Colors.blue, Colors.yellow, Colors.red]);
+    MapLayer layer = MapLayer(
+        dataSource: polygons,
+        theme: MapTheme.gradient(
+            contourColor: Colors.white,
+            key: 'Seq',
+            min: 3,
+            max: 9,
+            colors: [Colors.blue, Colors.yellow, Colors.red]));
 
-    VectorMap map = VectorMap(dataSource: dataSource, theme: theme);
+    VectorMap map = VectorMap(layers: [layer]);
 
     return map;
   }

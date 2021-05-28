@@ -10,23 +10,26 @@ class ParserPage extends StatefulWidget {
 
 class ParserPageState extends ExamplePageState {
   @override
-  Future<VectorMapDataSource> loadDataSource(String geojson) async {
-    VectorMapDataSource dataSource = await VectorMapDataSource.geoJSON(
-        geojson: geojson,
+  Future<DataSources> loadDataSources(
+      String polygonsGeoJSON, String pointsGeoJSON) async {
+    MapDataSource polygons = await MapDataSource.geoJSON(
+        geojson: polygonsGeoJSON,
         keys: ['Seq', 'Rnd'],
         parseToNumber: ['Rnd'],
         labelKey: 'Rnd');
-    return dataSource;
+    return DataSources(polygons: polygons);
   }
 
   @override
   Widget buildContent() {
-    VectorMap map = VectorMap(
-        dataSource: dataSource,
-        theme: VectorMapTheme.gradient(
+    MapLayer layer = MapLayer(
+        dataSource: polygons,
+        theme: MapTheme.gradient(
             labelVisibility: (feature) => true,
             key: 'Rnd',
             colors: [Colors.blue, Colors.red]));
+
+    VectorMap map = VectorMap(layers: [layer]);
     return map;
   }
 }

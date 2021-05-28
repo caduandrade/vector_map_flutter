@@ -4,6 +4,8 @@ import 'dart:ui';
 
 import 'package:flutter/painting.dart';
 import 'package:vector_map/src/data_source.dart';
+import 'package:vector_map/src/error.dart';
+import 'package:vector_map/src/layer.dart';
 import 'package:vector_map/src/matrices.dart';
 import 'package:vector_map/src/simplifier.dart';
 import 'package:vector_map/src/theme.dart';
@@ -18,12 +20,12 @@ class MapResolution {
   MapResolution._(
       {required this.widgetSize,
       required this.mapBuffer,
-      required this.paths,
+      required this.paintableLayers,
       required this.pointsCount});
 
   final Size widgetSize;
   final Image mapBuffer;
-  final UnmodifiableMapView<int, Path> paths;
+  final UnmodifiableListView<PaintableLayer> paintableLayers;
   final int pointsCount;
 
   Future<MemoryImage> toMemoryImageProvider() async {
@@ -34,28 +36,88 @@ class MapResolution {
   }
 }
 
+class PaintableGeometry {
+  PaintableGeometry._(this._path, this._offset, this._pointBounds, this._radius,
+      this.pointsCount, this.color);
+
+  factory PaintableGeometry.path(Path path, int pointsCount, Color color) {
+    return PaintableGeometry._(path, null, null, null, pointsCount, color);
+  }
+
+  factory PaintableGeometry.circle(Offset offset, double radius, Color color) {
+    return PaintableGeometry._(
+        null,
+        offset,
+        Rect.fromLTWH(
+            offset.dx - radius / 2, offset.dy - radius / 2, radius, radius),
+        radius,
+        1,
+        color);
+  }
+
+  final Path? _path;
+
+  final Offset? _offset;
+  final Rect? _pointBounds;
+  final double? _radius;
+
+  final Color color;
+  final int pointsCount;
+
+  Rect getBounds() {
+    if (_path != null) {
+      return _path!.getBounds();
+    } else if (_pointBounds != null) {
+      return _pointBounds!;
+    }
+    throw VectorMapError('Illegal PaintableGeometry');
+  }
+
+  bool contains(Offset offset) {
+    if (_path != null) {
+      return _path!.contains(offset);
+    } else if (_pointBounds != null) {
+      return _pointBounds!.contains(offset);
+    }
+    return false;
+  }
+
+  draw(Canvas canvas, Paint paint) {
+    if (_path != null) {
+      canvas.drawPath(_path!, paint);
+    } else if (_offset != null && _radius != null) {
+      canvas.drawCircle(_offset!, _radius!, paint);
+    } else {
+      throw VectorMapError('Illegal PaintableGeometry');
+    }
+  }
+}
+
+class PaintableLayer {
+  PaintableLayer(this.layer, this.paintableGeometries);
+
+  final MapLayer layer;
+  final Map<int, PaintableGeometry> paintableGeometries;
+}
+
 /// [MapResolution] builder.
 class MapResolutionBuilder {
   MapResolutionBuilder(
-      {required this.dataSource,
-      required this.theme,
+      {required this.layers,
       required this.contourThickness,
       required this.mapMatrices,
       required this.simplifier,
       required this.onFinish});
 
-  final VectorMapDataSource dataSource;
-  final VectorMapTheme theme;
+  final List<MapLayer> layers;
   final double contourThickness;
   final MapMatrices mapMatrices;
   final GeometrySimplifier simplifier;
 
   final OnFinish onFinish;
-  final Map<int, Path> _paths = Map<int, Path>();
-  final Map<int, Color> _colors = Map<int, Color>();
+  final List<PaintableLayer> _paintableLayers = [];
 
   _State _state = _State.waiting;
-  Map<int, MapFeature> _pendingFeatures = Map<int, MapFeature>();
 
   stop() {
     _state = _State.stopped;
@@ -64,30 +126,31 @@ class MapResolutionBuilder {
   start() async {
     if (_state == _State.waiting) {
       _state = _State.running;
-      _pendingFeatures.addAll(dataSource.features);
-      _nextPath();
-    }
-  }
 
-  _nextPath() async {
-    if (_state == _State.stopped) {
-      return;
-    }
+      _paintableLayers.clear();
 
-    int pointsCount = 0;
-    while (_pendingFeatures.length > 0) {
-      final int id = _pendingFeatures.keys.first;
-      final MapFeature feature = _pendingFeatures.remove(id)!;
-      MapGeometry geometry = feature.geometry;
-      SimplifiedPath simplifiedPath =
-          geometry.toPath(mapMatrices.canvasMatrix, simplifier);
-      pointsCount += simplifiedPath.pointsCount;
-      _paths[id] = simplifiedPath.path;
-      _colors[id] =
-          VectorMapTheme.getThemeOrDefaultColor(dataSource, feature, theme);
+      int pointsCount = 0;
+      for (MapLayer layer in layers) {
+        MapDataSource dataSource = layer.dataSource;
+        MapTheme theme = layer.theme;
+        Map<int, PaintableGeometry> paintableGeometries =
+            Map<int, PaintableGeometry>();
+        for (MapFeature feature in dataSource.features.values) {
+          if (_state == _State.stopped) {
+            return;
+          }
+          Color color =
+              MapTheme.getThemeOrDefaultColor(dataSource, feature, theme);
+          MapGeometry geometry = feature.geometry;
+          PaintableGeometry paintableGeometry = geometry.toPaintableGeometry(
+              mapMatrices.canvasMatrix, simplifier, color);
+          pointsCount += paintableGeometry.pointsCount;
+          paintableGeometries[feature.id] = paintableGeometry;
+        }
+        _paintableLayers.add(PaintableLayer(layer, paintableGeometries));
+      }
+      _createBuffer(pointsCount);
     }
-
-    _createBuffer(pointsCount);
   }
 
   _createBuffer(int pointsCount) async {
@@ -107,33 +170,37 @@ class MapResolutionBuilder {
         bufferCreationMatrix.translateX, bufferCreationMatrix.translateY);
     canvas.scale(bufferCreationMatrix.scale, -bufferCreationMatrix.scale);
 
-    _paths.entries.forEach((element) {
-      int id = element.key;
-      Path path = element.value;
-      if (_state == _State.stopped) {
-        return;
-      }
-      var paint = Paint()
-        ..style = PaintingStyle.fill
-        ..color = _colors[id]!
-        ..isAntiAlias = true;
-      canvas.drawPath(path, paint);
-    });
-
-    if (contourThickness > 0) {
-      var paint = Paint()
-        ..style = PaintingStyle.stroke
-        ..color = theme.contourColor != null
-            ? theme.contourColor!
-            : VectorMapTheme.defaultContourColor
-        ..strokeWidth = contourThickness / bufferCreationMatrix.scale
-        ..isAntiAlias = true;
-
-      for (Path path in _paths.values) {
+    for (PaintableLayer paintableLayer in _paintableLayers) {
+      for (PaintableGeometry paintableGeometry
+          in paintableLayer.paintableGeometries.values) {
         if (_state == _State.stopped) {
           return;
         }
-        canvas.drawPath(path, paint);
+        var paint = Paint()
+          ..style = PaintingStyle.fill
+          ..color = paintableGeometry.color
+          ..isAntiAlias = true;
+        paintableGeometry.draw(canvas, paint);
+      }
+    }
+
+    if (contourThickness > 0) {
+      for (PaintableLayer paintableLayer in _paintableLayers) {
+        MapTheme theme = paintableLayer.layer.theme;
+        var paint = Paint()
+          ..style = PaintingStyle.stroke
+          ..color = theme.contourColor != null
+              ? theme.contourColor!
+              : MapTheme.defaultContourColor
+          ..strokeWidth = contourThickness / bufferCreationMatrix.scale
+          ..isAntiAlias = true;
+        for (PaintableGeometry paintableGeometry
+            in paintableLayer.paintableGeometries.values) {
+          if (_state == _State.stopped) {
+            return;
+          }
+          paintableGeometry.draw(canvas, paint);
+        }
       }
     }
 
@@ -147,7 +214,7 @@ class MapResolutionBuilder {
     if (_state != _State.stopped) {
       onFinish(MapResolution._(
           widgetSize: mapMatrices.canvasMatrix.widgetSize,
-          paths: UnmodifiableMapView(_paths),
+          paintableLayers: UnmodifiableListView(_paintableLayers),
           pointsCount: pointsCount,
           mapBuffer: mapBuffer));
     }

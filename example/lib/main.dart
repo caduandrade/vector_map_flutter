@@ -14,7 +14,7 @@ class ExampleWidget extends StatefulWidget {
 }
 
 class ExampleState extends State<ExampleWidget> {
-  VectorMapDataSource? _dataSource;
+  MapDataSource? _dataSource;
 
   @override
   void initState() {
@@ -25,7 +25,7 @@ class ExampleState extends State<ExampleWidget> {
   }
 
   _loadDataSource(String geojson) async {
-    VectorMapDataSource dataSource = await VectorMapDataSource.geoJSON(
+    MapDataSource dataSource = await MapDataSource.geoJSON(
         geojson: geojson, keys: ['GEOCODIGO'], parseToNumber: ['GEOCODIGO']);
     setState(() {
       _dataSource = dataSource;
@@ -36,7 +36,7 @@ class ExampleState extends State<ExampleWidget> {
   Widget build(BuildContext context) {
     Widget? content;
     if (_dataSource != null) {
-      content = _buildMapChart();
+      content = _buildMap(_dataSource!);
     } else {
       content = Text('Loading...');
     }
@@ -53,13 +53,15 @@ class ExampleState extends State<ExampleWidget> {
     );
   }
 
-  Widget _buildMapChart() {
-    return VectorMap(
-        dataSource: _dataSource,
-        theme: VectorMapTheme.gradient(
-            contourColor: Colors.green[800],
-            key: 'GEOCODIGO',
-            colors: [Colors.yellow, Colors.lightGreen]),
-        hoverTheme: VectorMapTheme(color: Colors.green[900]));
+  Widget _buildMap(MapDataSource dataSource) {
+    return VectorMap(layers: [
+      MapLayer(
+          dataSource: dataSource,
+          theme: MapTheme.gradient(
+              contourColor: Colors.green[800],
+              key: 'GEOCODIGO',
+              colors: [Colors.yellow, Colors.lightGreen]),
+          hoverTheme: MapTheme(color: Colors.green[900]))
+    ]);
   }
 }

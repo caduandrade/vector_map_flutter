@@ -10,28 +10,28 @@ typedef ColorRule = Color? Function(MapFeature feature);
 typedef LabelStyleBuilder = TextStyle Function(
     MapFeature feature, Color featureColor, Color labelColor);
 
-class VectorMapTheme {
+class MapTheme {
   static const Color defaultColor = Color(0xFFE0E0E0);
   static const Color defaultContourColor = Color(0xFF9E9E9E);
 
-  static Color getThemeOrDefaultColor(VectorMapDataSource? dataSource,
-      MapFeature feature, VectorMapTheme theme) {
+  static Color getThemeOrDefaultColor(
+      MapDataSource? dataSource, MapFeature feature, MapTheme theme) {
     Color? color = theme.getColor(dataSource, feature);
     if (color != null) {
       return color;
     }
-    return VectorMapTheme.defaultColor;
+    return MapTheme.defaultColor;
   }
 
   /// Creates a theme with colors by property value.
-  static VectorMapTheme value(
+  static MapTheme value(
       {Color? color,
       Color? contourColor,
       LabelVisibility? labelVisibility,
       LabelStyleBuilder? labelStyleBuilder,
       required String key,
       Map<dynamic, Color>? colors}) {
-    return _VectorMapThemeValue(
+    return _MapThemeValue(
         color: color,
         contourColor: contourColor,
         labelStyleBuilder: labelStyleBuilder,
@@ -43,13 +43,13 @@ class VectorMapTheme {
   /// The feature color is obtained from the first rule that returns
   /// a non-null color.
   /// If all rules return a null color, the default color is used.
-  static VectorMapTheme rule(
+  static MapTheme rule(
       {Color? color,
       Color? contourColor,
       LabelVisibility? labelVisibility,
       LabelStyleBuilder? labelStyleBuilder,
       required List<ColorRule> colorRules}) {
-    return _VectorMapThemeRule(
+    return _MapThemeRule(
         color: color,
         contourColor: contourColor,
         labelVisibility: labelVisibility,
@@ -65,7 +65,7 @@ class VectorMapTheme {
   /// gradient color.
   /// If the [max] is set, all larger values will be displayed with the last
   /// gradient color.
-  static VectorMapTheme gradient(
+  static MapTheme gradient(
       {Color? color,
       Color? contourColor,
       LabelVisibility? labelVisibility,
@@ -78,7 +78,7 @@ class VectorMapTheme {
       throw VectorMapError('At least 2 colors are required for the gradient.');
     }
 
-    return _VectorMapThemeGradient(
+    return _MapThemeGradient(
         color: color,
         contourColor: contourColor,
         labelVisibility: labelVisibility,
@@ -90,7 +90,7 @@ class VectorMapTheme {
   }
 
   /// Theme for [VectorMap]
-  VectorMapTheme(
+  MapTheme(
       {Color? color,
       this.contourColor,
       this.labelVisibility,
@@ -107,13 +107,13 @@ class VectorMapTheme {
     return _color != null || contourColor != null || labelVisibility != null;
   }
 
-  Color? getColor(VectorMapDataSource? dataSource, MapFeature feature) {
+  Color? getColor(MapDataSource? dataSource, MapFeature feature) {
     return _color;
   }
 }
 
-class _VectorMapThemeValue extends VectorMapTheme {
-  _VectorMapThemeValue(
+class _MapThemeValue extends MapTheme {
+  _MapThemeValue(
       {Color? color,
       Color? contourColor,
       LabelVisibility? labelVisibility,
@@ -135,7 +135,7 @@ class _VectorMapThemeValue extends VectorMapTheme {
   }
 
   @override
-  Color? getColor(VectorMapDataSource? dataSource, MapFeature feature) {
+  Color? getColor(MapDataSource? dataSource, MapFeature feature) {
     if (_colors != null) {
       dynamic? value = feature.getValue(key);
       if (value != null && _colors!.containsKey(value)) {
@@ -146,8 +146,8 @@ class _VectorMapThemeValue extends VectorMapTheme {
   }
 }
 
-class _VectorMapThemeRule extends VectorMapTheme {
-  _VectorMapThemeRule(
+class _MapThemeRule extends MapTheme {
+  _MapThemeRule(
       {Color? color,
       Color? contourColor,
       LabelVisibility? labelVisibility,
@@ -169,7 +169,7 @@ class _VectorMapThemeRule extends VectorMapTheme {
   }
 
   @override
-  Color? getColor(VectorMapDataSource? dataSource, MapFeature feature) {
+  Color? getColor(MapDataSource? dataSource, MapFeature feature) {
     Color? color;
     for (ColorRule rule in _colorRules) {
       color = rule(feature);
@@ -181,8 +181,8 @@ class _VectorMapThemeRule extends VectorMapTheme {
   }
 }
 
-class _VectorMapThemeGradient extends VectorMapTheme {
-  _VectorMapThemeGradient(
+class _MapThemeGradient extends MapTheme {
+  _MapThemeGradient(
       {Color? color,
       Color? contourColor,
       LabelVisibility? labelVisibility,
@@ -209,7 +209,7 @@ class _VectorMapThemeGradient extends VectorMapTheme {
   }
 
   @override
-  Color? getColor(VectorMapDataSource? dataSource, MapFeature feature) {
+  Color? getColor(MapDataSource? dataSource, MapFeature feature) {
     double? min = this.min;
     double? max = this.max;
 

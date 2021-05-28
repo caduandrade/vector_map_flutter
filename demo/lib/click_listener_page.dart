@@ -10,17 +10,20 @@ class ClickListenerPage extends StatefulWidget {
 
 class ClickListenerPageState extends ExamplePageState {
   @override
-  Future<VectorMapDataSource> loadDataSource(String geojson) async {
-    VectorMapDataSource dataSource =
-        await VectorMapDataSource.geoJSON(geojson: geojson);
-    return dataSource;
+  Future<DataSources> loadDataSources(
+      String polygonsGeoJSON, String pointsGeoJSON) async {
+    MapDataSource polygons =
+        await MapDataSource.geoJSON(geojson: polygonsGeoJSON);
+    return DataSources(polygons: polygons);
   }
 
   @override
   Widget buildContent() {
+    MapLayer layer = MapLayer(
+        dataSource: polygons, hoverTheme: MapTheme(color: Colors.grey[800]!));
+
     VectorMap map = VectorMap(
-        dataSource: dataSource,
-        hoverTheme: VectorMapTheme(color: Colors.grey[800]!),
+        layers: [layer],
         clickListener: (feature) {
           print(feature.id);
         });
