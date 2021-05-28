@@ -115,8 +115,8 @@ class VectorMapState extends State<VectorMap> {
         int? bufferWidth;
         int? bufferHeight;
         if (_mapResolution != null) {
-          bufferWidth = _mapResolution!.mapBuffer.width;
-          bufferHeight = _mapResolution!.mapBuffer.height;
+          bufferWidth = _mapResolution!.bufferWidth;
+          bufferHeight = _mapResolution!.bufferHeight;
         }
         MapMatrices mapMatrices = MapMatrices(
             widgetWidth: constraints.maxWidth,
@@ -204,13 +204,16 @@ class VectorMapState extends State<VectorMap> {
                 _mapResolution!.paintableLayers[layerIndex];
             if (paintableLayer.paintableGeometries.containsKey(feature.id) ==
                 false) {
-              throw VectorMapError('No path for id: ' + feature.id.toString());
+              throw VectorMapError(
+                  'No paintable geometry for id: ' + feature.id.toString());
             }
             PaintableGeometry paintableGeometry =
                 paintableLayer.paintableGeometries[feature.id]!;
             found = paintableGeometry.contains(o);
             if (found) {
-              if (_hover == null || _hover!.feature != feature) {
+              if (_hover == null ||
+                  _hover!.layerIndex != layerIndex ||
+                  _hover!.feature != feature) {
                 _updateHover(_HoverFeature(layerIndex, feature));
               }
               break;
@@ -254,64 +257,68 @@ class _MapPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // drawing the buffer
+    // drawing layers
+    for (int layerIndex = 0;
+        layerIndex < mapResolution.paintableLayers.length;
+        layerIndex++) {
+      PaintableLayer paintableLayer = mapResolution.paintableLayers[layerIndex];
 
-    canvas.save();
-    BufferPaintMatrix matrix = mapMatrices.bufferPaintMatrix!;
-    canvas.translate(matrix.translateX, matrix.translateY);
-    canvas.scale(matrix.scale);
-    canvas.drawImage(mapResolution.mapBuffer, Offset.zero, Paint());
-    canvas.restore();
+      // drawing the buffer
+      canvas.save();
+      BufferPaintMatrix matrix = mapMatrices.bufferPaintMatrix!;
+      canvas.translate(matrix.translateX, matrix.translateY);
+      canvas.scale(matrix.scale);
+      canvas.drawImage(paintableLayer.layerBuffer, Offset.zero, Paint());
+      canvas.restore();
 
-    // drawing the hover
-    if (hover != null) {
-      PaintableLayer paintableLayer =
-          mapResolution.paintableLayers[hover!.layerIndex];
-      MapLayer layer = paintableLayer.layer;
-      if (layer.hoverTheme != null) {
-        MapFeature feature = hover!.feature;
-        MapTheme hoverTheme = layer.hoverTheme!;
-        Color? hoverColor = hoverTheme.getColor(layer.dataSource, feature);
-        if (hoverColor != null || hoverTheme.contourColor != null) {
-          canvas.save();
+      // drawing the hover
+      if (hover != null && hover!.layerIndex == layerIndex) {
+        MapLayer layer = paintableLayer.layer;
+        if (layer.hoverTheme != null) {
+          MapFeature feature = hover!.feature;
+          MapTheme hoverTheme = layer.hoverTheme!;
+          Color? hoverColor = hoverTheme.getColor(layer.dataSource, feature);
+          if (hoverColor != null || hoverTheme.contourColor != null) {
+            canvas.save();
 
-          CanvasMatrix canvasMatrix = mapMatrices.canvasMatrix;
-          canvas.translate(canvasMatrix.translateX, canvasMatrix.translateY);
-          canvas.scale(canvasMatrix.scale, -canvasMatrix.scale);
+            CanvasMatrix canvasMatrix = mapMatrices.canvasMatrix;
+            canvas.translate(canvasMatrix.translateX, canvasMatrix.translateY);
+            canvas.scale(canvasMatrix.scale, -canvasMatrix.scale);
 
-          int featureId = feature.id;
-          if (paintableLayer.paintableGeometries.containsKey(featureId) ==
-              false) {
-            throw VectorMapError('No path for id: $featureId');
-          }
-
-          PaintableGeometry paintableGeometry =
-              paintableLayer.paintableGeometries[featureId]!;
-          if (hoverColor != null) {
-            var paint = Paint()
-              ..style = PaintingStyle.fill
-              ..color = hoverColor
-              ..isAntiAlias = true;
-            paintableGeometry.draw(canvas, paint);
-          }
-
-          if (contourThickness > 0) {
-            Color contourColor = MapTheme.defaultContourColor;
-            if (hoverTheme.contourColor != null) {
-              contourColor = hoverTheme.contourColor!;
-            } else if (layer.theme.contourColor != null) {
-              contourColor = layer.theme.contourColor!;
+            int featureId = feature.id;
+            if (paintableLayer.paintableGeometries.containsKey(featureId) ==
+                false) {
+              throw VectorMapError('No path for id: $featureId');
             }
 
-            var paint = Paint()
-              ..style = PaintingStyle.stroke
-              ..color = contourColor
-              ..strokeWidth = contourThickness / canvasMatrix.scale
-              ..isAntiAlias = true;
-            paintableGeometry.draw(canvas, paint);
-          }
+            PaintableGeometry paintableGeometry =
+                paintableLayer.paintableGeometries[featureId]!;
+            if (hoverColor != null) {
+              var paint = Paint()
+                ..style = PaintingStyle.fill
+                ..color = hoverColor
+                ..isAntiAlias = true;
+              paintableGeometry.draw(canvas, paint);
+            }
 
-          canvas.restore();
+            if (contourThickness > 0) {
+              Color contourColor = MapTheme.defaultContourColor;
+              if (hoverTheme.contourColor != null) {
+                contourColor = hoverTheme.contourColor!;
+              } else if (layer.theme.contourColor != null) {
+                contourColor = layer.theme.contourColor!;
+              }
+
+              var paint = Paint()
+                ..style = PaintingStyle.stroke
+                ..color = contourColor
+                ..strokeWidth = contourThickness / canvasMatrix.scale
+                ..isAntiAlias = true;
+              paintableGeometry.draw(canvas, paint);
+            }
+
+            canvas.restore();
+          }
         }
       }
     }

@@ -22,14 +22,6 @@ class MapFeature {
   final Color? color;
   final MapGeometry geometry;
 
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is MapFeature && runtimeType == other.runtimeType && id == other.id;
-
-  @override
-  int get hashCode => id.hashCode;
-
   dynamic getValue(String key) {
     if (_properties != null && _properties!.containsKey(key)) {
       return _properties![key];

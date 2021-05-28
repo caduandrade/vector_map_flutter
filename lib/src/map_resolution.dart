@@ -19,18 +19,20 @@ typedef OnFinish(MapResolution newMapResolution);
 class MapResolution {
   MapResolution._(
       {required this.widgetSize,
-      required this.mapBuffer,
+      required this.bufferWidth,
+      required this.bufferHeight,
       required this.paintableLayers,
       required this.pointsCount});
 
   final Size widgetSize;
-  final Image mapBuffer;
+  final int bufferWidth;
+  final int bufferHeight;
   final UnmodifiableListView<PaintableLayer> paintableLayers;
   final int pointsCount;
 
-  Future<MemoryImage> toMemoryImageProvider() async {
+  Future<MemoryImage> toMemoryImageProvider(Image image) async {
     ByteData? imageByteData =
-        await mapBuffer.toByteData(format: ImageByteFormat.png);
+        await image.toByteData(format: ImageByteFormat.png);
     Uint8List uint8list = imageByteData!.buffer.asUint8List();
     return MemoryImage(uint8list);
   }
@@ -49,7 +51,7 @@ class PaintableGeometry {
         null,
         offset,
         Rect.fromLTWH(
-            offset.dx - radius / 2, offset.dy - radius / 2, radius, radius),
+            offset.dx - radius, offset.dy - radius, radius * 2, radius * 2),
         radius,
         1,
         color);
@@ -94,9 +96,10 @@ class PaintableGeometry {
 }
 
 class PaintableLayer {
-  PaintableLayer(this.layer, this.paintableGeometries);
+  PaintableLayer(this.layer, this.layerBuffer, this.paintableGeometries);
 
   final MapLayer layer;
+  final Image layerBuffer;
   final Map<int, PaintableGeometry> paintableGeometries;
 }
 
@@ -147,13 +150,26 @@ class MapResolutionBuilder {
           pointsCount += paintableGeometry.pointsCount;
           paintableGeometries[feature.id] = paintableGeometry;
         }
-        _paintableLayers.add(PaintableLayer(layer, paintableGeometries));
+        Image? layerBuffer = await _createBuffer(layer, paintableGeometries);
+        if (layerBuffer == null) {
+          return;
+        }
+        _paintableLayers
+            .add(PaintableLayer(layer, layerBuffer, paintableGeometries));
       }
-      _createBuffer(pointsCount);
+      if (_state != _State.stopped) {
+        onFinish(MapResolution._(
+            widgetSize: mapMatrices.canvasMatrix.widgetSize,
+            bufferWidth: mapMatrices.bufferCreationMatrix.imageWidth.toInt(),
+            bufferHeight: mapMatrices.bufferCreationMatrix.imageHeight.toInt(),
+            paintableLayers: UnmodifiableListView(_paintableLayers),
+            pointsCount: pointsCount));
+      }
     }
   }
 
-  _createBuffer(int pointsCount) async {
+  Future<Image?> _createBuffer(
+      MapLayer layer, Map<int, PaintableGeometry> paintableGeometries) async {
     BufferCreationMatrix bufferCreationMatrix =
         mapMatrices.bufferCreationMatrix;
     PictureRecorder recorder = PictureRecorder();
@@ -170,53 +186,38 @@ class MapResolutionBuilder {
         bufferCreationMatrix.translateX, bufferCreationMatrix.translateY);
     canvas.scale(bufferCreationMatrix.scale, -bufferCreationMatrix.scale);
 
-    for (PaintableLayer paintableLayer in _paintableLayers) {
-      for (PaintableGeometry paintableGeometry
-          in paintableLayer.paintableGeometries.values) {
-        if (_state == _State.stopped) {
-          return;
-        }
-        var paint = Paint()
-          ..style = PaintingStyle.fill
-          ..color = paintableGeometry.color
-          ..isAntiAlias = true;
-        paintableGeometry.draw(canvas, paint);
+    for (PaintableGeometry paintableGeometry in paintableGeometries.values) {
+      if (_state == _State.stopped) {
+        return null;
       }
+      var paint = Paint()
+        ..style = PaintingStyle.fill
+        ..color = paintableGeometry.color
+        ..isAntiAlias = true;
+      paintableGeometry.draw(canvas, paint);
     }
 
     if (contourThickness > 0) {
-      for (PaintableLayer paintableLayer in _paintableLayers) {
-        MapTheme theme = paintableLayer.layer.theme;
-        var paint = Paint()
-          ..style = PaintingStyle.stroke
-          ..color = theme.contourColor != null
-              ? theme.contourColor!
-              : MapTheme.defaultContourColor
-          ..strokeWidth = contourThickness / bufferCreationMatrix.scale
-          ..isAntiAlias = true;
-        for (PaintableGeometry paintableGeometry
-            in paintableLayer.paintableGeometries.values) {
-          if (_state == _State.stopped) {
-            return;
-          }
-          paintableGeometry.draw(canvas, paint);
+      MapTheme theme = layer.theme;
+      var paint = Paint()
+        ..style = PaintingStyle.stroke
+        ..color = theme.contourColor != null
+            ? theme.contourColor!
+            : MapTheme.defaultContourColor
+        ..strokeWidth = contourThickness / bufferCreationMatrix.scale
+        ..isAntiAlias = true;
+      for (PaintableGeometry paintableGeometry in paintableGeometries.values) {
+        if (_state == _State.stopped) {
+          return null;
         }
+        paintableGeometry.draw(canvas, paint);
       }
     }
 
     canvas.restore();
 
     Picture picture = recorder.endRecording();
-    Image mapBuffer = await picture.toImage(
-        bufferCreationMatrix.imageWidth.toInt(),
+    return await picture.toImage(bufferCreationMatrix.imageWidth.toInt(),
         bufferCreationMatrix.imageHeight.toInt());
-
-    if (_state != _State.stopped) {
-      onFinish(MapResolution._(
-          widgetSize: mapMatrices.canvasMatrix.widgetSize,
-          paintableLayers: UnmodifiableListView(_paintableLayers),
-          pointsCount: pointsCount,
-          mapBuffer: mapBuffer));
-    }
   }
 }

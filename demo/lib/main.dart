@@ -100,7 +100,7 @@ class VectorMapDemoPageState extends State<VectorMapDemoPage> {
   @override
   Widget build(BuildContext context) {
     Widget? body;
-    if (polygons == null && points == null) {
+    if (polygons == null || points == null) {
       body = Center(child: Text('Loading...'));
     } else {
       Widget exampleMenu = Container(
