@@ -88,6 +88,64 @@ The `labelKey` defines which property will be used to display its values as feat
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/default_colors_v1.png)
 
+### Label
+
+Mapping label property:
+
+```dart
+    MapDataSource polygons =
+        await MapDataSource.geoJSON(geojson: polygonsGeoJSON, labelKey: 'Name');
+```
+
+Visibility:
+
+```dart
+    MapLayer layer = MapLayer(
+        dataSource: polygons,
+        theme: MapTheme(labelVisibility: (feature) => true));
+
+    VectorMap map = VectorMap(layers: [layer]);
+```
+
+![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/label_visible_v1.png)
+
+```dart
+    MapLayer layer = MapLayer(
+        dataSource: polygons,
+        theme:
+            MapTheme(labelVisibility: (feature) => feature.label == 'Darwin'));
+
+    VectorMap map = VectorMap(layers: [layer]);
+```
+
+![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/label_rule_v1.png)
+
+##### Label style
+
+```dart
+    MapLayer layer = MapLayer(
+        dataSource: polygons,
+        theme: MapTheme(
+            labelVisibility: (feature) => true,
+            labelStyleBuilder: (feature, featureColor, labelColor) {
+              if (feature.label == 'Darwin') {
+                return TextStyle(
+                  color: labelColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 11,
+                );
+              }
+              return TextStyle(
+                color: labelColor,
+                fontSize: 11,
+              );
+            }));
+
+    VectorMap map = VectorMap(layers: [layer]);
+```
+
+![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/label_style_v1.png)
+
 ### Color by property value
 
 Sets a color for each property value in GeoJSON. If a color is not set, the default color is used.
@@ -95,8 +153,8 @@ Sets a color for each property value in GeoJSON. If a color is not set, the defa
 Mapping the property key:
 
 ```dart
-    MapDataSource polygons =
-        await MapDataSource.geoJSON(geojson: polygonsGeoJSON, keys: ['Seq']);
+    MapDataSource polygons = await MapDataSource.geoJSON(
+        geojson: polygonsGeoJSON, keys: ['Seq'], labelKey: 'Seq');
 ```
 
 Setting the colors for the property values:
@@ -104,17 +162,21 @@ Setting the colors for the property values:
 ```dart
     MapLayer layer = MapLayer(
         dataSource: polygons,
-        theme: MapTheme.value(contourColor: Colors.white, key: 'Seq', colors: {
-          2: Colors.green,
-          4: Colors.red,
-          6: Colors.orange,
-          8: Colors.blue
-        }));
+        theme: MapTheme.value(
+            contourColor: Colors.white,
+            labelVisibility: (feature) => true,
+            key: 'Seq',
+            colors: {
+              2: Colors.green,
+              4: Colors.red,
+              6: Colors.orange,
+              8: Colors.blue
+            }));
 
     VectorMap map = VectorMap(layers: [layer]);
 ```
 
-![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/color_by_value_v1.png)
+![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/color_by_value_v2.png)
 
 ### Color by rule
 
@@ -162,8 +224,8 @@ The property must have numeric values.
 Uses the min and max values read from data source.
 
 ```dart
-    MapDataSource polygons =
-        await MapDataSource.geoJSON(geojson: polygonsGeoJSON, keys: ['Seq']);
+    MapDataSource polygons = await MapDataSource.geoJSON(
+        geojson: polygonsGeoJSON, keys: ['Seq'], labelKey: 'Seq');
 ```
 
 ```dart
@@ -171,6 +233,7 @@ Uses the min and max values read from data source.
         dataSource: polygons,
         theme: MapTheme.gradient(
             contourColor: Colors.white,
+            labelVisibility: (feature) => true,
             key: 'Seq',
             colors: [Colors.blue, Colors.yellow, Colors.red]));
 
@@ -185,8 +248,8 @@ If the `min` value is set, all lower values will be displayed using the first gr
 If the `max` value is set, all higher values will be displayed using the last gradient color.
 
 ```dart
-    MapDataSource polygons =
-        await MapDataSource.geoJSON(geojson: polygonsGeoJSON, keys: ['Seq']);
+    MapDataSource polygons = await MapDataSource.geoJSON(
+        geojson: polygonsGeoJSON, keys: ['Seq'], labelKey: 'Seq');
 ```
 
 ```dart
@@ -194,6 +257,7 @@ If the `max` value is set, all higher values will be displayed using the last gr
         dataSource: polygons,
         theme: MapTheme.gradient(
             contourColor: Colors.white,
+            labelVisibility: (feature) => true,
             key: 'Seq',
             min: 3,
             max: 9,
@@ -214,64 +278,6 @@ If the `max` value is set, all higher values will be displayed using the last gr
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/contour_thickness_v1.png)
-
-## Label
-
-#### Mapping label property
-
-```dart
-    MapDataSource polygons =
-        await MapDataSource.geoJSON(geojson: polygonsGeoJSON, labelKey: 'Name');
-```
-
-#### Visibility
-
-```dart
-    MapLayer layer = MapLayer(
-        dataSource: polygons,
-        theme: MapTheme(labelVisibility: (feature) => true));
-
-    VectorMap map = VectorMap(layers: [layer]);
-```
-
-![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/label_visible_v1.png)
-
-```dart
-    MapLayer layer = MapLayer(
-        dataSource: polygons,
-        theme:
-            MapTheme(labelVisibility: (feature) => feature.label == 'Darwin'));
-
-    VectorMap map = VectorMap(layers: [layer]);
-```
-
-![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/label_rule_v1.png)
-
-#### Style
-
-```dart
-    MapLayer layer = MapLayer(
-        dataSource: polygons,
-        theme: MapTheme(
-            labelVisibility: (feature) => true,
-            labelStyleBuilder: (feature, featureColor, labelColor) {
-              if (feature.label == 'Darwin') {
-                return TextStyle(
-                  color: labelColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 11,
-                );
-              }
-              return TextStyle(
-                color: labelColor,
-                fontSize: 11,
-              );
-            }));
-
-    VectorMap map = VectorMap(layers: [layer]);
-```
-
-![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/label_style_v1.png)
 
 ## Hover theme
 
@@ -407,7 +413,7 @@ Creating a map with multiple layers:
         hoverTheme: hoverTheme);
 ```
 
-**Disabled**
+Overlay disabled:
 
 ```dart
     VectorMap map = VectorMap(layers: [layer1, layer2]);
@@ -415,7 +421,7 @@ Creating a map with multiple layers:
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/overlay_contour_off_v1.gif)
 
-**Enabled**
+Overlay enabled:
 
 ```dart
     VectorMap map =

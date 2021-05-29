@@ -34,6 +34,7 @@ class MapTheme {
     return _MapThemeValue(
         color: color,
         contourColor: contourColor,
+        labelVisibility: labelVisibility,
         labelStyleBuilder: labelStyleBuilder,
         key: key,
         colors: colors);

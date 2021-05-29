@@ -13,8 +13,8 @@ class GradientPageState extends ExamplePageState {
   @override
   Future<DataSources> loadDataSources(
       String polygonsGeoJSON, String pointsGeoJSON) async {
-    MapDataSource polygons =
-        await MapDataSource.geoJSON(geojson: polygonsGeoJSON, keys: ['Seq']);
+    MapDataSource polygons = await MapDataSource.geoJSON(
+        geojson: polygonsGeoJSON, keys: ['Seq'], labelKey: 'Seq');
     return DataSources(polygons: polygons);
   }
 
@@ -31,6 +31,7 @@ class GradientPageState extends ExamplePageState {
         dataSource: polygons,
         theme: MapTheme.gradient(
             contourColor: Colors.white,
+            labelVisibility: (feature) => true,
             key: 'Seq',
             colors: [Colors.blue, Colors.yellow, Colors.red]));
 
@@ -44,6 +45,7 @@ class GradientPageState extends ExamplePageState {
         dataSource: polygons,
         theme: MapTheme.gradient(
             contourColor: Colors.white,
+            labelVisibility: (feature) => true,
             key: 'Seq',
             min: 3,
             max: 9,
