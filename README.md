@@ -240,7 +240,7 @@ Uses the min and max values read from data source.
     VectorMap map = VectorMap(layers: [layer]);
 ```
 
-![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/gradient_auto_v1.png)
+![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/gradient_auto_v2.png)
 
 ##### Setting min or max values manually
 
@@ -266,7 +266,7 @@ If the `max` value is set, all higher values will be displayed using the last gr
     VectorMap map = VectorMap(layers: [layer]);
 ```
 
-![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/gradient_min_max_v1.png)
+![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/gradient_min_max_v2.png)
 
 ## Contour
 
