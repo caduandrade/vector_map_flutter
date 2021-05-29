@@ -88,18 +88,18 @@ The `labelKey` defines which property will be used to display its values as feat
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/default_colors_v1.png)
 
-#### Color by property value
+### Color by property value
 
 Sets a color for each property value in GeoJSON. If a color is not set, the default color is used.
 
-**Mapping the property key**
+Mapping the property key
 
 ```dart
     MapDataSource polygons =
         await MapDataSource.geoJSON(geojson: polygonsGeoJSON, keys: ['Seq']);
 ```
 
-**Setting the colors for the property values**
+Setting the colors for the property values
 
 ```dart
     MapLayer layer = MapLayer(
@@ -116,18 +116,18 @@ Sets a color for each property value in GeoJSON. If a color is not set, the defa
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/color_by_value_v1.png)
 
-#### Color by rule
+### Color by rule
 
 The feature color is obtained from the first rule that returns a non-null color. If all rules return a null color, the default color is used.
 
-**Mapping the property key**
+Mapping the property key
 
 ```dart
     MapDataSource polygons = await MapDataSource.geoJSON(
         geojson: polygonsGeoJSON, keys: ['Name', 'Seq']);
 ```
 
-**Setting the rules**
+Setting the rules
 
 ```dart
     MapLayer layer = MapLayer(
@@ -152,7 +152,7 @@ The feature color is obtained from the first rule that returns a non-null color.
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/color_by_rule_v1.png)
 
-#### Gradient
+### Gradient
 
 The gradient is created given the colors and limit values of the chosen property.
 The property must have numeric values.
@@ -358,7 +358,7 @@ If the `max` value is set, all higher values will be displayed using the last gr
 
 ## Layers
 
-**Loading multiple data sources.**
+Loading multiple data sources.
 
 ```dart
     MapDataSource polygons =
@@ -366,7 +366,7 @@ If the `max` value is set, all higher values will be displayed using the last gr
     MapDataSource points = await MapDataSource.geoJSON(geojson: pointsGeoJSON);
 ```
 
-**Creating a map with multiple layers.**
+Creating a map with multiple layers.
 
 ```dart
     MapTheme hoverTheme = MapTheme(color: Colors.green);
