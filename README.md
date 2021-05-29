@@ -92,14 +92,14 @@ The `labelKey` defines which property will be used to display its values as feat
 
 Sets a color for each property value in GeoJSON. If a color is not set, the default color is used.
 
-Mapping the property key
+Mapping the property key:
 
 ```dart
     MapDataSource polygons =
         await MapDataSource.geoJSON(geojson: polygonsGeoJSON, keys: ['Seq']);
 ```
 
-Setting the colors for the property values
+Setting the colors for the property values:
 
 ```dart
     MapLayer layer = MapLayer(
@@ -120,14 +120,14 @@ Setting the colors for the property values
 
 The feature color is obtained from the first rule that returns a non-null color. If all rules return a null color, the default color is used.
 
-Mapping the property key
+Mapping the property key:
 
 ```dart
     MapDataSource polygons = await MapDataSource.geoJSON(
         geojson: polygonsGeoJSON, keys: ['Name', 'Seq']);
 ```
 
-Setting the rules
+Setting the rules:
 
 ```dart
     MapLayer layer = MapLayer(
@@ -358,7 +358,7 @@ If the `max` value is set, all higher values will be displayed using the last gr
 
 ## Layers
 
-Loading multiple data sources.
+Loading multiple data sources:
 
 ```dart
     MapDataSource polygons =
@@ -366,7 +366,7 @@ Loading multiple data sources.
     MapDataSource points = await MapDataSource.geoJSON(geojson: pointsGeoJSON);
 ```
 
-Creating a map with multiple layers.
+Creating a map with multiple layers:
 
 ```dart
     MapTheme hoverTheme = MapTheme(color: Colors.green);
@@ -441,6 +441,5 @@ Creating a map with multiple layers.
 
 * More theming features
 * Zoom / Pan
-* Layers
 * Legend
 * Release the final version (1.0.0). The API may have some small changes.
