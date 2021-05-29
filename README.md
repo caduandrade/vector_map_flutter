@@ -11,7 +11,7 @@
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/vector_map_v1.gif)
 
-## Get started
+## GeoJSON examples
 
 A simplified GeoJSONs will be used in the examples to demonstrate the different possibilities of themes.
 The following examples will assume that GeoJSONs have already been loaded into Strings.
@@ -43,7 +43,7 @@ Name | AN
 "Silicon" | 14
 "Hydrogen" | 1
 
-#### Reading GeoJSON from String
+## Reading GeoJSON from String
 
 No properties are loaded, only the geometries.
 
@@ -52,7 +52,7 @@ No properties are loaded, only the geometries.
         await MapDataSource.geoJSON(geojson: polygonsGeoJSON);
 ```
 
-#### Creating the Widget
+## Creating the Widget
 
 ```dart
     MapLayer layer = MapLayer(dataSource: polygons);
@@ -62,7 +62,7 @@ No properties are loaded, only the geometries.
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/get_started_v1.png)
 
-#### Reading GeoJSON properties
+## Reading GeoJSON properties
 
 The `keys` argument defines which properties must be loaded.
 The `parseToNumber` argument defines which properties will have numeric values in quotes parsed to numbers.
