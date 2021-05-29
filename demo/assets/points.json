@@ -4,7 +4,7 @@
     {
       "type": "Feature",
       "properties": {
-        "an": 22,
+        "AN": 22,
         "Name": "Titanium"
       },
       "geometry": {
@@ -18,7 +18,7 @@
     {
       "type": "Feature",
       "properties": {
-        "an": 41,
+        "AN": 41,
         "Name": "Niobium"
       },
       "geometry": {
@@ -32,7 +32,7 @@
     {
       "type": "Feature",
       "properties": {
-        "an": 6,
+        "AN": 6,
         "Name": "Carbon"
       },
       "geometry": {
@@ -46,7 +46,7 @@
     {
       "type": "Feature",
       "properties": {
-        "an": 10,
+        "AN": 10,
         "Name": "Neon"
       },
       "geometry": {
@@ -60,7 +60,7 @@
     {
       "type": "Feature",
       "properties": {
-        "an": 14,
+        "AN": 14,
         "Name": "Silicon"
       },
       "geometry": {
@@ -74,7 +74,7 @@
     {
       "type": "Feature",
       "properties": {
-        "an": 1,
+        "AN": 1,
         "Name": "Hydrogen"
       },
       "geometry": {

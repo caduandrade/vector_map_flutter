@@ -75,6 +75,7 @@ class VectorMapDemoPageState extends State<VectorMapDemoPage> {
       });
     });
     rootBundle.loadString('assets/points.json').then((json) {
+      // _printPointsProperties(json);
       setState(() {
         points = json;
       });
@@ -96,6 +97,19 @@ class VectorMapDemoPageState extends State<VectorMapDemoPage> {
         rnd = '"$rnd"';
       }
       print('"$name" | $seq | $rnd');
+    }
+  }
+
+  _printPointsProperties(String geojson) async {
+    print('Name | AN');
+    print('--- | ---');
+    Map<String, dynamic> map = await json.decode(geojson);
+    List features = map['features']!;
+    for (Map<String, dynamic> feature in features) {
+      Map<String, dynamic> properties = feature['properties'];
+      String name = properties['Name'];
+      int atomicNumber = properties['AN'];
+      print('"$name" | $atomicNumber');
     }
   }
 

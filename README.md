@@ -2,9 +2,10 @@
 
 # Vector Map
 
-* Displays GeoJSON geometries
+* Compatible with GeoJSON
 * Multi resolution with geometry simplification
 * Highly customizable
+* High performance
 * Interactable
 * Pure Flutter (no WebView/JavaScript)
 
@@ -12,7 +13,10 @@
 
 ## Get started
 
-A simplified GeoJSON will be used in the examples to demonstrate the different possibilities of themes. This GeoJSON has only 3 features with the following properties:
+A simplified GeoJSONs will be used in the examples to demonstrate the different possibilities of themes.
+The following examples will assume that GeoJSONs have already been loaded into Strings.
+
+**polygons.json** ([link](https://raw.githubusercontent.com/caduandrade/vector_map_flutter/main/demo/assets/polygons.json))
 
 Name | Seq | Rnd
 --- | --- | ---
@@ -28,155 +32,174 @@ Name | Seq | Rnd
 "Kepler" | 10 | "32"
 "Turing" | 11 | "93"
 
-To view the full content, use this [link](https://raw.githubusercontent.com/caduandrade/vector_map_flutter/main/demo/assets/example.json).
+**points.json** ([link](https://raw.githubusercontent.com/caduandrade/vector_map_flutter/main/demo/assets/points.json))
 
-The following examples will assume that GeoJSON has already been loaded into a String.
+Name | AN
+--- | ---
+"Titanium" | 22
+"Niobium" | 41
+"Carbon" | 6
+"Neon" | 10
+"Silicon" | 14
+"Hydrogen" | 1
 
-##### Reading GeoJSON from String
+#### Reading GeoJSON from String
 
 No properties are loaded, only the geometries.
 
 ```dart
-    VectorMapDataSource dataSource =
-        await VectorMapDataSource.geoJSON(geojson: geojson);
+    MapDataSource polygons =
+        await MapDataSource.geoJSON(geojson: polygonsGeoJSON);
 ```
 
-##### Creating the Widget
+#### Creating the Widget
 
 ```dart
-    VectorMap map = VectorMap(dataSource: dataSource);
+    MapLayer layer = MapLayer(dataSource: polygons);
+
+    VectorMap map = VectorMap(layers: [layer]);
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/get_started_v1.png)
 
-##### Reading GeoJSON properties
+#### Reading GeoJSON properties
 
 The `keys` argument defines which properties must be loaded.
 The `parseToNumber` argument defines which properties will have numeric values in quotes parsed to numbers.
+The `labelKey` defines which property will be used to display its values as feature labels.
 
 ```dart
-    VectorMapDataSource dataSource = await VectorMapDataSource.geoJSON(
-        geojson: geojson, keys: ['Seq', 'Rnd'], parseToNumber: ['Rnd']);
+    MapDataSource polygons = await MapDataSource.geoJSON(
+        geojson: polygonsGeoJSON,
+        keys: ['Seq', 'Rnd'],
+        parseToNumber: ['Rnd'],
+        labelKey: 'Rnd');
 ```
 
-## Default colors
+## Theme
 
 ```dart
-    VectorMap map = VectorMap(
-        dataSource: dataSource,
-        theme: VectorMapTheme(color: Colors.yellow, contourColor: Colors.red));
+    MapLayer layer = MapLayer(
+        dataSource: polygons,
+        theme: MapTheme(color: Colors.yellow, contourColor: Colors.red));
+
+    VectorMap map = VectorMap(layers: [layer]);
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/default_colors_v1.png)
 
-## Color by property value
+#### Color by property value
 
 Sets a color for each property value in GeoJSON. If a color is not set, the default color is used.
 
-##### Mapping the property key
+**Mapping the property key**
 
 ```dart
-    VectorMapDataSource dataSource =
-        await VectorMapDataSource.geoJSON(geojson: geojson, keys: ['Seq']);
+    MapDataSource polygons =
+        await MapDataSource.geoJSON(geojson: polygonsGeoJSON, keys: ['Seq']);
 ```
 
-##### Setting the colors for the property values
+**Setting the colors for the property values**
 
 ```dart
-    VectorMapTheme theme = VectorMapTheme.value(
-        contourColor: Colors.white,
-        key: 'Seq',
-        colors: {
+    MapLayer layer = MapLayer(
+        dataSource: polygons,
+        theme: MapTheme.value(contourColor: Colors.white, key: 'Seq', colors: {
           2: Colors.green,
           4: Colors.red,
           6: Colors.orange,
           8: Colors.blue
-        });
+        }));
 
-    VectorMap map = VectorMap(dataSource: dataSource, theme: theme);
+    VectorMap map = VectorMap(layers: [layer]);
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/color_by_value_v1.png)
 
-## Color by rule
+#### Color by rule
 
 The feature color is obtained from the first rule that returns a non-null color. If all rules return a null color, the default color is used.
 
-##### Mapping the property key
+**Mapping the property key**
 
 ```dart
-    VectorMapDataSource dataSource = await VectorMapDataSource.geoJSON(
-        geojson: geojson, keys: ['Name', 'Seq']);
+    MapDataSource polygons = await MapDataSource.geoJSON(
+        geojson: polygonsGeoJSON, keys: ['Name', 'Seq']);
 ```
 
-##### Setting the rules
+**Setting the rules**
 
 ```dart
-    VectorMapTheme theme =
-        VectorMapTheme.rule(contourColor: Colors.white, colorRules: [
-      (feature) {
-        String? value = feature.getValue('Name');
-        return value == 'Faraday' ? Colors.red : null;
-      },
-      (feature) {
-        double? value = feature.getDoubleValue('Seq');
-        return value != null && value < 3 ? Colors.green : null;
-      },
-      (feature) {
-        double? value = feature.getDoubleValue('Seq');
-        return value != null && value > 9 ? Colors.blue : null;
-      }
-    ]);
+    MapLayer layer = MapLayer(
+        dataSource: polygons,
+        theme: MapTheme.rule(contourColor: Colors.white, colorRules: [
+          (feature) {
+            String? value = feature.getValue('Name');
+            return value == 'Faraday' ? Colors.red : null;
+          },
+          (feature) {
+            double? value = feature.getDoubleValue('Seq');
+            return value != null && value < 3 ? Colors.green : null;
+          },
+          (feature) {
+            double? value = feature.getDoubleValue('Seq');
+            return value != null && value > 9 ? Colors.blue : null;
+          }
+        ]));
 
-    VectorMap map = VectorMap(dataSource: dataSource, theme: theme);
+    VectorMap map = VectorMap(layers: [layer]);
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/color_by_rule_v1.png)
 
-## Gradient
+#### Gradient
 
 The gradient is created given the colors and limit values of the chosen property.
 The property must have numeric values.
 
-#### Auto min/max values
+##### Auto min/max values
 
 Uses the min and max values read from data source.
 
 ```dart
-    VectorMapDataSource dataSource =
-        await VectorMapDataSource.geoJSON(geojson: geojson, keys: ['Seq']);
+    MapDataSource polygons =
+        await MapDataSource.geoJSON(geojson: polygonsGeoJSON, keys: ['Seq']);
 ```
 
 ```dart
-    VectorMapTheme theme = VectorMapTheme.gradient(
-        contourColor: Colors.white,
-        key: 'Seq',
-        colors: [Colors.blue, Colors.yellow, Colors.red]);
+    MapLayer layer = MapLayer(
+        dataSource: polygons,
+        theme: MapTheme.gradient(
+            contourColor: Colors.white,
+            key: 'Seq',
+            colors: [Colors.blue, Colors.yellow, Colors.red]));
 
-    VectorMap map = VectorMap(dataSource: dataSource, theme: theme);
+    VectorMap map = VectorMap(layers: [layer]);
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/gradient_auto_v1.png)
 
-#### Setting min or max values manually
+##### Setting min or max values manually
 
 If the `min` value is set, all lower values will be displayed using the first gradient color.
 If the `max` value is set, all higher values will be displayed using the last gradient color.
 
 ```dart
-    VectorMapDataSource dataSource =
-        await VectorMapDataSource.geoJSON(geojson: geojson, keys: ['Seq']);
+    MapDataSource polygons =
+        await MapDataSource.geoJSON(geojson: polygonsGeoJSON, keys: ['Seq']);
 ```
 
 ```dart
-    VectorMapTheme theme = VectorMapTheme.gradient(
-        contourColor: Colors.white,
-        key: 'Seq',
-        min: 3,
-        max: 9,
-        colors: [Colors.blue, Colors.yellow, Colors.red]);
+    MapLayer layer = MapLayer(
+        dataSource: polygons,
+        theme: MapTheme.gradient(
+            contourColor: Colors.white,
+            key: 'Seq',
+            min: 3,
+            max: 9,
+            colors: [Colors.blue, Colors.yellow, Colors.red]));
 
-    VectorMap map = VectorMap(dataSource: dataSource, theme: theme);
+    VectorMap map = VectorMap(layers: [layer]);
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/gradient_min_max_v1.png)
@@ -186,7 +209,8 @@ If the `max` value is set, all higher values will be displayed using the last gr
 #### Thickness
 
 ```dart
-    VectorMap map = VectorMap(dataSource: dataSource, contourThickness: 3);
+    VectorMap map = VectorMap(
+        layers: [MapLayer(dataSource: polygons)], contourThickness: 3);
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/contour_thickness_v1.png)
@@ -196,25 +220,29 @@ If the `max` value is set, all higher values will be displayed using the last gr
 #### Mapping label property
 
 ```dart
-    VectorMapDataSource dataSource =
-        await VectorMapDataSource.geoJSON(geojson: geojson, labelKey: 'Name');
+    MapDataSource polygons =
+        await MapDataSource.geoJSON(geojson: polygonsGeoJSON, labelKey: 'Name');
 ```
 
 #### Visibility
 
 ```dart
-    VectorMap map = VectorMap(
-        dataSource: dataSource,
-        theme: VectorMapTheme(labelVisibility: (feature) => true));
+    MapLayer layer = MapLayer(
+        dataSource: polygons,
+        theme: MapTheme(labelVisibility: (feature) => true));
+
+    VectorMap map = VectorMap(layers: [layer]);
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/label_visible_v1.png)
 
 ```dart
-    VectorMap map = VectorMap(
-        dataSource: dataSource,
-        theme: VectorMapTheme(
-            labelVisibility: (feature) => feature.label == 'Darwin'));
+    MapLayer layer = MapLayer(
+        dataSource: polygons,
+        theme:
+            MapTheme(labelVisibility: (feature) => feature.label == 'Darwin'));
+
+    VectorMap map = VectorMap(layers: [layer]);
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/label_rule_v1.png)
@@ -222,9 +250,9 @@ If the `max` value is set, all higher values will be displayed using the last gr
 #### Style
 
 ```dart
-    VectorMap map = VectorMap(
-        dataSource: dataSource,
-        theme: VectorMapTheme(
+    MapLayer layer = MapLayer(
+        dataSource: polygons,
+        theme: MapTheme(
             labelVisibility: (feature) => true,
             labelStyleBuilder: (feature, featureColor, labelColor) {
               if (feature.label == 'Darwin') {
@@ -239,17 +267,21 @@ If the `max` value is set, all higher values will be displayed using the last gr
                 fontSize: 11,
               );
             }));
+
+    VectorMap map = VectorMap(layers: [layer]);
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/label_style_v1.png)
 
-## Hover
+## Hover theme
 
 #### Color
 
 ```dart
-    VectorMap map = VectorMap(
-        dataSource: dataSource, hoverTheme: VectorMapTheme(color: Colors.green));
+    MapLayer layer = MapLayer(
+        dataSource: polygons, hoverTheme: MapTheme(color: Colors.green));
+
+    VectorMap map = VectorMap(layers: [layer]);
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/hover_color_v1.png)
@@ -257,9 +289,10 @@ If the `max` value is set, all higher values will be displayed using the last gr
 #### Contour color
 
 ```dart
-    VectorMap map = VectorMap(
-        dataSource: dataSource,
-        hoverTheme: VectorMapTheme(contourColor: Colors.red));
+    MapLayer layer = MapLayer(
+        dataSource: polygons, hoverTheme: MapTheme(contourColor: Colors.red));
+
+    VectorMap map = VectorMap(layers: [layer]);
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/hover_contour_v1.png)
@@ -267,14 +300,16 @@ If the `max` value is set, all higher values will be displayed using the last gr
 #### Label
 
 ```dart
-    VectorMapDataSource dataSource =
-        await VectorMapDataSource.geoJSON(geojson: geojson, labelKey: 'Name');
+    MapDataSource polygons =
+        await MapDataSource.geoJSON(geojson: polygonsGeoJSON, labelKey: 'Name');
 ```
 
 ```dart
-    VectorMap map = VectorMap(
-        dataSource: dataSource,
-        hoverTheme: VectorMapTheme(labelVisibility: (feature) => true));
+    MapLayer layer = MapLayer(
+        dataSource: polygons,
+        hoverTheme: MapTheme(labelVisibility: (feature) => true));
+
+    VectorMap map = VectorMap(layers: [layer]);
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/label_hover_v1.png)
@@ -282,9 +317,11 @@ If the `max` value is set, all higher values will be displayed using the last gr
 #### Listener
 
 ```dart
+    MapLayer layer = MapLayer(
+        dataSource: polygons, hoverTheme: MapTheme(color: Colors.grey[700]));
+
     VectorMap map = VectorMap(
-        dataSource: dataSource,
-        hoverTheme: VectorMapTheme(color: Colors.grey[700]),
+        layers: [layer],
         hoverListener: (MapFeature? feature) {
           if (feature != null) {
             int id = feature.id;
@@ -298,35 +335,103 @@ If the `max` value is set, all higher values will be displayed using the last gr
 ##### Enabling hover by property value
 
 ```dart
-    VectorMapDataSource dataSource =
-        await VectorMapDataSource.geoJSON(geojson: geojson, keys: ['Seq']);
+    MapDataSource polygons =
+        await MapDataSource.geoJSON(geojson: polygonsGeoJSON, keys: ['Seq']);
 ```
 
 ```dart
     // coloring only the 'Darwin' feature
-    VectorMapTheme theme =
-        VectorMapTheme.value(key: 'Seq', colors: {4: Colors.green});
-    VectorMapTheme hoverTheme = VectorMapTheme(color: Colors.green[900]!);
+    MapLayer layer = MapLayer(
+        dataSource: polygons,
+        theme: MapTheme.value(key: 'Seq', colors: {4: Colors.green}),
+        hoverTheme: MapTheme(color: Colors.green[900]!));
 
     // enabling hover only for the 'Darwin' feature
     VectorMap map = VectorMap(
-      dataSource: dataSource,
-      theme: theme,
-      hoverTheme: hoverTheme,
-      hoverRule: (feature) {
-        return feature.getValue('Seq') == 4;
-      },
-    );
+        layers: [layer],
+        hoverRule: (feature) {
+          return feature.getValue('Seq') == 4;
+        });
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/enable_hover_by_value_v1.gif)
 
+## Layers
+
+**Loading multiple data sources.**
+
+```dart
+    MapDataSource polygons =
+        await MapDataSource.geoJSON(geojson: polygonsGeoJSON);
+    MapDataSource points = await MapDataSource.geoJSON(geojson: pointsGeoJSON);
+```
+
+**Creating a map with multiple layers.**
+
+```dart
+    MapTheme hoverTheme = MapTheme(color: Colors.green);
+
+    MapLayer polygonsLayer =
+        MapLayer(dataSource: polygons, hoverTheme: hoverTheme);
+    MapLayer pointsLayer = MapLayer(
+        dataSource: points,
+        theme: MapTheme(color: Colors.black),
+        hoverTheme: hoverTheme);
+
+    VectorMap map = VectorMap(layers: [polygonsLayer, pointsLayer]);
+```
+
+![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/multiple_layers_v1.gif)
+
+#### Overlay hover contour
+
+```dart
+    MapDataSource dataSource1 = MapDataSource.geometries([
+      MapPolygon.coordinates([2, 3, 4, 5, 6, 3, 4, 1, 2, 3])
+    ]);
+    MapDataSource dataSource2 = MapDataSource.geometries([
+      MapPolygon.coordinates([0, 2, 2, 4, 4, 2, 2, 0, 0, 2]),
+      MapPolygon.coordinates([4, 2, 6, 4, 8, 2, 6, 0, 4, 2])
+    ]);
+
+    MapTheme hoverTheme =
+        MapTheme(color: Colors.black, contourColor: Colors.black);
+
+    MapLayer layer1 = MapLayer(
+        dataSource: dataSource1,
+        theme: MapTheme(color: Colors.yellow, contourColor: Colors.black),
+        hoverTheme: hoverTheme);
+    MapLayer layer2 = MapLayer(
+        dataSource: dataSource2,
+        theme: MapTheme(color: Colors.green, contourColor: Colors.black),
+        hoverTheme: hoverTheme);
+```
+
+**Disabled**
+
+```dart
+    VectorMap map = VectorMap(layers: [layer1, layer2]);
+```
+
+![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/overlay_contour_off_v1.gif)
+
+**Enabled**
+
+```dart
+    VectorMap map =
+        VectorMap(layers: [layer1, layer2], overlayHoverContour: true);
+```
+
+![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/overlay_contour_on_v1.gif)
+
 ## Click listener
 
 ```dart
+    MapLayer layer = MapLayer(
+        dataSource: polygons, hoverTheme: MapTheme(color: Colors.grey[800]!));
+
     VectorMap map = VectorMap(
-        dataSource: dataSource,
-        hoverTheme: VectorMapTheme(color: Colors.grey[800]!),
+        layers: [layer],
         clickListener: (feature) {
           print(feature.id);
         });
