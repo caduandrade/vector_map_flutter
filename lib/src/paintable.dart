@@ -44,7 +44,13 @@ class PaintablePath extends PaintableFeature {
 }
 
 /// [Marker] builder.
-typedef MarkerBuilder = Marker Function(Offset offset, double scale);
+abstract class MarkerBuilder {
+  MarkerBuilder({required this.scale});
+
+  final double scale;
+
+  Marker build(Offset offset);
+}
 
 /// Defines a marker to be painted on the map.
 abstract class Marker extends PaintableFeature {
@@ -87,5 +93,18 @@ class CircleMaker extends Marker {
   @override
   Rect getBounds() {
     return _bounds;
+  }
+}
+
+/// [CircleMaker] builder.
+class CircleMakerBuilder extends MarkerBuilder {
+  CircleMakerBuilder({required double scale, required double radius})
+      : this.radius = radius / scale,
+        super(scale: scale);
+
+  final double radius;
+
+  Marker build(Offset offset) {
+    return CircleMaker(offset: offset, radius: radius);
   }
 }
