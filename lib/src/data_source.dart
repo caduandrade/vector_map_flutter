@@ -6,6 +6,7 @@ import 'package:vector_map/src/data_reader.dart';
 import 'package:vector_map/src/matrices.dart';
 import 'package:vector_map/src/paintable.dart';
 import 'package:vector_map/src/simplifier.dart';
+import 'package:vector_map/src/theme.dart';
 
 /// A representation of a real-world object on a map.
 class MapFeature {
@@ -184,7 +185,7 @@ class SimplifiedPath {
 /// Abstract map geometry.
 mixin MapGeometry {
   PaintableFeature toPaintableFeature(
-      CanvasMatrix canvasMatrix, GeometrySimplifier simplifier);
+      MapTheme theme, CanvasMatrix canvasMatrix, GeometrySimplifier simplifier);
 
   Rect get bounds;
 
@@ -211,9 +212,10 @@ class MapPoint extends Offset with MapGeometry {
   int get pointsCount => 1;
 
   @override
-  PaintableFeature toPaintableFeature(
-      CanvasMatrix canvasMatrix, GeometrySimplifier simplifier) {
-    return CircleMaker(offset: Offset(x, y), radius: 5 / canvasMatrix.scale);
+  PaintableFeature toPaintableFeature(MapTheme theme, CanvasMatrix canvasMatrix,
+      GeometrySimplifier simplifier) {
+    return theme.markerBuilder
+        .build(offset: Offset(x, y), scale: canvasMatrix.scale);
   }
 }
 
@@ -275,8 +277,8 @@ class MapLinearRing with MapGeometry {
   }
 
   @override
-  PaintableFeature toPaintableFeature(
-      CanvasMatrix canvasMatrix, GeometrySimplifier simplifier) {
+  PaintableFeature toPaintableFeature(MapTheme theme, CanvasMatrix canvasMatrix,
+      GeometrySimplifier simplifier) {
     SimplifiedPath simplifiedPath = toSimplifiedPath(canvasMatrix, simplifier);
     return PaintablePath(simplifiedPath.path, simplifiedPath.pointsCount);
   }
@@ -355,8 +357,8 @@ class MapPolygon with MapGeometry {
   }
 
   @override
-  PaintableFeature toPaintableFeature(
-      CanvasMatrix canvasMatrix, GeometrySimplifier simplifier) {
+  PaintableFeature toPaintableFeature(MapTheme theme, CanvasMatrix canvasMatrix,
+      GeometrySimplifier simplifier) {
     SimplifiedPath simplifiedPath = toSimplifiedPath(canvasMatrix, simplifier);
     return PaintablePath(simplifiedPath.path, simplifiedPath.pointsCount);
   }
@@ -391,8 +393,8 @@ class MapMultiPolygon with MapGeometry {
   }
 
   @override
-  PaintableFeature toPaintableFeature(
-      CanvasMatrix canvasMatrix, GeometrySimplifier simplifier) {
+  PaintableFeature toPaintableFeature(MapTheme theme, CanvasMatrix canvasMatrix,
+      GeometrySimplifier simplifier) {
     Path path = Path();
     int pointsCount = 0;
     for (MapPolygon polygon in polygons) {

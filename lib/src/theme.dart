@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:vector_map/src/data_source.dart';
 import 'package:vector_map/src/error.dart';
+import 'package:vector_map/src/paintable.dart';
 
 typedef LabelVisibility = bool Function(MapFeature feature);
 
@@ -97,7 +98,8 @@ class MapTheme {
       {Color? color,
       this.contourColor,
       this.labelVisibility,
-      LabelStyleBuilder? labelStyleBuilder})
+      LabelStyleBuilder? labelStyleBuilder,
+      this.markerBuilder = const CircleMakerBuilder(radius: 5)})
       : this._color = color,
         this.labelStyleBuilder = labelStyleBuilder;
 
@@ -105,6 +107,7 @@ class MapTheme {
   final Color? contourColor;
   final LabelVisibility? labelVisibility;
   final LabelStyleBuilder? labelStyleBuilder;
+  final MarkerBuilder markerBuilder;
 
   /// Indicates whether the theme has any value set.
   bool hasValue() {

@@ -92,7 +92,7 @@ class MapResolutionBuilder {
           colors[feature.id] =
               MapTheme.getThemeOrDefaultColor(dataSource, feature, theme);
           PaintableFeature paintableFeature = feature.geometry
-              .toPaintableFeature(mapMatrices.canvasMatrix, simplifier);
+              .toPaintableFeature(theme, mapMatrices.canvasMatrix, simplifier);
           pointsCount += paintableFeature.pointsCount;
           paintableFeatures[feature.id] = paintableFeature;
         }

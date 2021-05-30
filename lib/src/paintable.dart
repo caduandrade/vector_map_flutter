@@ -45,11 +45,9 @@ class PaintablePath extends PaintableFeature {
 
 /// [Marker] builder.
 abstract class MarkerBuilder {
-  MarkerBuilder({required this.scale});
+  const MarkerBuilder();
 
-  final double scale;
-
-  Marker build(Offset offset);
+  Marker build({required Offset offset, required double scale});
 }
 
 /// Defines a marker to be painted on the map.
@@ -98,13 +96,11 @@ class CircleMaker extends Marker {
 
 /// [CircleMaker] builder.
 class CircleMakerBuilder extends MarkerBuilder {
-  CircleMakerBuilder({required double scale, required double radius})
-      : this.radius = radius / scale,
-        super(scale: scale);
+  const CircleMakerBuilder({required this.radius});
 
   final double radius;
 
-  Marker build(Offset offset) {
-    return CircleMaker(offset: offset, radius: radius);
+  Marker build({required Offset offset, required double scale}) {
+    return CircleMaker(offset: offset, radius: radius / scale);
   }
 }
