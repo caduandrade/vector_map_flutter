@@ -65,6 +65,7 @@ class CanvasMatrix {
   final Matrix4 geometryToScreen;
   final Matrix4 screenToGeometry;
 
+  /// Applies a matrix on the canvas.
   applyOn(Canvas canvas) {
     canvas.translate(translateX, translateY);
     canvas.scale(scale, -scale);

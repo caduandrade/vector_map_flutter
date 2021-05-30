@@ -13,10 +13,13 @@ class MapLayer {
   final MapTheme? hoverTheme;
   final String? name;
 
+  /// Indicates if the hover is paintable, if there is any hover theme and
+  /// if it has a set value.
   bool get hoverPaintable {
     return hoverTheme != null && hoverTheme!.hasValue();
   }
 
+  /// Gets the bounds of the layers. Returns [NULL] if the list is empty.
   static Rect? boundsOf(List<MapLayer> layers) {
     Rect? bounds;
     if (layers.isNotEmpty) {

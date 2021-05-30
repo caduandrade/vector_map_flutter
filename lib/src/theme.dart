@@ -7,9 +7,11 @@ typedef LabelVisibility = bool Function(MapFeature feature);
 /// Rule to obtain a color of a feature.
 typedef ColorRule = Color? Function(MapFeature feature);
 
+/// The label style builder.
 typedef LabelStyleBuilder = TextStyle Function(
     MapFeature feature, Color featureColor, Color labelColor);
 
+/// The [VectorMap] theme.
 class MapTheme {
   static const Color defaultColor = Color(0xFFE0E0E0);
   static const Color defaultContourColor = Color(0xFF9E9E9E);
@@ -104,15 +106,18 @@ class MapTheme {
   final LabelVisibility? labelVisibility;
   final LabelStyleBuilder? labelStyleBuilder;
 
+  /// Indicates whether the theme has any value set.
   bool hasValue() {
     return _color != null || contourColor != null || labelVisibility != null;
   }
 
+  /// Gets the feature color.
   Color? getColor(MapDataSource? dataSource, MapFeature feature) {
     return _color;
   }
 }
 
+/// Theme for colors by value.
 class _MapThemeValue extends MapTheme {
   _MapThemeValue(
       {Color? color,
@@ -147,6 +152,7 @@ class _MapThemeValue extends MapTheme {
   }
 }
 
+/// Theme for colors by rule.
 class _MapThemeRule extends MapTheme {
   _MapThemeRule(
       {Color? color,
@@ -182,6 +188,7 @@ class _MapThemeRule extends MapTheme {
   }
 }
 
+/// Theme for gradient colors.
 class _MapThemeGradient extends MapTheme {
   _MapThemeGradient(
       {Color? color,

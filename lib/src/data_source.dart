@@ -7,6 +7,7 @@ import 'package:vector_map/src/map_resolution.dart';
 import 'package:vector_map/src/matrices.dart';
 import 'package:vector_map/src/simplifier.dart';
 
+/// A representation of a real-world object on a map.
 class MapFeature {
   MapFeature(
       {required this.id,
@@ -42,6 +43,7 @@ class MapFeature {
   }
 }
 
+/// Stores the number limits, max and min, for a given feature property.
 class PropertyLimits {
   double _max;
   double _min;
@@ -74,6 +76,7 @@ class MapDataSource {
   final int pointsCount;
   final Map<String, PropertyLimits>? _limits;
 
+  /// Create a [MapDataSource] from a list of [MapFeature].
   static MapDataSource fromFeatures(List<MapFeature> features) {
     Rect boundsFromGeometry = Rect.zero;
     int pointsCount = 0;
@@ -170,6 +173,7 @@ class MapDataSource {
   }
 }
 
+/// Stores a simplified path generated from the original [MapFeature] geometry.
 class SimplifiedPath {
   SimplifiedPath(this.path, this.pointsCount);
 
@@ -379,6 +383,7 @@ class MapMultiPolygon with MapGeometry {
   @override
   int get pointsCount => _getPointsCount();
 
+  /// Gets the count of points.
   int _getPointsCount() {
     int count = 0;
     for (MapPolygon polygon in polygons) {

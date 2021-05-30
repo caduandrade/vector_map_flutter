@@ -12,6 +12,7 @@ import 'package:vector_map/src/theme.dart';
 
 enum _State { waiting, running, stopped }
 
+/// Event to signal that a map resolution has been created.
 typedef OnFinish(MapResolution newMapResolution);
 
 /// Representation of the map in a given resolution. Stores simplified
@@ -38,6 +39,7 @@ class MapResolution {
   }
 }
 
+/// Holds a geometry to be paint in the current resolution.
 class PaintableGeometry {
   PaintableGeometry._(this._path, this._offset, this._pointBounds, this._radius,
       this.pointsCount);
@@ -64,6 +66,7 @@ class PaintableGeometry {
 
   final int pointsCount;
 
+  /// Gets the geometry bounds
   Rect getBounds() {
     if (_path != null) {
       return _path!.getBounds();
@@ -73,6 +76,7 @@ class PaintableGeometry {
     throw VectorMapError('Illegal PaintableGeometry');
   }
 
+  /// Checks whether a point is contained in the geometry.
   bool contains(Offset offset) {
     if (_path != null) {
       return _path!.contains(offset);
@@ -82,6 +86,7 @@ class PaintableGeometry {
     return false;
   }
 
+  /// Draws the geometry.
   draw(Canvas canvas, Paint paint) {
     if (_path != null) {
       canvas.drawPath(_path!, paint);
@@ -93,6 +98,7 @@ class PaintableGeometry {
   }
 }
 
+/// Holds all geometry layers to be paint in the current resolution.
 class PaintableLayer {
   PaintableLayer(this.layer, this.layerBuffer, this.paintableGeometries);
 
