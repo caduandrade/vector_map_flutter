@@ -32,6 +32,7 @@ class MapTheme {
       Color? contourColor,
       LabelVisibility? labelVisibility,
       LabelStyleBuilder? labelStyleBuilder,
+      MarkerBuilder? markerBuilder,
       required String key,
       Map<dynamic, Color>? colors}) {
     return _MapThemeValue(
@@ -39,6 +40,7 @@ class MapTheme {
         contourColor: contourColor,
         labelVisibility: labelVisibility,
         labelStyleBuilder: labelStyleBuilder,
+        markerBuilder: markerBuilder,
         key: key,
         colors: colors);
   }
@@ -52,12 +54,14 @@ class MapTheme {
       Color? contourColor,
       LabelVisibility? labelVisibility,
       LabelStyleBuilder? labelStyleBuilder,
+      MarkerBuilder? markerBuilder,
       required List<ColorRule> colorRules}) {
     return _MapThemeRule(
         color: color,
         contourColor: contourColor,
         labelVisibility: labelVisibility,
         labelStyleBuilder: labelStyleBuilder,
+        markerBuilder: markerBuilder,
         colorRules: colorRules);
   }
 
@@ -74,6 +78,7 @@ class MapTheme {
       Color? contourColor,
       LabelVisibility? labelVisibility,
       LabelStyleBuilder? labelStyleBuilder,
+      MarkerBuilder? markerBuilder,
       double? min,
       double? max,
       required String key,
@@ -87,6 +92,7 @@ class MapTheme {
         contourColor: contourColor,
         labelVisibility: labelVisibility,
         labelStyleBuilder: labelStyleBuilder,
+        markerBuilder: markerBuilder,
         min: min,
         max: max,
         key: key,
@@ -99,9 +105,12 @@ class MapTheme {
       this.contourColor,
       this.labelVisibility,
       LabelStyleBuilder? labelStyleBuilder,
-      this.markerBuilder = const CircleMakerBuilder(radius: 5)})
+      MarkerBuilder? markerBuilder})
       : this._color = color,
-        this.labelStyleBuilder = labelStyleBuilder;
+        this.labelStyleBuilder = labelStyleBuilder,
+        this.markerBuilder = markerBuilder != null
+            ? markerBuilder
+            : CircleMakerBuilder(radius: 5);
 
   final Color? _color;
   final Color? contourColor;
@@ -127,6 +136,7 @@ class _MapThemeValue extends MapTheme {
       Color? contourColor,
       LabelVisibility? labelVisibility,
       LabelStyleBuilder? labelStyleBuilder,
+      MarkerBuilder? markerBuilder,
       required this.key,
       Map<dynamic, Color>? colors})
       : this._colors = colors,
@@ -134,7 +144,8 @@ class _MapThemeValue extends MapTheme {
             color: color,
             contourColor: contourColor,
             labelVisibility: labelVisibility,
-            labelStyleBuilder: labelStyleBuilder);
+            labelStyleBuilder: labelStyleBuilder,
+            markerBuilder: markerBuilder);
 
   final String key;
   final Map<dynamic, Color>? _colors;
@@ -162,13 +173,15 @@ class _MapThemeRule extends MapTheme {
       Color? contourColor,
       LabelVisibility? labelVisibility,
       LabelStyleBuilder? labelStyleBuilder,
+      MarkerBuilder? markerBuilder,
       required List<ColorRule> colorRules})
       : this._colorRules = colorRules,
         super(
             color: color,
             contourColor: contourColor,
             labelVisibility: labelVisibility,
-            labelStyleBuilder: labelStyleBuilder);
+            labelStyleBuilder: labelStyleBuilder,
+            markerBuilder: markerBuilder);
 
   final List<ColorRule> _colorRules;
 
@@ -198,6 +211,7 @@ class _MapThemeGradient extends MapTheme {
       Color? contourColor,
       LabelVisibility? labelVisibility,
       LabelStyleBuilder? labelStyleBuilder,
+      MarkerBuilder? markerBuilder,
       required this.min,
       required this.max,
       required this.key,
@@ -206,7 +220,8 @@ class _MapThemeGradient extends MapTheme {
             color: color,
             contourColor: contourColor,
             labelVisibility: labelVisibility,
-            labelStyleBuilder: labelStyleBuilder);
+            labelStyleBuilder: labelStyleBuilder,
+            markerBuilder: markerBuilder);
 
   final double? min;
   final double? max;
