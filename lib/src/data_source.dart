@@ -3,8 +3,8 @@ import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:vector_map/src/data_reader.dart';
-import 'package:vector_map/src/map_resolution.dart';
 import 'package:vector_map/src/matrices.dart';
+import 'package:vector_map/src/paintable.dart';
 import 'package:vector_map/src/simplifier.dart';
 
 /// A representation of a real-world object on a map.
@@ -183,7 +183,7 @@ class SimplifiedPath {
 
 /// Abstract map geometry.
 mixin MapGeometry {
-  PaintableGeometry toPaintableGeometry(
+  PaintableFeature toPaintableFeature(
       CanvasMatrix canvasMatrix, GeometrySimplifier simplifier);
 
   Rect get bounds;
@@ -211,9 +211,9 @@ class MapPoint extends Offset with MapGeometry {
   int get pointsCount => 1;
 
   @override
-  PaintableGeometry toPaintableGeometry(
+  PaintableFeature toPaintableFeature(
       CanvasMatrix canvasMatrix, GeometrySimplifier simplifier) {
-    return PaintableGeometry.circle(Offset(x, y), 5 / canvasMatrix.scale);
+    return CircleMaker(offset: Offset(x, y), radius: 5 / canvasMatrix.scale);
   }
 }
 
@@ -275,11 +275,10 @@ class MapLinearRing with MapGeometry {
   }
 
   @override
-  PaintableGeometry toPaintableGeometry(
+  PaintableFeature toPaintableFeature(
       CanvasMatrix canvasMatrix, GeometrySimplifier simplifier) {
     SimplifiedPath simplifiedPath = toSimplifiedPath(canvasMatrix, simplifier);
-    return PaintableGeometry.path(
-        simplifiedPath.path, simplifiedPath.pointsCount);
+    return PaintablePath(simplifiedPath.path, simplifiedPath.pointsCount);
   }
 }
 
@@ -356,11 +355,10 @@ class MapPolygon with MapGeometry {
   }
 
   @override
-  PaintableGeometry toPaintableGeometry(
+  PaintableFeature toPaintableFeature(
       CanvasMatrix canvasMatrix, GeometrySimplifier simplifier) {
     SimplifiedPath simplifiedPath = toSimplifiedPath(canvasMatrix, simplifier);
-    return PaintableGeometry.path(
-        simplifiedPath.path, simplifiedPath.pointsCount);
+    return PaintablePath(simplifiedPath.path, simplifiedPath.pointsCount);
   }
 }
 
@@ -393,7 +391,7 @@ class MapMultiPolygon with MapGeometry {
   }
 
   @override
-  PaintableGeometry toPaintableGeometry(
+  PaintableFeature toPaintableFeature(
       CanvasMatrix canvasMatrix, GeometrySimplifier simplifier) {
     Path path = Path();
     int pointsCount = 0;
@@ -403,6 +401,6 @@ class MapMultiPolygon with MapGeometry {
       pointsCount += simplifiedPath.pointsCount;
       path.addPath(simplifiedPath.path, Offset.zero);
     }
-    return PaintableGeometry.path(path, pointsCount);
+    return PaintablePath(path, pointsCount);
   }
 }

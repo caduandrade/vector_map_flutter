@@ -4,9 +4,9 @@ import 'dart:ui';
 
 import 'package:flutter/painting.dart';
 import 'package:vector_map/src/data_source.dart';
-import 'package:vector_map/src/error.dart';
 import 'package:vector_map/src/layer.dart';
 import 'package:vector_map/src/matrices.dart';
+import 'package:vector_map/src/paintable.dart';
 import 'package:vector_map/src/simplifier.dart';
 import 'package:vector_map/src/theme.dart';
 
@@ -39,72 +39,13 @@ class MapResolution {
   }
 }
 
-/// Holds a geometry to be paint in the current resolution.
-class PaintableGeometry {
-  PaintableGeometry._(this._path, this._offset, this._pointBounds, this._radius,
-      this.pointsCount);
-
-  factory PaintableGeometry.path(Path path, int pointsCount) {
-    return PaintableGeometry._(path, null, null, null, pointsCount);
-  }
-
-  factory PaintableGeometry.circle(Offset offset, double radius) {
-    return PaintableGeometry._(
-        null,
-        offset,
-        Rect.fromLTWH(
-            offset.dx - radius, offset.dy - radius, radius * 2, radius * 2),
-        radius,
-        1);
-  }
-
-  final Path? _path;
-
-  final Offset? _offset;
-  final Rect? _pointBounds;
-  final double? _radius;
-
-  final int pointsCount;
-
-  /// Gets the geometry bounds
-  Rect getBounds() {
-    if (_path != null) {
-      return _path!.getBounds();
-    } else if (_pointBounds != null) {
-      return _pointBounds!;
-    }
-    throw VectorMapError('Illegal PaintableGeometry');
-  }
-
-  /// Checks whether a point is contained in the geometry.
-  bool contains(Offset offset) {
-    if (_path != null) {
-      return _path!.contains(offset);
-    } else if (_pointBounds != null) {
-      return _pointBounds!.contains(offset);
-    }
-    return false;
-  }
-
-  /// Draws the geometry.
-  draw(Canvas canvas, Paint paint) {
-    if (_path != null) {
-      canvas.drawPath(_path!, paint);
-    } else if (_offset != null && _radius != null) {
-      canvas.drawCircle(_offset!, _radius!, paint);
-    } else {
-      throw VectorMapError('Illegal PaintableGeometry');
-    }
-  }
-}
-
 /// Holds all geometry layers to be paint in the current resolution.
 class PaintableLayer {
-  PaintableLayer(this.layer, this.layerBuffer, this.paintableGeometries);
+  PaintableLayer(this.layer, this.layerBuffer, this.paintableFeatures);
 
   final MapLayer layer;
   final Image layerBuffer;
-  final Map<int, PaintableGeometry> paintableGeometries;
+  final Map<int, PaintableFeature> paintableFeatures;
 }
 
 /// [MapResolution] builder.
@@ -141,8 +82,8 @@ class MapResolutionBuilder {
         MapDataSource dataSource = layer.dataSource;
         MapTheme theme = layer.theme;
 
-        Map<int, PaintableGeometry> paintableGeometries =
-            Map<int, PaintableGeometry>();
+        Map<int, PaintableFeature> paintableFeatures =
+            Map<int, PaintableFeature>();
         Map<int, Color> colors = Map<int, Color>();
         for (MapFeature feature in dataSource.features.values) {
           if (_state == _State.stopped) {
@@ -150,18 +91,18 @@ class MapResolutionBuilder {
           }
           colors[feature.id] =
               MapTheme.getThemeOrDefaultColor(dataSource, feature, theme);
-          PaintableGeometry paintableGeometry = feature.geometry
-              .toPaintableGeometry(mapMatrices.canvasMatrix, simplifier);
-          pointsCount += paintableGeometry.pointsCount;
-          paintableGeometries[feature.id] = paintableGeometry;
+          PaintableFeature paintableFeature = feature.geometry
+              .toPaintableFeature(mapMatrices.canvasMatrix, simplifier);
+          pointsCount += paintableFeature.pointsCount;
+          paintableFeatures[feature.id] = paintableFeature;
         }
         Image? layerBuffer =
-            await _createBuffer(layer, paintableGeometries, colors);
+            await _createBuffer(layer, paintableFeatures, colors);
         if (layerBuffer == null) {
           return;
         }
         _paintableLayers
-            .add(PaintableLayer(layer, layerBuffer, paintableGeometries));
+            .add(PaintableLayer(layer, layerBuffer, paintableFeatures));
       }
       if (_state != _State.stopped) {
         onFinish(MapResolution._(
@@ -176,7 +117,7 @@ class MapResolutionBuilder {
 
   Future<Image?> _createBuffer(
       MapLayer layer,
-      Map<int, PaintableGeometry> paintableGeometries,
+      Map<int, PaintableFeature> paintableFeatures,
       Map<int, Color> colors) async {
     BufferCreationMatrix bufferCreationMatrix =
         mapMatrices.bufferCreationMatrix;
@@ -194,8 +135,8 @@ class MapResolutionBuilder {
         bufferCreationMatrix.translateX, bufferCreationMatrix.translateY);
     canvas.scale(bufferCreationMatrix.scale, -bufferCreationMatrix.scale);
 
-    for (int featureId in paintableGeometries.keys) {
-      PaintableGeometry paintableGeometry = paintableGeometries[featureId]!;
+    for (int featureId in paintableFeatures.keys) {
+      PaintableFeature paintableFeature = paintableFeatures[featureId]!;
       Color color = colors[featureId]!;
       if (_state == _State.stopped) {
         return null;
@@ -205,7 +146,7 @@ class MapResolutionBuilder {
         ..style = PaintingStyle.fill
         ..color = color
         ..isAntiAlias = true;
-      paintableGeometry.draw(canvas, paint);
+      paintableFeature.drawOn(canvas, paint);
     }
 
     if (contourThickness > 0) {
@@ -217,11 +158,11 @@ class MapResolutionBuilder {
             : MapTheme.defaultContourColor
         ..strokeWidth = contourThickness / bufferCreationMatrix.scale
         ..isAntiAlias = true;
-      for (PaintableGeometry paintableGeometry in paintableGeometries.values) {
+      for (PaintableFeature paintableFeature in paintableFeatures.values) {
         if (_state == _State.stopped) {
           return null;
         }
-        paintableGeometry.draw(canvas, paint);
+        paintableFeature.drawOn(canvas, paint);
       }
     }
 

@@ -9,6 +9,7 @@ import 'package:vector_map/src/error.dart';
 import 'package:vector_map/src/layer.dart';
 import 'package:vector_map/src/map_resolution.dart';
 import 'package:vector_map/src/matrices.dart';
+import 'package:vector_map/src/paintable.dart';
 import 'package:vector_map/src/simplifier.dart';
 import 'package:vector_map/src/theme.dart';
 
@@ -205,14 +206,14 @@ class VectorMapState extends State<VectorMap> {
 
             PaintableLayer paintableLayer =
                 _mapResolution!.paintableLayers[layerIndex];
-            if (paintableLayer.paintableGeometries.containsKey(feature.id) ==
+            if (paintableLayer.paintableFeatures.containsKey(feature.id) ==
                 false) {
               throw VectorMapError(
                   'No paintable geometry for id: ' + feature.id.toString());
             }
-            PaintableGeometry paintableGeometry =
-                paintableLayer.paintableGeometries[feature.id]!;
-            found = paintableGeometry.contains(o);
+            PaintableFeature paintableFeature =
+                paintableLayer.paintableFeatures[feature.id]!;
+            found = paintableFeature.contains(o);
             if (found) {
               if (_hover == null ||
                   _hover!.layerIndex != layerIndex ||
@@ -290,24 +291,24 @@ class _MapPainter extends CustomPainter {
             canvasMatrix.applyOn(canvas);
 
             int featureId = feature.id;
-            if (paintableLayer.paintableGeometries.containsKey(featureId) ==
+            if (paintableLayer.paintableFeatures.containsKey(featureId) ==
                 false) {
               throw VectorMapError('No path for id: $featureId');
             }
 
-            PaintableGeometry paintableGeometry =
-                paintableLayer.paintableGeometries[featureId]!;
+            PaintableFeature paintableFeature =
+                paintableLayer.paintableFeatures[featureId]!;
             if (hoverColor != null) {
               var paint = Paint()
                 ..style = PaintingStyle.fill
                 ..color = hoverColor
                 ..isAntiAlias = true;
-              paintableGeometry.draw(canvas, paint);
+              paintableFeature.drawOn(canvas, paint);
             }
 
             if (contourThickness > 0) {
               _drawHoverContour(canvas, paintableLayer.layer, hoverTheme,
-                  paintableGeometry, canvasMatrix);
+                  paintableFeature, canvasMatrix);
             }
 
             canvas.restore();
@@ -327,10 +328,10 @@ class _MapPainter extends CustomPainter {
         canvasMatrix.applyOn(canvas);
 
         MapTheme hoverTheme = layer.hoverTheme!;
-        PaintableGeometry paintableGeometry =
-            paintableLayer.paintableGeometries[hover!.feature.id]!;
+        PaintableFeature paintableFeature =
+            paintableLayer.paintableFeatures[hover!.feature.id]!;
         _drawHoverContour(canvas, paintableLayer.layer, hoverTheme,
-            paintableGeometry, canvasMatrix);
+            paintableFeature, canvasMatrix);
 
         canvas.restore();
       }
@@ -390,7 +391,7 @@ class _MapPainter extends CustomPainter {
   }
 
   _drawHoverContour(Canvas canvas, MapLayer layer, MapTheme hoverTheme,
-      PaintableGeometry paintableGeometry, CanvasMatrix canvasMatrix) {
+      PaintableFeature paintableFeature, CanvasMatrix canvasMatrix) {
     Color contourColor = MapTheme.defaultContourColor;
     if (hoverTheme.contourColor != null) {
       contourColor = hoverTheme.contourColor!;
@@ -403,7 +404,7 @@ class _MapPainter extends CustomPainter {
       ..color = contourColor
       ..strokeWidth = contourThickness / canvasMatrix.scale
       ..isAntiAlias = true;
-    paintableGeometry.draw(canvas, paint);
+    paintableFeature.drawOn(canvas, paint);
   }
 
   _drawLabel(Canvas canvas, int layerIndex, MapFeature feature,
@@ -422,11 +423,11 @@ class _MapPainter extends CustomPainter {
     }
 
     PaintableLayer paintableLayer = mapResolution.paintableLayers[layerIndex];
-    PaintableGeometry paintableGeometry =
-        paintableLayer.paintableGeometries[feature.id]!;
+    PaintableFeature paintableFeature =
+        paintableLayer.paintableFeatures[feature.id]!;
     Rect bounds = MatrixUtils.transformRect(
         mapMatrices.canvasMatrix.geometryToScreen,
-        paintableGeometry.getBounds());
+        paintableFeature.getBounds());
     _drawText(canvas, bounds.center, feature.label!, labelStyle);
   }
 

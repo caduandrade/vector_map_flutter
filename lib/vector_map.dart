@@ -3,6 +3,7 @@ library vector_map;
 export 'src/data_reader.dart';
 export 'src/data_source.dart';
 export 'src/error.dart';
+export 'src/paintable.dart';
 export 'src/layer.dart';
 export 'src/map_resolution.dart';
 export 'src/matrices.dart';
