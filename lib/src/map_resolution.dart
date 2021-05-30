@@ -40,21 +40,20 @@ class MapResolution {
 
 class PaintableGeometry {
   PaintableGeometry._(this._path, this._offset, this._pointBounds, this._radius,
-      this.pointsCount, this.color);
+      this.pointsCount);
 
-  factory PaintableGeometry.path(Path path, int pointsCount, Color color) {
-    return PaintableGeometry._(path, null, null, null, pointsCount, color);
+  factory PaintableGeometry.path(Path path, int pointsCount) {
+    return PaintableGeometry._(path, null, null, null, pointsCount);
   }
 
-  factory PaintableGeometry.circle(Offset offset, double radius, Color color) {
+  factory PaintableGeometry.circle(Offset offset, double radius) {
     return PaintableGeometry._(
         null,
         offset,
         Rect.fromLTWH(
             offset.dx - radius, offset.dy - radius, radius * 2, radius * 2),
         radius,
-        1,
-        color);
+        1);
   }
 
   final Path? _path;
@@ -63,7 +62,6 @@ class PaintableGeometry {
   final Rect? _pointBounds;
   final double? _radius;
 
-  final Color color;
   final int pointsCount;
 
   Rect getBounds() {
@@ -136,21 +134,23 @@ class MapResolutionBuilder {
       for (MapLayer layer in layers) {
         MapDataSource dataSource = layer.dataSource;
         MapTheme theme = layer.theme;
+
         Map<int, PaintableGeometry> paintableGeometries =
             Map<int, PaintableGeometry>();
+        Map<int, Color> colors = Map<int, Color>();
         for (MapFeature feature in dataSource.features.values) {
           if (_state == _State.stopped) {
             return;
           }
-          Color color =
+          colors[feature.id] =
               MapTheme.getThemeOrDefaultColor(dataSource, feature, theme);
-          MapGeometry geometry = feature.geometry;
-          PaintableGeometry paintableGeometry = geometry.toPaintableGeometry(
-              mapMatrices.canvasMatrix, simplifier, color);
+          PaintableGeometry paintableGeometry = feature.geometry
+              .toPaintableGeometry(mapMatrices.canvasMatrix, simplifier);
           pointsCount += paintableGeometry.pointsCount;
           paintableGeometries[feature.id] = paintableGeometry;
         }
-        Image? layerBuffer = await _createBuffer(layer, paintableGeometries);
+        Image? layerBuffer =
+            await _createBuffer(layer, paintableGeometries, colors);
         if (layerBuffer == null) {
           return;
         }
@@ -169,7 +169,9 @@ class MapResolutionBuilder {
   }
 
   Future<Image?> _createBuffer(
-      MapLayer layer, Map<int, PaintableGeometry> paintableGeometries) async {
+      MapLayer layer,
+      Map<int, PaintableGeometry> paintableGeometries,
+      Map<int, Color> colors) async {
     BufferCreationMatrix bufferCreationMatrix =
         mapMatrices.bufferCreationMatrix;
     PictureRecorder recorder = PictureRecorder();
@@ -186,13 +188,16 @@ class MapResolutionBuilder {
         bufferCreationMatrix.translateX, bufferCreationMatrix.translateY);
     canvas.scale(bufferCreationMatrix.scale, -bufferCreationMatrix.scale);
 
-    for (PaintableGeometry paintableGeometry in paintableGeometries.values) {
+    for (int featureId in paintableGeometries.keys) {
+      PaintableGeometry paintableGeometry = paintableGeometries[featureId]!;
+      Color color = colors[featureId]!;
       if (_state == _State.stopped) {
         return null;
       }
+
       var paint = Paint()
         ..style = PaintingStyle.fill
-        ..color = paintableGeometry.color
+        ..color = color
         ..isAntiAlias = true;
       paintableGeometry.draw(canvas, paint);
     }

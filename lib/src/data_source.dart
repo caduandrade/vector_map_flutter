@@ -180,7 +180,7 @@ class SimplifiedPath {
 /// Abstract map geometry.
 mixin MapGeometry {
   PaintableGeometry toPaintableGeometry(
-      CanvasMatrix canvasMatrix, GeometrySimplifier simplifier, Color color);
+      CanvasMatrix canvasMatrix, GeometrySimplifier simplifier);
 
   Rect get bounds;
 
@@ -208,9 +208,8 @@ class MapPoint extends Offset with MapGeometry {
 
   @override
   PaintableGeometry toPaintableGeometry(
-      CanvasMatrix canvasMatrix, GeometrySimplifier simplifier, Color color) {
-    return PaintableGeometry.circle(
-        Offset(x, y), 5 / canvasMatrix.scale, color);
+      CanvasMatrix canvasMatrix, GeometrySimplifier simplifier) {
+    return PaintableGeometry.circle(Offset(x, y), 5 / canvasMatrix.scale);
   }
 }
 
@@ -273,10 +272,10 @@ class MapLinearRing with MapGeometry {
 
   @override
   PaintableGeometry toPaintableGeometry(
-      CanvasMatrix canvasMatrix, GeometrySimplifier simplifier, Color color) {
+      CanvasMatrix canvasMatrix, GeometrySimplifier simplifier) {
     SimplifiedPath simplifiedPath = toSimplifiedPath(canvasMatrix, simplifier);
     return PaintableGeometry.path(
-        simplifiedPath.path, simplifiedPath.pointsCount, color);
+        simplifiedPath.path, simplifiedPath.pointsCount);
   }
 }
 
@@ -354,10 +353,10 @@ class MapPolygon with MapGeometry {
 
   @override
   PaintableGeometry toPaintableGeometry(
-      CanvasMatrix canvasMatrix, GeometrySimplifier simplifier, Color color) {
+      CanvasMatrix canvasMatrix, GeometrySimplifier simplifier) {
     SimplifiedPath simplifiedPath = toSimplifiedPath(canvasMatrix, simplifier);
     return PaintableGeometry.path(
-        simplifiedPath.path, simplifiedPath.pointsCount, color);
+        simplifiedPath.path, simplifiedPath.pointsCount);
   }
 }
 
@@ -390,7 +389,7 @@ class MapMultiPolygon with MapGeometry {
 
   @override
   PaintableGeometry toPaintableGeometry(
-      CanvasMatrix canvasMatrix, GeometrySimplifier simplifier, Color color) {
+      CanvasMatrix canvasMatrix, GeometrySimplifier simplifier) {
     Path path = Path();
     int pointsCount = 0;
     for (MapPolygon polygon in polygons) {
@@ -399,6 +398,6 @@ class MapMultiPolygon with MapGeometry {
       pointsCount += simplifiedPath.pointsCount;
       path.addPath(simplifiedPath.path, Offset.zero);
     }
-    return PaintableGeometry.path(path, pointsCount, color);
+    return PaintableGeometry.path(path, pointsCount);
   }
 }
