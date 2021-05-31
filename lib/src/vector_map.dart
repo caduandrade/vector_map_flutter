@@ -72,8 +72,8 @@ class VectorMapState extends State<VectorMap> {
   Size? _lastBuildSize;
   MapResolutionBuilder? _mapResolutionBuilder;
 
-  _updateMapResolution(MapMatrices mapMatrices, Size size) {
-    if (mounted && _lastBuildSize == size) {
+  _updateMapResolution(MapMatrices mapMatrices) {
+    if (mounted && _lastBuildSize == mapMatrices.widgetSize) {
       if (_mapResolutionBuilder != null) {
         _mapResolutionBuilder!.stop();
       }
@@ -128,14 +128,12 @@ class VectorMapState extends State<VectorMap> {
             bufferWidth: bufferWidth,
             bufferHeight: bufferHeight);
 
-        final Size size = Size(constraints.maxWidth, constraints.maxHeight);
-
-        if (_lastBuildSize != size) {
-          _lastBuildSize = size;
+        if (_lastBuildSize != mapMatrices.widgetSize) {
+          _lastBuildSize = mapMatrices.widgetSize;
           if (_mapResolution == null) {
             if (_mapResolutionBuilder == null) {
               // first build without delay
-              Future.microtask(() => _updateMapResolution(mapMatrices, size));
+              Future.microtask(() => _updateMapResolution(mapMatrices));
             }
             return Center(
               child: Text('updating...'),
@@ -144,7 +142,7 @@ class VectorMapState extends State<VectorMap> {
             // updating map resolution
             Future.delayed(
                 Duration(milliseconds: widget.delayToRefreshResolution), () {
-              _updateMapResolution(mapMatrices, size);
+              _updateMapResolution(mapMatrices);
             });
           }
         }

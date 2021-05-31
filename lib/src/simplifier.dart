@@ -49,7 +49,7 @@ class IntegerSimplifier extends GeometrySimplifier {
       transformedPoint = MapPoint(transformedPoint.x.truncateToDouble(),
           transformedPoint.y.truncateToDouble());
       if (simplifiedPoints.isEmpty ||
-          _accept(lastMapPoint!, transformedPoint)) {
+          _accept(canvasMatrix.scale, lastMapPoint!, transformedPoint)) {
         simplifiedPoints.add(point);
       }
       lastMapPoint = transformedPoint;
@@ -57,13 +57,13 @@ class IntegerSimplifier extends GeometrySimplifier {
     return simplifiedPoints;
   }
 
-  bool _accept(MapPoint p1, MapPoint p2) {
+  bool _accept(double scale, MapPoint p1, MapPoint p2) {
     double dx = (p1.x - p2.x).abs();
-    if (dx > tolerance) {
+    if (dx > tolerance/scale) {
       return true;
     }
     double dy = (p1.y - p2.y).abs();
-    return dy > tolerance;
+    return dy > tolerance/scale;
   }
 }
 

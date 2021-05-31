@@ -134,11 +134,13 @@ class MapMatrices {
   MapMatrices._(
       {required this.canvasMatrix,
       required this.bufferCreationMatrix,
-      this.bufferPaintMatrix});
+      this.bufferPaintMatrix,
+      required this.widgetSize});
 
   final CanvasMatrix canvasMatrix;
   final BufferCreationMatrix bufferCreationMatrix;
   final BufferPaintMatrix? bufferPaintMatrix;
+  final Size widgetSize;
 
   factory MapMatrices(
       {required double widgetWidth,
@@ -164,6 +166,7 @@ class MapMatrices {
     }
 
     return MapMatrices._(
+        widgetSize: Size(widgetWidth, widgetHeight),
         canvasMatrix: canvasMatrix,
         bufferCreationMatrix: bufferCreationMatrix,
         bufferPaintMatrix: bufferPaintMatrix);
