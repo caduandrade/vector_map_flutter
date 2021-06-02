@@ -5,6 +5,7 @@ export 'src/data_source.dart';
 export 'src/error.dart';
 export 'src/paintable.dart';
 export 'src/layer.dart';
+export 'src/debugger.dart';
 export 'src/map_resolution.dart';
 export 'src/matrices.dart';
 export 'src/simplifier.dart';

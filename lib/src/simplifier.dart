@@ -36,7 +36,7 @@ abstract class GeometrySimplifier {
 
 /// Ignores points that collide on the same physical pixel.
 class IntegerSimplifier extends GeometrySimplifier {
-  IntegerSimplifier({double tolerance = 0}) : super(tolerance);
+  IntegerSimplifier({double tolerance = 1}) : super(tolerance);
 
   @override
   List<MapPoint> simplify(CanvasMatrix canvasMatrix, List<MapPoint> points) {
@@ -49,21 +49,21 @@ class IntegerSimplifier extends GeometrySimplifier {
       transformedPoint = MapPoint(transformedPoint.x.truncateToDouble(),
           transformedPoint.y.truncateToDouble());
       if (simplifiedPoints.isEmpty ||
-          _accept(canvasMatrix.scale, lastMapPoint!, transformedPoint)) {
+          _accept(lastMapPoint!, transformedPoint)) {
         simplifiedPoints.add(point);
+        lastMapPoint = transformedPoint;
       }
-      lastMapPoint = transformedPoint;
     }
     return simplifiedPoints;
   }
 
-  bool _accept(double scale, MapPoint p1, MapPoint p2) {
+  bool _accept( MapPoint p1, MapPoint p2) {
     double dx = (p1.x - p2.x).abs();
-    if (dx > tolerance/scale) {
+    if (dx >= tolerance) {
       return true;
     }
     double dy = (p1.y - p2.y).abs();
-    return dy > tolerance/scale;
+    return dy >= tolerance;
   }
 }
 
