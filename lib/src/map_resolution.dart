@@ -5,7 +5,7 @@ import 'dart:ui';
 import 'package:flutter/painting.dart';
 import 'package:vector_map/src/data_source.dart';
 import 'package:vector_map/src/layer.dart';
-import 'package:vector_map/src/matrices.dart';
+import 'package:vector_map/src/matrix.dart';
 import 'package:vector_map/src/paintable.dart';
 import 'package:vector_map/src/simplifier.dart';
 import 'package:vector_map/src/theme.dart';
@@ -20,15 +20,11 @@ typedef OnFinish = Function(MapResolution newMapResolution);
 class MapResolution {
   MapResolution._(
       {required this.widgetSize,
-      required this.bufferWidth,
-      required this.bufferHeight,
       required this.paintableLayers,
       required this.layerBuffers,
       required this.pointsCount});
 
   final Size widgetSize;
-  final int bufferWidth;
-  final int bufferHeight;
   final UnmodifiableListView<PaintableLayer> paintableLayers;
   final UnmodifiableListView<Image> layerBuffers;
   final int pointsCount;
@@ -46,13 +42,13 @@ class MapResolutionBuilder {
   MapResolutionBuilder(
       {required this.layers,
       required this.contourThickness,
-      required this.mapMatrices,
+      required this.canvasMatrix,
       required this.simplifier,
       required this.onFinish});
 
   final List<MapLayer> layers;
   final double contourThickness;
-  final MapMatrices mapMatrices;
+  final CanvasMatrix canvasMatrix;
   final GeometrySimplifier simplifier;
 
   final OnFinish onFinish;
@@ -85,22 +81,19 @@ class MapResolutionBuilder {
             return;
           }
           PaintableFeature paintableFeature = feature.geometry
-              .toPaintableFeature(theme, mapMatrices.canvasMatrix, simplifier);
+              .toPaintableFeature(theme, canvasMatrix, simplifier);
           pointsCount += paintableFeature.pointsCount;
           paintableFeatures[feature.id] = paintableFeature;
         }
         PaintableLayer paintableLayer =
             PaintableLayer(layer, paintableFeatures);
-        Image? image =
-            await _createBuffer(mapMatrices.canvasMatrix, paintableLayer);
+        Image? image = await _createBuffer(canvasMatrix, paintableLayer);
         _paintableLayers.add(paintableLayer);
         _layerBuffers.add(image);
       }
       if (_state != _State.stopped) {
         onFinish(MapResolution._(
-            widgetSize: mapMatrices.canvasMatrix.widgetSize,
-            bufferWidth: mapMatrices.bufferCreationMatrix.imageWidth.toInt(),
-            bufferHeight: mapMatrices.bufferCreationMatrix.imageHeight.toInt(),
+            widgetSize: canvasMatrix.widgetSize,
             paintableLayers: UnmodifiableListView(_paintableLayers),
             layerBuffers: UnmodifiableListView(_layerBuffers),
             pointsCount: pointsCount));
@@ -125,7 +118,7 @@ class MapResolutionBuilder {
         canvas: canvas,
         contourThickness: contourThickness,
         scale: canvasMatrix.scale,
-    antiAlias: true);
+        antiAlias: true);
 
     canvas.restore();
 

@@ -1,10 +1,8 @@
-
 import 'dart:ui';
 
 import 'package:vector_map/src/data_source.dart';
 import 'package:vector_map/src/layer.dart';
 import 'package:vector_map/src/theme.dart';
-
 
 /// Holds all geometry layers to be paint in the current resolution.
 class PaintableLayer {
@@ -40,15 +38,19 @@ class PaintableLayer {
     }
 
     if (contourThickness > 0) {
-      drawContourOn(canvas: canvas, contourThickness: contourThickness, scale: scale, antiAlias: antiAlias);
+      drawContourOn(
+          canvas: canvas,
+          contourThickness: contourThickness,
+          scale: scale,
+          antiAlias: antiAlias);
     }
   }
 
   drawContourOn(
       {required Canvas canvas,
-        required double contourThickness,
-        required double scale,
-        required bool antiAlias}) {
+      required double contourThickness,
+      required double scale,
+      required bool antiAlias}) {
     MapTheme theme = layer.theme;
     var paint = Paint()
       ..style = PaintingStyle.stroke

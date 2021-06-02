@@ -3,7 +3,7 @@ import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:vector_map/src/data_reader.dart';
-import 'package:vector_map/src/matrices.dart';
+import 'package:vector_map/src/matrix.dart';
 import 'package:vector_map/src/paintable.dart';
 import 'package:vector_map/src/simplifier.dart';
 import 'package:vector_map/src/theme.dart';

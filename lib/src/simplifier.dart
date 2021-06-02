@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter/rendering.dart';
-import 'package:vector_map/src/matrices.dart';
+import 'package:vector_map/src/matrix.dart';
 
 import 'data_source.dart';
 
@@ -57,7 +57,7 @@ class IntegerSimplifier extends GeometrySimplifier {
     return simplifiedPoints;
   }
 
-  bool _accept( MapPoint p1, MapPoint p2) {
+  bool _accept(MapPoint p1, MapPoint p2) {
     double dx = (p1.x - p2.x).abs();
     if (dx >= tolerance) {
       return true;

@@ -9,7 +9,7 @@ import 'package:vector_map/src/debugger.dart';
 import 'package:vector_map/src/error.dart';
 import 'package:vector_map/src/layer.dart';
 import 'package:vector_map/src/map_resolution.dart';
-import 'package:vector_map/src/matrices.dart';
+import 'package:vector_map/src/matrix.dart';
 import 'package:vector_map/src/paintable.dart';
 import 'package:vector_map/src/simplifier.dart';
 import 'package:vector_map/src/theme.dart';
@@ -76,15 +76,15 @@ class VectorMapState extends State<VectorMap> {
   MapResolution? _mapResolution;
   MapResolutionBuilder? _mapResolutionBuilder;
 
-  _updateMapResolution(MapMatrices mapMatrices) {
-    if (mounted && _lastBuildSize == mapMatrices.widgetSize) {
+  _updateMapResolution(CanvasMatrix canvasMatrix) {
+    if (mounted && _lastBuildSize == canvasMatrix.widgetSize) {
       if (_mapResolutionBuilder != null) {
         _mapResolutionBuilder!.stop();
       }
       _mapResolutionBuilder = MapResolutionBuilder(
           layers: widget.layers,
           contourThickness: widget.contourThickness,
-          mapMatrices: mapMatrices,
+          canvasMatrix: canvasMatrix,
           simplifier: IntegerSimplifier(),
           onFinish: _onFinish);
       _mapResolutionBuilder!.start();
@@ -119,25 +119,17 @@ class VectorMapState extends State<VectorMap> {
     if (widget.layers.isNotEmpty) {
       content = LayoutBuilder(
           builder: (BuildContext context, BoxConstraints constraints) {
-        int? bufferWidth;
-        int? bufferHeight;
-        if (_mapResolution != null) {
-          bufferWidth = _mapResolution!.bufferWidth;
-          bufferHeight = _mapResolution!.bufferHeight;
-        }
-        MapMatrices mapMatrices = MapMatrices(
+        CanvasMatrix canvasMatrix = CanvasMatrix(
             widgetWidth: constraints.maxWidth,
             widgetHeight: constraints.maxHeight,
-            geometryBounds: widget.layersBounds!,
-            bufferWidth: bufferWidth,
-            bufferHeight: bufferHeight);
+            geometryBounds: widget.layersBounds!);
 
-        if (_lastBuildSize != mapMatrices.widgetSize) {
-          _lastBuildSize = mapMatrices.widgetSize;
+        if (_lastBuildSize != canvasMatrix.widgetSize) {
+          _lastBuildSize = canvasMatrix.widgetSize;
           if (_mapResolution == null) {
             if (_mapResolutionBuilder == null) {
               // first build without delay
-              Future.microtask(() => _updateMapResolution(mapMatrices));
+              Future.microtask(() => _updateMapResolution(canvasMatrix));
             }
             return Center(
               child: Text('updating...'),
@@ -146,7 +138,7 @@ class VectorMapState extends State<VectorMap> {
             // updating map resolution
             Future.delayed(
                 Duration(milliseconds: widget.delayToRefreshResolution), () {
-              _updateMapResolution(mapMatrices);
+              _updateMapResolution(canvasMatrix);
             });
           }
         }
@@ -154,7 +146,7 @@ class VectorMapState extends State<VectorMap> {
         _MapPainter mapPainter = _MapPainter(
             mapResolution: _mapResolution!,
             hover: _hover,
-            mapMatrices: mapMatrices,
+            canvasMatrix: canvasMatrix,
             contourThickness: widget.contourThickness,
             overlayHoverContour: widget.overlayHoverContour);
 
@@ -165,7 +157,7 @@ class VectorMapState extends State<VectorMap> {
             widget.clickListener != null) {
           map = MouseRegion(
             child: map,
-            onHover: (event) => _onHover(event, mapMatrices),
+            onHover: (event) => _onHover(event, canvasMatrix),
             onExit: (event) {
               if (_hover != null) {
                 _updateHover(null);
@@ -189,10 +181,10 @@ class VectorMapState extends State<VectorMap> {
     }
   }
 
-  _onHover(PointerHoverEvent event, MapMatrices mapMatrices) {
+  _onHover(PointerHoverEvent event, CanvasMatrix canvasMatrix) {
     if (_mapResolution != null) {
       Offset o = MatrixUtils.transformPoint(
-          mapMatrices.canvasMatrix.screenToGeometry, event.localPosition);
+          canvasMatrix.screenToGeometry, event.localPosition);
 
       bool found = false;
       if (widget.layers.isNotEmpty) {
@@ -252,12 +244,12 @@ class VectorMapState extends State<VectorMap> {
 class _MapPainter extends CustomPainter {
   _MapPainter(
       {required this.mapResolution,
-      required this.mapMatrices,
+      required this.canvasMatrix,
       required this.contourThickness,
       required this.overlayHoverContour,
       this.hover});
 
-  final MapMatrices mapMatrices;
+  final CanvasMatrix canvasMatrix;
   final double contourThickness;
   final _HoverFeature? hover;
   final MapResolution mapResolution;
@@ -269,16 +261,19 @@ class _MapPainter extends CustomPainter {
     for (int layerIndex = 0;
         layerIndex < mapResolution.paintableLayers.length;
         layerIndex++) {
-
       PaintableLayer paintableLayer = mapResolution.paintableLayers[layerIndex];
 
-      if(mapMatrices.widgetSize==mapResolution.widgetSize) {
-        canvas.drawImage(mapResolution.layerBuffers[layerIndex], Offset.zero, Paint());
+      if (canvasMatrix.widgetSize == mapResolution.widgetSize) {
+        canvas.drawImage(
+            mapResolution.layerBuffers[layerIndex], Offset.zero, Paint());
       } else {
         canvas.save();
-        CanvasMatrix canvasMatrix = mapMatrices.canvasMatrix;
         canvasMatrix.applyOn(canvas);
-        paintableLayer.drawContourOn(canvas: canvas, contourThickness: contourThickness, scale: canvasMatrix.scale, antiAlias: false);
+        paintableLayer.drawContourOn(
+            canvas: canvas,
+            contourThickness: contourThickness,
+            scale: canvasMatrix.scale,
+            antiAlias: false);
         canvas.restore();
       }
 
@@ -292,7 +287,6 @@ class _MapPainter extends CustomPainter {
           if (hoverColor != null || hoverTheme.contourColor != null) {
             canvas.save();
 
-            CanvasMatrix canvasMatrix = mapMatrices.canvasMatrix;
             canvasMatrix.applyOn(canvas);
 
             int featureId = feature.id;
@@ -325,12 +319,11 @@ class _MapPainter extends CustomPainter {
     // drawing the overlay hover
     if (contourThickness > 0 && overlayHoverContour && hover != null) {
       PaintableLayer paintableLayer =
-      mapResolution.paintableLayers[hover!.layerIndex];
+          mapResolution.paintableLayers[hover!.layerIndex];
       MapLayer layer = paintableLayer.layer;
       if (layer.hoverTheme != null) {
         canvas.save();
 
-        CanvasMatrix canvasMatrix = mapMatrices.canvasMatrix;
         canvasMatrix.applyOn(canvas);
 
         MapTheme hoverTheme = layer.hoverTheme!;
@@ -432,8 +425,7 @@ class _MapPainter extends CustomPainter {
     PaintableFeature paintableFeature =
         paintableLayer.paintableFeatures[feature.id]!;
     Rect bounds = MatrixUtils.transformRect(
-        mapMatrices.canvasMatrix.geometryToScreen,
-        paintableFeature.getBounds());
+        canvasMatrix.geometryToScreen, paintableFeature.getBounds());
     _drawText(canvas, bounds.center, feature.label!, labelStyle);
   }
 
@@ -469,8 +461,6 @@ class _MapPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
     return false;
   }
-
-
 }
 
 class _HoverFeature {
