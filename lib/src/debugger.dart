@@ -35,15 +35,34 @@ class MapDebuggerWidget extends StatefulWidget {
 }
 
 class MapDebuggerState extends State<MapDebuggerWidget> {
+  String formatInt(int value) {
+    String str = value.toString();
+    String fmt = '';
+    int indexGroup = 3 - str.length % 3;
+    if (indexGroup == 3) {
+      indexGroup = 0;
+    }
+    print(value.toString() + ' ' + indexGroup.toString());
+    for (int i = 0; i < str.length; i++) {
+      fmt += str.substring(i, i + 1);
+      indexGroup++;
+      if (indexGroup == 3 && i < str.length - 1) {
+        fmt += ',';
+        indexGroup = 0;
+      }
+    }
+    return fmt;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(children: [
-      Text('Layers: ' + widget.debugger._layersCount.toString()),
-      Text('Features: ' + widget.debugger._featuresCount.toString()),
+      Text('Layers: ' + formatInt(widget.debugger._layersCount)),
+      Text('Features: ' + formatInt(widget.debugger._featuresCount)),
       Text('Original points: ' +
-          widget.debugger._originalPointsCount.toString()),
+          formatInt(widget.debugger._originalPointsCount)),
       Text('Simplified points: ' +
-          widget.debugger._simplifiedPointsCount.toString())
+          formatInt(widget.debugger._simplifiedPointsCount))
     ], crossAxisAlignment: CrossAxisAlignment.start);
   }
 
