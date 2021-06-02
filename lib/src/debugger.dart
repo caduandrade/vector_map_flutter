@@ -1,10 +1,12 @@
 import 'package:flutter/cupertino.dart';
 import 'package:vector_map/src/layer.dart';
+import 'package:vector_map/src/map_resolution.dart';
 
 class MapDebugger extends ChangeNotifier {
   int _layersCount = 0;
   int _featuresCount = 0;
   int _originalPointsCount = 0;
+  int _simplifiedPointsCount = 0;
 
   initialize(List<MapLayer> layers) {
     _layersCount = layers.length;
@@ -12,6 +14,11 @@ class MapDebugger extends ChangeNotifier {
       _featuresCount += layer.dataSource.features.length;
       _originalPointsCount += layer.dataSource.pointsCount;
     }
+    notifyListeners();
+  }
+
+  updateMapResolution(MapResolution mapResolution) {
+    _simplifiedPointsCount = mapResolution.pointsCount;
     notifyListeners();
   }
 }
@@ -33,8 +40,10 @@ class MapDebuggerState extends State<MapDebuggerWidget> {
     return Column(children: [
       Text('Layers: ' + widget.debugger._layersCount.toString()),
       Text('Features: ' + widget.debugger._featuresCount.toString()),
-      Text(
-          'Original points: ' + widget.debugger._originalPointsCount.toString())
+      Text('Original points: ' +
+          widget.debugger._originalPointsCount.toString()),
+      Text('Simplified points: ' +
+          widget.debugger._simplifiedPointsCount.toString())
     ], crossAxisAlignment: CrossAxisAlignment.start);
   }
 

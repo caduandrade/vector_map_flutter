@@ -97,6 +97,7 @@ class VectorMapState extends State<VectorMap> {
         _mapResolution = newMapResolution;
         _mapResolutionBuilder = null;
       });
+      widget.debugger?.updateMapResolution(newMapResolution);
     }
   }
 
