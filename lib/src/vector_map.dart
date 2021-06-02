@@ -303,7 +303,7 @@ class _MapPainter extends CustomPainter {
                 ..style = PaintingStyle.fill
                 ..color = hoverColor
                 ..isAntiAlias = true;
-              paintableFeature.drawOn(canvas, paint);
+              paintableFeature.drawOn(canvas, paint, canvasMatrix.scale);
             }
 
             if (contourThickness > 0) {
@@ -404,7 +404,7 @@ class _MapPainter extends CustomPainter {
       ..color = contourColor
       ..strokeWidth = contourThickness / canvasMatrix.scale
       ..isAntiAlias = true;
-    paintableFeature.drawOn(canvas, paint);
+    paintableFeature.drawOn(canvas, paint, canvasMatrix.scale);
   }
 
   _drawLabel(Canvas canvas, int layerIndex, MapFeature feature,

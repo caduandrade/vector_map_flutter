@@ -42,7 +42,6 @@ class MapDebuggerState extends State<MapDebuggerWidget> {
     if (indexGroup == 3) {
       indexGroup = 0;
     }
-    print(value.toString() + ' ' + indexGroup.toString());
     for (int i = 0; i < str.length; i++) {
       fmt += str.substring(i, i + 1);
       indexGroup++;

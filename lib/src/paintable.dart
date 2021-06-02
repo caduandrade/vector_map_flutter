@@ -34,7 +34,7 @@ class PaintableLayer {
         ..style = PaintingStyle.fill
         ..color = color
         ..isAntiAlias = antiAlias;
-      paintableFeature.drawOn(canvas, paint);
+      paintableFeature.drawOn(canvas, paint, scale);
     }
 
     if (contourThickness > 0) {
@@ -60,7 +60,7 @@ class PaintableLayer {
       ..strokeWidth = contourThickness / scale
       ..isAntiAlias = antiAlias;
     for (PaintableFeature paintableFeature in paintableFeatures.values) {
-      paintableFeature.drawOn(canvas, paint);
+      paintableFeature.drawOn(canvas, paint, scale);
     }
   }
 }
@@ -71,7 +71,7 @@ abstract class PaintableFeature {
   Rect getBounds();
 
   /// Draws this paintable on the canvas.
-  drawOn(Canvas canvas, Paint paint);
+  drawOn(Canvas canvas, Paint paint, double scale);
 
   /// Gets the count of points for this paintable.
   int get pointsCount;
@@ -90,7 +90,7 @@ class PaintablePath extends PaintableFeature {
   final int _pointsCount;
 
   @override
-  drawOn(Canvas canvas, Paint paint) {
+  drawOn(Canvas canvas, Paint paint, double scale) {
     canvas.drawPath(_path, paint);
   }
 
@@ -122,21 +122,24 @@ abstract class Marker extends PaintableFeature {
   final Offset offset;
 
   @override
-  drawOn(Canvas canvas, Paint paint) {
-    drawMarkerOn(canvas, paint, offset);
+  drawOn(Canvas canvas, Paint paint, double scale) {
+    drawMarkerOn(canvas, paint, offset, scale);
   }
 
   @override
   int get pointsCount => 1;
 
-  drawMarkerOn(Canvas canvas, Paint paint, Offset offset);
+  drawMarkerOn(Canvas canvas, Paint paint, Offset offset, double scale);
 }
 
 /// Defines a circle marker to be painted on the map.
 class CircleMaker extends Marker {
-  CircleMaker({required Offset offset, required double radius})
-      : this._bounds = Rect.fromLTWH(
-            offset.dx - radius, offset.dy - radius, radius * 2, radius * 2),
+  CircleMaker(
+      {required Offset offset,
+      required double radius,
+      required double scaledRadius})
+      : this._bounds = Rect.fromLTWH(offset.dx - scaledRadius,
+            offset.dy - scaledRadius, scaledRadius * 2, scaledRadius * 2),
         this._radius = radius,
         super(offset: offset);
 
@@ -149,8 +152,8 @@ class CircleMaker extends Marker {
   }
 
   @override
-  drawMarkerOn(Canvas canvas, Paint paint, Offset offset) {
-    canvas.drawCircle(offset, _radius, paint);
+  drawMarkerOn(Canvas canvas, Paint paint, Offset offset, double scale) {
+    canvas.drawCircle(offset, _radius / scale, paint);
   }
 
   @override
@@ -166,6 +169,7 @@ class CircleMakerBuilder extends MarkerBuilder {
   final double radius;
 
   Marker build({required Offset offset, required double scale}) {
-    return CircleMaker(offset: offset, radius: radius / scale);
+    return CircleMaker(
+        offset: offset, radius: radius, scaledRadius: radius / scale);
   }
 }
