@@ -4,9 +4,7 @@ import 'dart:ui';
 
 import 'package:vector_map/src/data_reader.dart';
 import 'package:vector_map/src/matrix.dart';
-import 'package:vector_map/src/paintable.dart';
 import 'package:vector_map/src/simplifier.dart';
-import 'package:vector_map/src/theme.dart';
 
 /// A representation of a real-world object on a map.
 class MapFeature {
@@ -184,9 +182,6 @@ class SimplifiedPath {
 
 /// Abstract map geometry.
 mixin MapGeometry {
-  PaintableFeature toPaintableFeature(
-      MapTheme theme, CanvasMatrix canvasMatrix, GeometrySimplifier simplifier);
-
   Rect get bounds;
 
   int get pointsCount;
@@ -210,13 +205,6 @@ class MapPoint extends Offset with MapGeometry {
 
   @override
   int get pointsCount => 1;
-
-  @override
-  PaintableFeature toPaintableFeature(MapTheme theme, CanvasMatrix canvasMatrix,
-      GeometrySimplifier simplifier) {
-    return theme.markerBuilder
-        .build(offset: Offset(x, y), scale: canvasMatrix.scale);
-  }
 }
 
 /// Line ring geometry.
@@ -274,13 +262,6 @@ class MapLinearRing with MapGeometry {
     }
     path.close();
     return SimplifiedPath(path, simplifiedPoints.length);
-  }
-
-  @override
-  PaintableFeature toPaintableFeature(MapTheme theme, CanvasMatrix canvasMatrix,
-      GeometrySimplifier simplifier) {
-    SimplifiedPath simplifiedPath = toSimplifiedPath(canvasMatrix, simplifier);
-    return PaintablePath(simplifiedPath.path, simplifiedPath.pointsCount);
   }
 }
 
@@ -355,13 +336,6 @@ class MapPolygon with MapGeometry {
     }
     return SimplifiedPath(path, pointsCount);
   }
-
-  @override
-  PaintableFeature toPaintableFeature(MapTheme theme, CanvasMatrix canvasMatrix,
-      GeometrySimplifier simplifier) {
-    SimplifiedPath simplifiedPath = toSimplifiedPath(canvasMatrix, simplifier);
-    return PaintablePath(simplifiedPath.path, simplifiedPath.pointsCount);
-  }
 }
 
 /// Multi polygon geometry.
@@ -390,19 +364,5 @@ class MapMultiPolygon with MapGeometry {
       count += polygon.pointsCount;
     }
     return count;
-  }
-
-  @override
-  PaintableFeature toPaintableFeature(MapTheme theme, CanvasMatrix canvasMatrix,
-      GeometrySimplifier simplifier) {
-    Path path = Path();
-    int pointsCount = 0;
-    for (MapPolygon polygon in polygons) {
-      SimplifiedPath simplifiedPath =
-          polygon.toSimplifiedPath(canvasMatrix, simplifier);
-      pointsCount += simplifiedPath.pointsCount;
-      path.addPath(simplifiedPath.path, Offset.zero);
-    }
-    return PaintablePath(path, pointsCount);
   }
 }

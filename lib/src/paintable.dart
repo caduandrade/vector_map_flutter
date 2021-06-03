@@ -1,7 +1,10 @@
 import 'dart:ui';
 
 import 'package:vector_map/src/data_source.dart';
+import 'package:vector_map/src/error.dart';
 import 'package:vector_map/src/layer.dart';
+import 'package:vector_map/src/matrix.dart';
+import 'package:vector_map/src/simplifier.dart';
 import 'package:vector_map/src/theme.dart';
 
 /// Holds all geometry layers to be paint in the current resolution.
@@ -62,6 +65,75 @@ class PaintableLayer {
     for (PaintableFeature paintableFeature in paintableFeatures.values) {
       paintableFeature.drawOn(canvas, paint, scale);
     }
+  }
+}
+
+/// [PaintableFeature] builder.
+class PaintableFeatureBuilder {
+  static PaintableFeature build(MapFeature feature, MapTheme theme,
+      CanvasMatrix canvasMatrix, GeometrySimplifier simplifier) {
+    MapGeometry geometry = feature.geometry;
+    if (geometry is MapPoint) {
+      return _point(geometry, feature, theme, canvasMatrix, simplifier);
+    } else if (geometry is MapLinearRing) {
+      return _linearRing(geometry, feature, theme, canvasMatrix, simplifier);
+    } else if (geometry is MapPolygon) {
+      return _polygon(geometry, feature, theme, canvasMatrix, simplifier);
+    } else if (geometry is MapMultiPolygon) {
+      return _multiPolygon(geometry, feature, theme, canvasMatrix, simplifier);
+    } else {
+      throw VectorMapError(
+          'Unrecognized geometry: ' + geometry.runtimeType.toString());
+    }
+  }
+
+  static PaintableFeature _point(
+      MapPoint point,
+      MapFeature feature,
+      MapTheme theme,
+      CanvasMatrix canvasMatrix,
+      GeometrySimplifier simplifier) {
+    return theme.markerBuilder
+        .build(offset: Offset(point.x, point.y), scale: canvasMatrix.scale);
+  }
+
+  static PaintableFeature _linearRing(
+      MapLinearRing linearRing,
+      MapFeature feature,
+      MapTheme theme,
+      CanvasMatrix canvasMatrix,
+      GeometrySimplifier simplifier) {
+    SimplifiedPath simplifiedPath =
+        linearRing.toSimplifiedPath(canvasMatrix, simplifier);
+    return PaintablePath(simplifiedPath.path, simplifiedPath.pointsCount);
+  }
+
+  static PaintableFeature _polygon(
+      MapPolygon polygon,
+      MapFeature feature,
+      MapTheme theme,
+      CanvasMatrix canvasMatrix,
+      GeometrySimplifier simplifier) {
+    SimplifiedPath simplifiedPath =
+        polygon.toSimplifiedPath(canvasMatrix, simplifier);
+    return PaintablePath(simplifiedPath.path, simplifiedPath.pointsCount);
+  }
+
+  static PaintableFeature _multiPolygon(
+      MapMultiPolygon multiPolygon,
+      MapFeature feature,
+      MapTheme theme,
+      CanvasMatrix canvasMatrix,
+      GeometrySimplifier simplifier) {
+    Path path = Path();
+    int pointsCount = 0;
+    for (MapPolygon polygon in multiPolygon.polygons) {
+      SimplifiedPath simplifiedPath =
+          polygon.toSimplifiedPath(canvasMatrix, simplifier);
+      pointsCount += simplifiedPath.pointsCount;
+      path.addPath(simplifiedPath.path, Offset.zero);
+    }
+    return PaintablePath(path, pointsCount);
   }
 }
 
