@@ -4,6 +4,7 @@ import 'dart:ui';
 
 import 'package:flutter/painting.dart';
 import 'package:vector_map/src/data_source.dart';
+import 'package:vector_map/src/debugger.dart';
 import 'package:vector_map/src/layer.dart';
 import 'package:vector_map/src/matrix.dart';
 import 'package:vector_map/src/paintable.dart';
@@ -44,7 +45,8 @@ class MapResolutionBuilder {
       required this.contourThickness,
       required this.canvasMatrix,
       required this.simplifier,
-      required this.onFinish});
+      required this.onFinish,
+      this.debugger});
 
   final List<MapLayer> layers;
   final double contourThickness;
@@ -55,6 +57,8 @@ class MapResolutionBuilder {
   final List<PaintableLayer> _paintableLayers = [];
   final List<Image> _layerBuffers = [];
 
+  final MapDebugger? debugger;
+
   _State _state = _State.waiting;
 
   stop() {
@@ -63,6 +67,8 @@ class MapResolutionBuilder {
 
   start() async {
     if (_state == _State.waiting) {
+      debugger?.clearCountPaintableBuildDuration();
+      debugger?.clearCountBufferBuildDuration();
       _state = _State.running;
 
       _paintableLayers.clear();
@@ -80,18 +86,25 @@ class MapResolutionBuilder {
           if (_state == _State.stopped) {
             return;
           }
+          debugger?.markPaintableBuildStart();
           PaintableFeature paintableFeature = feature.geometry
               .toPaintableFeature(theme, canvasMatrix, simplifier);
+          debugger?.markPaintableBuildEnd();
           pointsCount += paintableFeature.pointsCount;
           paintableFeatures[feature.id] = paintableFeature;
         }
         PaintableLayer paintableLayer =
             PaintableLayer(layer, paintableFeatures);
-        Image? image = await _createBuffer(canvasMatrix, paintableLayer);
+        debugger?.markBufferBuildStart();
+        Image image = await _createBuffer(canvasMatrix, paintableLayer);
+        debugger?.markBufferBuildEnd();
         _paintableLayers.add(paintableLayer);
         _layerBuffers.add(image);
       }
       if (_state != _State.stopped) {
+        debugger?.updateCountPaintableBuildDuration();
+        debugger?.updateCountBufferBuildDuration();
+
         onFinish(MapResolution._(
             widgetSize: canvasMatrix.widgetSize,
             paintableLayers: UnmodifiableListView(_paintableLayers),

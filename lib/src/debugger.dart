@@ -8,6 +8,14 @@ class MapDebugger extends ChangeNotifier {
   int _originalPointsCount = 0;
   int _simplifiedPointsCount = 0;
 
+  int _lastPaintableBuildDuration = 0;
+  int _nextPaintableBuildDuration = 0;
+  DateTime? _paintableBuildStart;
+
+  int _lastBufferBuildDuration = 0;
+  int _nextBufferBuildDuration = 0;
+  DateTime? _bufferBuildStart;
+
   initialize(List<MapLayer> layers) {
     _layersCount = layers.length;
     for (MapLayer layer in layers) {
@@ -20,6 +28,52 @@ class MapDebugger extends ChangeNotifier {
   updateMapResolution(MapResolution mapResolution) {
     _simplifiedPointsCount = mapResolution.pointsCount;
     notifyListeners();
+  }
+
+  clearCountPaintableBuildDuration() {
+    _nextPaintableBuildDuration = 0;
+    _paintableBuildStart = null;
+  }
+
+  updateCountPaintableBuildDuration() {
+    _lastPaintableBuildDuration = _nextPaintableBuildDuration;
+    _paintableBuildStart = null;
+    notifyListeners();
+  }
+
+  markPaintableBuildStart() {
+    _paintableBuildStart = DateTime.now();
+  }
+
+  markPaintableBuildEnd() {
+    if (_paintableBuildStart != null) {
+      DateTime end = DateTime.now();
+      Duration duration = end.difference(_paintableBuildStart!);
+      _nextPaintableBuildDuration += duration.inMilliseconds;
+    }
+  }
+
+  clearCountBufferBuildDuration() {
+    _nextBufferBuildDuration = 0;
+    _bufferBuildStart = null;
+  }
+
+  updateCountBufferBuildDuration() {
+    _lastBufferBuildDuration = _nextBufferBuildDuration;
+    _bufferBuildStart = null;
+    notifyListeners();
+  }
+
+  markBufferBuildStart() {
+    _bufferBuildStart = DateTime.now();
+  }
+
+  markBufferBuildEnd() {
+    if (_bufferBuildStart != null) {
+      DateTime end = DateTime.now();
+      Duration duration = end.difference(_bufferBuildStart!);
+      _nextBufferBuildDuration += duration.inMilliseconds;
+    }
   }
 }
 
@@ -55,13 +109,20 @@ class MapDebuggerState extends State<MapDebuggerWidget> {
 
   @override
   Widget build(BuildContext context) {
+    Duration paintableDuration =
+        Duration(milliseconds: widget.debugger._lastPaintableBuildDuration);
+    Duration bufferDuration =
+        Duration(milliseconds: widget.debugger._lastBufferBuildDuration);
+
     return Column(children: [
       Text('Layers: ' + formatInt(widget.debugger._layersCount)),
       Text('Features: ' + formatInt(widget.debugger._featuresCount)),
       Text('Original points: ' +
           formatInt(widget.debugger._originalPointsCount)),
       Text('Simplified points: ' +
-          formatInt(widget.debugger._simplifiedPointsCount))
+          formatInt(widget.debugger._simplifiedPointsCount)),
+      Text('Last paintable build duration: ' + paintableDuration.toString()),
+      Text('Last buffer build duration: ' + bufferDuration.toString())
     ], crossAxisAlignment: CrossAxisAlignment.start);
   }
 

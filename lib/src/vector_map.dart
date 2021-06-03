@@ -86,7 +86,8 @@ class VectorMapState extends State<VectorMap> {
           contourThickness: widget.contourThickness,
           canvasMatrix: canvasMatrix,
           simplifier: IntegerSimplifier(),
-          onFinish: _onFinish);
+          onFinish: _onFinish,
+          debugger: widget.debugger);
       _mapResolutionBuilder!.start();
     }
   }
