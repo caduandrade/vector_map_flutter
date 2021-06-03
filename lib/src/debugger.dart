@@ -2,19 +2,45 @@ import 'package:flutter/cupertino.dart';
 import 'package:vector_map/src/layer.dart';
 import 'package:vector_map/src/map_resolution.dart';
 
+class DurationDebugger {
+  int _lastDuration = 0;
+  int _nextDuration = 0;
+  DateTime? _lastStartTime;
+
+  clear() {
+    _nextDuration = 0;
+    _lastStartTime = null;
+  }
+
+  update() {
+    _lastDuration = _nextDuration;
+    _lastStartTime = null;
+  }
+
+  openDuration() {
+    _lastStartTime = DateTime.now();
+  }
+
+  closeDuration() {
+    if (_lastStartTime != null) {
+      DateTime end = DateTime.now();
+      Duration duration = end.difference(_lastStartTime!);
+      _nextDuration += duration.inMilliseconds;
+    }
+  }
+}
+
 class MapDebugger extends ChangeNotifier {
   int _layersCount = 0;
   int _featuresCount = 0;
   int _originalPointsCount = 0;
   int _simplifiedPointsCount = 0;
 
-  int _lastPaintableBuildDuration = 0;
-  int _nextPaintableBuildDuration = 0;
-  DateTime? _paintableBuildStart;
+  DurationDebugger _paintableBuildDuration = DurationDebugger();
+  DurationDebugger _bufferBuildDuration = DurationDebugger();
 
-  int _lastBufferBuildDuration = 0;
-  int _nextBufferBuildDuration = 0;
-  DateTime? _bufferBuildStart;
+  DateTime? _initialMultiResolutionTime;
+  Duration _multiResolutionDuration = Duration.zero;
 
   initialize(List<MapLayer> layers) {
     _layersCount = layers.length;
@@ -30,49 +56,50 @@ class MapDebugger extends ChangeNotifier {
     notifyListeners();
   }
 
-  clearCountPaintableBuildDuration() {
-    _nextPaintableBuildDuration = 0;
-    _paintableBuildStart = null;
+  clearPaintableBuildDuration() {
+    _paintableBuildDuration.clear();
   }
 
-  updateCountPaintableBuildDuration() {
-    _lastPaintableBuildDuration = _nextPaintableBuildDuration;
-    _paintableBuildStart = null;
+  updatePaintableBuildDuration() {
+    _paintableBuildDuration.update();
     notifyListeners();
   }
 
-  markPaintableBuildStart() {
-    _paintableBuildStart = DateTime.now();
+  openPaintableBuildDuration() {
+    _paintableBuildDuration.openDuration();
   }
 
-  markPaintableBuildEnd() {
-    if (_paintableBuildStart != null) {
-      DateTime end = DateTime.now();
-      Duration duration = end.difference(_paintableBuildStart!);
-      _nextPaintableBuildDuration += duration.inMilliseconds;
-    }
+  closePaintableBuildDuration() {
+    _paintableBuildDuration.closeDuration();
   }
 
-  clearCountBufferBuildDuration() {
-    _nextBufferBuildDuration = 0;
-    _bufferBuildStart = null;
+  clearBufferBuildDuration() {
+    _bufferBuildDuration.clear();
   }
 
-  updateCountBufferBuildDuration() {
-    _lastBufferBuildDuration = _nextBufferBuildDuration;
-    _bufferBuildStart = null;
+  updateBufferBuildDuration() {
+    _bufferBuildDuration.update();
     notifyListeners();
   }
 
-  markBufferBuildStart() {
-    _bufferBuildStart = DateTime.now();
+  openBufferBuildDuration() {
+    _bufferBuildDuration.openDuration();
   }
 
-  markBufferBuildEnd() {
-    if (_bufferBuildStart != null) {
+  closeBufferBuildDuration() {
+    _bufferBuildDuration.closeDuration();
+  }
+
+  openMultiResolutionTime() {
+    _initialMultiResolutionTime = DateTime.now();
+    _multiResolutionDuration = Duration.zero;
+  }
+
+  closeMultiResolutionTime() {
+    if (_initialMultiResolutionTime != null) {
       DateTime end = DateTime.now();
-      Duration duration = end.difference(_bufferBuildStart!);
-      _nextBufferBuildDuration += duration.inMilliseconds;
+      _multiResolutionDuration = end.difference(_initialMultiResolutionTime!);
+      notifyListeners();
     }
   }
 }
@@ -109,10 +136,10 @@ class MapDebuggerState extends State<MapDebuggerWidget> {
 
   @override
   Widget build(BuildContext context) {
-    Duration paintableDuration =
-        Duration(milliseconds: widget.debugger._lastPaintableBuildDuration);
-    Duration bufferDuration =
-        Duration(milliseconds: widget.debugger._lastBufferBuildDuration);
+    Duration paintableDuration = Duration(
+        milliseconds: widget.debugger._paintableBuildDuration._lastDuration);
+    Duration bufferDuration = Duration(
+        milliseconds: widget.debugger._bufferBuildDuration._lastDuration);
 
     return Column(children: [
       Text('Layers: ' + formatInt(widget.debugger._layersCount)),
@@ -122,7 +149,9 @@ class MapDebuggerState extends State<MapDebuggerWidget> {
       Text('Simplified points: ' +
           formatInt(widget.debugger._simplifiedPointsCount)),
       Text('Last paintable build duration: ' + paintableDuration.toString()),
-      Text('Last buffer build duration: ' + bufferDuration.toString())
+      Text('Last buffer build duration: ' + bufferDuration.toString()),
+      Text('Last multi resolution duration: ' +
+          widget.debugger._multiResolutionDuration.toString())
     ], crossAxisAlignment: CrossAxisAlignment.start);
   }
 

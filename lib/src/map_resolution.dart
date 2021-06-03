@@ -67,8 +67,9 @@ class MapResolutionBuilder {
 
   start() async {
     if (_state == _State.waiting) {
-      debugger?.clearCountPaintableBuildDuration();
-      debugger?.clearCountBufferBuildDuration();
+      debugger?.openMultiResolutionTime();
+      debugger?.clearPaintableBuildDuration();
+      debugger?.clearBufferBuildDuration();
       _state = _State.running;
 
       _paintableLayers.clear();
@@ -86,24 +87,25 @@ class MapResolutionBuilder {
           if (_state == _State.stopped) {
             return;
           }
-          debugger?.markPaintableBuildStart();
+          debugger?.openPaintableBuildDuration();
           PaintableFeature paintableFeature = feature.geometry
               .toPaintableFeature(theme, canvasMatrix, simplifier);
-          debugger?.markPaintableBuildEnd();
+          debugger?.closePaintableBuildDuration();
           pointsCount += paintableFeature.pointsCount;
           paintableFeatures[feature.id] = paintableFeature;
         }
         PaintableLayer paintableLayer =
             PaintableLayer(layer, paintableFeatures);
-        debugger?.markBufferBuildStart();
+        debugger?.openBufferBuildDuration();
         Image image = await _createBuffer(canvasMatrix, paintableLayer);
-        debugger?.markBufferBuildEnd();
+        debugger?.closeBufferBuildDuration();
         _paintableLayers.add(paintableLayer);
         _layerBuffers.add(image);
       }
       if (_state != _State.stopped) {
-        debugger?.updateCountPaintableBuildDuration();
-        debugger?.updateCountBufferBuildDuration();
+        debugger?.updatePaintableBuildDuration();
+        debugger?.updateBufferBuildDuration();
+        debugger?.closeMultiResolutionTime();
 
         onFinish(MapResolution._(
             widgetSize: canvasMatrix.widgetSize,
