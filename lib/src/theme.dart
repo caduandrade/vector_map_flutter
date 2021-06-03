@@ -108,9 +108,8 @@ class MapTheme {
       MarkerBuilder? markerBuilder})
       : this._color = color,
         this.labelStyleBuilder = labelStyleBuilder,
-        this.markerBuilder = markerBuilder != null
-            ? markerBuilder
-            : CircleMakerBuilder(radius: 5);
+        this.markerBuilder =
+            markerBuilder != null ? markerBuilder : CircleMakerBuilder();
 
   final Color? _color;
   final Color? contourColor;
@@ -157,7 +156,7 @@ class _MapThemeValue extends MapTheme {
   @override
   Color? getColor(MapDataSource? dataSource, MapFeature feature) {
     if (_colors != null) {
-      dynamic? value = feature.getValue(key);
+      dynamic value = feature.getValue(key);
       if (value != null && _colors!.containsKey(value)) {
         return _colors![value]!;
       }
@@ -252,7 +251,7 @@ class _MapThemeGradient extends MapTheme {
     }
 
     if (min != null && max != null) {
-      dynamic? dynamicValue = feature.getValue(key);
+      dynamic dynamicValue = feature.getValue(key);
       double? value;
       if (dynamicValue is int) {
         value = dynamicValue.toDouble();

@@ -93,8 +93,10 @@ class PaintableFeatureBuilder {
       MapTheme theme,
       CanvasMatrix canvasMatrix,
       GeometrySimplifier simplifier) {
-    return theme.markerBuilder
-        .build(offset: Offset(point.x, point.y), scale: canvasMatrix.scale);
+    return theme.markerBuilder.build(
+        feature: feature,
+        offset: Offset(point.x, point.y),
+        scale: canvasMatrix.scale);
   }
 
   static PaintableFeature _linearRing(
@@ -184,7 +186,11 @@ class PaintablePath extends PaintableFeature {
 abstract class MarkerBuilder {
   const MarkerBuilder();
 
-  Marker build({required Offset offset, required double scale});
+  /// Builds a [Marker]
+  Marker build(
+      {required MapFeature feature,
+      required Offset offset,
+      required double scale});
 }
 
 /// Defines a marker to be painted on the map.
@@ -201,6 +207,7 @@ abstract class Marker extends PaintableFeature {
   @override
   int get pointsCount => 1;
 
+  /// Draw this marker on [Canvas]
   drawMarkerOn(Canvas canvas, Paint paint, Offset offset, double scale);
 }
 
@@ -235,13 +242,27 @@ class CircleMaker extends Marker {
 }
 
 /// [CircleMaker] builder.
+/// The default [radius] value is [5].
 class CircleMakerBuilder extends MarkerBuilder {
-  const CircleMakerBuilder({required this.radius});
+  const CircleMakerBuilder({double radius = 5, this.key, this.radiuses})
+      : this.radius = radius;
 
   final double radius;
+  final String? key;
+  final Map<dynamic, double>? radiuses;
 
-  Marker build({required Offset offset, required double scale}) {
-    return CircleMaker(
-        offset: offset, radius: radius, scaledRadius: radius / scale);
+  @override
+  Marker build(
+      {required MapFeature feature,
+      required Offset offset,
+      required double scale}) {
+    double r = radius;
+    if (key != null && radiuses != null) {
+      dynamic value = feature.getValue(key!);
+      if (value != null && radiuses!.containsKey(value)) {
+        r = radiuses![value]!;
+      }
+    }
+    return CircleMaker(offset: offset, radius: r, scaledRadius: r / scale);
   }
 }
