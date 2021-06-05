@@ -9,7 +9,7 @@
 * Interactable
 * Pure Flutter (no WebView/JavaScript)
 
-![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/vector_map_v1.gif)
+![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/vector_map_v1.png)
 
 ## Examples
 

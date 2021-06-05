@@ -1,4 +1,4 @@
-## [0.3.0] - ?
+## [0.3.0] - June 5, 2021
 
 * Drastic reduction in package size
   * Demo moved to separate repository
