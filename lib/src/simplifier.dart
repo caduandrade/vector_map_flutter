@@ -69,7 +69,7 @@ class IntegerSimplifier extends GeometrySimplifier {
 
 /// Does not apply any simplification.
 class NoSimplifier extends GeometrySimplifier {
-  NoSimplifier(double tolerance) : super(tolerance);
+  NoSimplifier() : super(0);
 
   @override
   List<MapPoint> simplify(CanvasMatrix canvasMatrix, List<MapPoint> points) {

@@ -11,12 +11,13 @@
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/vector_map_v1.gif)
 
-## GeoJSON examples
+## Examples
 
-A simplified GeoJSONs will be used in the examples to demonstrate the different possibilities of themes.
+Simplified GeoJSONs will be used in the examples to demonstrate package usage.
 The following examples will assume that GeoJSONs have already been loaded into Strings.
+The full code is at https://github.com/caduandrade/vector_map_flutter_demo.
 
-**polygons.json** ([link](https://raw.githubusercontent.com/caduandrade/vector_map_flutter/main/demo/assets/polygons.json))
+**polygons.json** ([link](https://raw.githubusercontent.com/caduandrade/vector_map_flutter_demo/main/assets/polygons.json))
 
 Name | Seq | Rnd
 --- | --- | ---
@@ -32,7 +33,7 @@ Name | Seq | Rnd
 "Kepler" | 10 | "32"
 "Turing" | 11 | "93"
 
-**points.json** ([link](https://raw.githubusercontent.com/caduandrade/vector_map_flutter/main/demo/assets/points.json))
+**points.json** ([link](https://raw.githubusercontent.com/caduandrade/vector_map_flutter_demo/main/assets/points.json))
 
 Name | AN
 --- | ---
