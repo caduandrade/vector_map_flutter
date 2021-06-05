@@ -471,8 +471,8 @@ Maps property values to radius values.
 ```dart
     MapDataSource polygons =
         await MapDataSource.geoJSON(geojson: polygonsGeoJSON);
-    MapDataSource points =
-        await MapDataSource.geoJSON(geojson: pointsGeoJSON, keys: ['AN']);
+    MapDataSource points = await MapDataSource.geoJSON(
+        geojson: pointsGeoJSON, keys: ['AN'], labelKey: 'AN');
 ```
 
 ```dart
@@ -482,13 +482,14 @@ Maps property values to radius values.
         dataSource: points,
         theme: MapTheme(
             color: Colors.black,
+            labelVisibility: (feature) => true,
             markerBuilder: CircleMakerBuilder.map(
                 key: 'AN', radiuses: {41: 25, 22: 20, 14: 10, 10: 10})));
 
     VectorMap map = VectorMap(layers: [polygonsLayer, pointsLayer]);
 ```
 
-![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/circle_marker_map_v1.png)
+![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/circle_marker_map_v2.png)
 
 ##### Radius by property values
 
@@ -497,8 +498,8 @@ Uses the property values as radius values.
 ```dart
     MapDataSource polygons =
         await MapDataSource.geoJSON(geojson: polygonsGeoJSON);
-    MapDataSource points =
-        await MapDataSource.geoJSON(geojson: pointsGeoJSON, keys: ['AN']);
+    MapDataSource points = await MapDataSource.geoJSON(
+        geojson: pointsGeoJSON, keys: ['AN'], labelKey: 'AN');
 ```
 
 ```dart
@@ -508,20 +509,21 @@ Uses the property values as radius values.
         dataSource: points,
         theme: MapTheme(
             color: Colors.black,
+            labelVisibility: (feature) => true,
             markerBuilder: CircleMakerBuilder.property(key: 'AN')));
 
     VectorMap map = VectorMap(layers: [polygonsLayer, pointsLayer]);
 ```
 
-![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/circle_marker_property_v1.png)
+![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/circle_marker_property_v2.png)
 
 ##### Radius in proportion to property values
 
 ```dart
     MapDataSource polygons =
         await MapDataSource.geoJSON(geojson: polygonsGeoJSON);
-    MapDataSource points =
-        await MapDataSource.geoJSON(geojson: pointsGeoJSON, keys: ['AN']);
+    MapDataSource points = await MapDataSource.geoJSON(
+        geojson: pointsGeoJSON, keys: ['AN'], labelKey: 'AN');
 ```
 
 ```dart
@@ -531,13 +533,14 @@ Uses the property values as radius values.
         dataSource: points,
         theme: MapTheme(
             color: Colors.black,
+            labelVisibility: (feature) => true,
             markerBuilder: CircleMakerBuilder.proportion(
-                key: 'AN', minRadius: 4, maxRadius: 20)));
+                key: 'AN', minRadius: 8, maxRadius: 30)));
 
     VectorMap map = VectorMap(layers: [polygonsLayer, pointsLayer]);
 ```
 
-![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/circle_marker_proportion_v1.png)
+![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/circle_marker_proportion_v2.png)
 
 ## Click listener
 
