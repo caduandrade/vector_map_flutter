@@ -21,6 +21,7 @@ class VectorMap extends StatefulWidget {
       {Key? key,
       List<MapLayer>? layers,
       this.delayToRefreshResolution = 1000,
+      this.color,
       this.borderColor = Colors.black54,
       this.borderThickness = 1,
       this.contourThickness = 1,
@@ -40,6 +41,7 @@ class VectorMap extends StatefulWidget {
   final Rect? layersBounds;
   final double contourThickness;
   final int delayToRefreshResolution;
+  final Color? color;
   final Color? borderColor;
   final double? borderThickness;
   final double? padding;
@@ -104,13 +106,16 @@ class VectorMapState extends State<VectorMap> {
 
   @override
   Widget build(BuildContext context) {
-    Decoration? decoration;
+    BoxBorder? border;
     if (widget.borderColor != null &&
         widget.borderThickness != null &&
         widget.borderThickness! > 0) {
-      decoration = BoxDecoration(
-          border: Border.all(
-              color: widget.borderColor!, width: widget.borderThickness!));
+      border = Border.all(
+          color: widget.borderColor!, width: widget.borderThickness!);
+    }
+    Decoration? decoration;
+    if (widget.color != null || border != null) {
+      decoration = BoxDecoration(color: widget.color, border: border);
     }
     EdgeInsetsGeometry? padding;
     if (widget.padding != null && widget.padding! > 0) {
