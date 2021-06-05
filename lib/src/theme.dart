@@ -19,7 +19,7 @@ class MapTheme {
   static const Color defaultContourColor = Color(0xFF9E9E9E);
 
   static Color getThemeOrDefaultColor(
-      MapDataSource? dataSource, MapFeature feature, MapTheme theme) {
+      MapDataSource dataSource, MapFeature feature, MapTheme theme) {
     Color? color = theme.getColor(dataSource, feature);
     if (color != null) {
       return color;
@@ -124,7 +124,7 @@ class MapTheme {
   }
 
   /// Gets the feature color.
-  Color? getColor(MapDataSource? dataSource, MapFeature feature) {
+  Color? getColor(MapDataSource dataSource, MapFeature feature) {
     return _color;
   }
 }
@@ -155,7 +155,7 @@ class _MapThemeValue extends MapTheme {
   }
 
   @override
-  Color? getColor(MapDataSource? dataSource, MapFeature feature) {
+  Color? getColor(MapDataSource dataSource, MapFeature feature) {
     if (_colors != null) {
       dynamic value = feature.getValue(key);
       if (value != null && _colors!.containsKey(value)) {
@@ -192,7 +192,7 @@ class _MapThemeRule extends MapTheme {
   }
 
   @override
-  Color? getColor(MapDataSource? dataSource, MapFeature feature) {
+  Color? getColor(MapDataSource dataSource, MapFeature feature) {
     Color? color;
     for (ColorRule rule in _colorRules) {
       color = rule(feature);
@@ -235,12 +235,12 @@ class _MapThemeGradient extends MapTheme {
   }
 
   @override
-  Color? getColor(MapDataSource? dataSource, MapFeature feature) {
+  Color? getColor(MapDataSource dataSource, MapFeature feature) {
     double? min = this.min;
     double? max = this.max;
 
     if (min == null || max == null) {
-      PropertyLimits? propertyLimits = dataSource?.getPropertyLimits(key);
+      PropertyLimits? propertyLimits = dataSource.getPropertyLimits(key);
       if (propertyLimits != null) {
         if (min == null) {
           min = propertyLimits.min;
