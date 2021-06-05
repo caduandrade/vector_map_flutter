@@ -31,15 +31,16 @@ class PaintableLayer {
 
     for (int featureId in paintableFeatures.keys) {
       PaintableFeature paintableFeature = paintableFeatures[featureId]!;
-      Color color = colors[featureId]!;
+      if (paintableFeature.visible) {
+        Color color = colors[featureId]!;
 
-      var paint = Paint()
-        ..style = PaintingStyle.fill
-        ..color = color
-        ..isAntiAlias = antiAlias;
-      paintableFeature.drawOn(canvas, paint, scale);
+        var paint = Paint()
+          ..style = PaintingStyle.fill
+          ..color = color
+          ..isAntiAlias = antiAlias;
+        paintableFeature.drawOn(canvas, paint, scale);
+      }
     }
-
     if (contourThickness > 0) {
       drawContourOn(
           canvas: canvas,
@@ -63,7 +64,9 @@ class PaintableLayer {
       ..strokeWidth = contourThickness / scale
       ..isAntiAlias = antiAlias;
     for (PaintableFeature paintableFeature in paintableFeatures.values) {
-      paintableFeature.drawOn(canvas, paint, scale);
+      if(paintableFeature.visible) {
+        paintableFeature.drawOn(canvas, paint, scale);
+      }
     }
   }
 }
@@ -159,6 +162,9 @@ abstract class PaintableFeature {
 
   /// Checks whether a point is contained in this paintable.
   bool contains(Offset offset);
+
+  /// Indicates whether it is visible.
+  bool get visible;
 }
 
 /// Defines a path to be painted on the map.
@@ -187,4 +193,7 @@ class PaintablePath extends PaintableFeature {
 
   @override
   int get pointsCount => _pointsCount;
+
+  @override
+  bool get visible => true;
 }

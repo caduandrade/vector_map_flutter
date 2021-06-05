@@ -286,9 +286,19 @@ class _MapPainter extends CustomPainter {
 
       // drawing the hover
       if (hover != null && hover!.layerIndex == layerIndex) {
+        MapFeature feature = hover!.feature;
+        int featureId = feature.id;
+        if (paintableLayer.paintableFeatures.containsKey(featureId) ==
+            false) {
+          throw VectorMapError('No path for id: $featureId');
+        }
+
+        PaintableFeature paintableFeature =
+        paintableLayer.paintableFeatures[featureId]!;
+
         MapLayer layer = paintableLayer.layer;
-        if (layer.hoverTheme != null) {
-          MapFeature feature = hover!.feature;
+        if (paintableFeature.visible && layer.hoverTheme != null) {
+
           MapTheme hoverTheme = layer.hoverTheme!;
           Color? hoverColor = hoverTheme.getColor(layer.dataSource, feature);
           if (hoverColor != null || hoverTheme.contourColor != null) {
@@ -296,14 +306,6 @@ class _MapPainter extends CustomPainter {
 
             canvasMatrix.applyOn(canvas);
 
-            int featureId = feature.id;
-            if (paintableLayer.paintableFeatures.containsKey(featureId) ==
-                false) {
-              throw VectorMapError('No path for id: $featureId');
-            }
-
-            PaintableFeature paintableFeature =
-                paintableLayer.paintableFeatures[featureId]!;
             if (hoverColor != null) {
               var paint = Paint()
                 ..style = PaintingStyle.fill
@@ -327,18 +329,15 @@ class _MapPainter extends CustomPainter {
     if (contourThickness > 0 && overlayHoverContour && hover != null) {
       PaintableLayer paintableLayer =
           mapResolution.paintableLayers[hover!.layerIndex];
+      PaintableFeature paintableFeature =
+      paintableLayer.paintableFeatures[hover!.feature.id]!;
       MapLayer layer = paintableLayer.layer;
-      if (layer.hoverTheme != null) {
+      if (paintableFeature.visible && layer.hoverTheme != null) {
         canvas.save();
-
         canvasMatrix.applyOn(canvas);
-
         MapTheme hoverTheme = layer.hoverTheme!;
-        PaintableFeature paintableFeature =
-            paintableLayer.paintableFeatures[hover!.feature.id]!;
-        _drawHoverContour(canvas, paintableLayer.layer, hoverTheme,
-            paintableFeature, canvasMatrix);
-
+          _drawHoverContour(canvas, paintableLayer.layer, hoverTheme,
+              paintableFeature, canvasMatrix);
         canvas.restore();
       }
     }
@@ -355,7 +354,9 @@ class _MapPainter extends CustomPainter {
       if (theme.labelVisibility != null ||
           (hoverTheme != null && hoverTheme.labelVisibility != null)) {
         for (MapFeature feature in dataSource.features.values) {
-          if (feature.label != null) {
+          PaintableFeature paintableFeature =
+              paintableLayer.paintableFeatures[feature.id]!;
+          if (paintableFeature.visible && feature.label != null) {
             LabelVisibility? labelVisibility;
             if (hover != null &&
                 layerIndex == hover!.layerIndex &&

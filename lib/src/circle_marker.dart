@@ -33,6 +33,9 @@ class CircleMaker extends Marker {
   Rect getBounds() {
     return _bounds;
   }
+
+  @override
+  bool get visible => _radius > 0 ? true : false;
 }
 
 /// A [CircleMaker] builder.
