@@ -2,6 +2,7 @@
 
 * Drastic reduction in package size
   * Demo moved to separate repository
+* Marker
 
 ## [0.2.0] - May 29, 2021
 

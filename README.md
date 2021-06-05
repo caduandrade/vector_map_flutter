@@ -431,6 +431,114 @@ Overlay enabled:
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/overlay_contour_on_v1.gif)
 
+## Marker
+
+Allows different displays for point geometry.
+
+#### Circle marker
+
+Default marker.
+
+##### Fixed radius
+
+Sets a fixed size radius.
+
+```dart
+    MapDataSource polygons =
+        await MapDataSource.geoJSON(geojson: polygonsGeoJSON);
+    MapDataSource points =
+        await MapDataSource.geoJSON(geojson: pointsGeoJSON, keys: ['AN']);
+```
+
+```dart
+    MapLayer polygonsLayer = MapLayer(dataSource: polygons);
+
+    MapLayer pointsLayer = MapLayer(
+        dataSource: points,
+        theme: MapTheme(
+            color: Colors.black,
+            markerBuilder: CircleMakerBuilder.fixed(radius: 15)));
+
+    VectorMap map = VectorMap(layers: [polygonsLayer, pointsLayer]);
+```
+
+![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/circle_marker_fixed_v1.png)
+
+##### Radius by mapping values
+
+Maps property values to radius values.
+
+```dart
+    MapDataSource polygons =
+        await MapDataSource.geoJSON(geojson: polygonsGeoJSON);
+    MapDataSource points =
+        await MapDataSource.geoJSON(geojson: pointsGeoJSON, keys: ['AN']);
+```
+
+```dart
+    MapLayer polygonsLayer = MapLayer(dataSource: polygons);
+
+    MapLayer pointsLayer = MapLayer(
+        dataSource: points,
+        theme: MapTheme(
+            color: Colors.black,
+            markerBuilder: CircleMakerBuilder.map(
+                key: 'AN', radiuses: {41: 25, 22: 20, 14: 10, 10: 10})));
+
+    VectorMap map = VectorMap(layers: [polygonsLayer, pointsLayer]);
+```
+
+![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/circle_marker_map_v1.png)
+
+##### Radius by property values
+
+Uses the property values as radius values.
+
+```dart
+    MapDataSource polygons =
+        await MapDataSource.geoJSON(geojson: polygonsGeoJSON);
+    MapDataSource points =
+        await MapDataSource.geoJSON(geojson: pointsGeoJSON, keys: ['AN']);
+```
+
+```dart
+    MapLayer polygonsLayer = MapLayer(dataSource: polygons);
+
+    MapLayer pointsLayer = MapLayer(
+        dataSource: points,
+        theme: MapTheme(
+            color: Colors.black,
+            markerBuilder: CircleMakerBuilder.property(key: 'AN')));
+
+    VectorMap map = VectorMap(layers: [polygonsLayer, pointsLayer]);
+```
+
+![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/circle_marker_property_v1.png)
+
+##### Radius in proportion to property values
+
+```dart
+    MapDataSource polygons =
+        await MapDataSource.geoJSON(geojson: polygonsGeoJSON);
+    MapDataSource points =
+        await MapDataSource.geoJSON(geojson: pointsGeoJSON, keys: ['AN']);
+```
+
+```dart
+    MapLayer polygonsLayer = MapLayer(dataSource: polygons);
+
+    MapLayer pointsLayer = MapLayer(
+        dataSource: points,
+        theme: MapTheme(
+            color: Colors.black,
+            markerBuilder: CircleMakerBuilder.proportion(
+                key: 'AN', minRadius: 4, maxRadius: 20)));
+
+    VectorMap map = VectorMap(layers: [polygonsLayer, pointsLayer]);
+```
+
+![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/circle_marker_proportion_v1.png)
+
 ## Click listener
 
 ```dart
