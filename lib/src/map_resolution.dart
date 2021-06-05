@@ -89,7 +89,7 @@ class MapResolutionBuilder {
           }
           debugger?.openPaintableBuildDuration();
           PaintableFeature paintableFeature = PaintableFeatureBuilder.build(
-              feature, theme, canvasMatrix, simplifier);
+              dataSource, feature, theme, canvasMatrix, simplifier);
           debugger?.closePaintableBuildDuration();
           pointsCount += paintableFeature.pointsCount;
           paintableFeatures[feature.id] = paintableFeature;

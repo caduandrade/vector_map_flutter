@@ -1,3 +1,8 @@
+## [0.3.0] - ?
+
+* Drastic reduction in package size
+  * Demo moved to separate repository
+
 ## [0.2.0] - May 29, 2021
 
 * Multiple layers

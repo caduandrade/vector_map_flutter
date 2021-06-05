@@ -2,6 +2,7 @@ import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:vector_map/src/data_source.dart';
+import 'package:vector_map/src/error.dart';
 import 'package:vector_map/src/marker.dart';
 
 /// Defines a circle marker to be painted on the map.
@@ -41,13 +42,28 @@ class CircleMakerBuilder {
     return _FixedRadius(radius: math.max(0, radius));
   }
 
-  static MarkerBuilder mappedValues(
+  /// Builds a circle marker by mapping a property value to a radius.
+  static MarkerBuilder map(
       {required String key, required Map<dynamic, double> radiuses}) {
     return _MappedValues(key: key, radiuses: radiuses);
   }
 
+  /// Builds a circle marker using property values as radiuses.
+  /// The type of the values must be numeric.
   static MarkerBuilder property({required String key}) {
     return _Property(key: key);
+  }
+
+  /// Builds a circle marker by proportionally mapping property
+  /// values to defined minimum and maximum values.
+  static MarkerBuilder proportion(
+      {required String key,
+      required double minRadius,
+      required double maxRadius}) {
+    if (maxRadius <= minRadius) {
+      throw VectorMapError('maxRadius must be bigger than minRadius');
+    }
+    return _Proportion(key: key, minRadius: minRadius, maxRadius: maxRadius);
   }
 }
 
@@ -59,7 +75,8 @@ class _FixedRadius extends MarkerBuilder {
 
   @override
   Marker build(
-      {required MapFeature feature,
+      {required MapDataSource dataSource,
+      required MapFeature feature,
       required Offset offset,
       required double scale}) {
     return CircleMaker(
@@ -75,7 +92,8 @@ class _MappedValues extends MarkerBuilder {
 
   @override
   Marker build(
-      {required MapFeature feature,
+      {required MapDataSource dataSource,
+      required MapFeature feature,
       required Offset offset,
       required double scale}) {
     double r = 0;
@@ -94,7 +112,8 @@ class _Property extends MarkerBuilder {
 
   @override
   Marker build(
-      {required MapFeature feature,
+      {required MapDataSource dataSource,
+      required MapFeature feature,
       required Offset offset,
       required double scale}) {
     double r = 0;
@@ -106,5 +125,43 @@ class _Property extends MarkerBuilder {
     }
 
     return CircleMaker(offset: offset, radius: r, scaledRadius: r / scale);
+  }
+}
+
+class _Proportion extends MarkerBuilder {
+  _Proportion(
+      {required this.key, required this.minRadius, required this.maxRadius});
+
+  final String key;
+  final double minRadius;
+  final double maxRadius;
+
+  @override
+  Marker build(
+      {required MapDataSource dataSource,
+      required MapFeature feature,
+      required Offset offset,
+      required double scale}) {
+    double radius = 0;
+
+    PropertyLimits? propertyLimits = dataSource.getPropertyLimits(key);
+    if (propertyLimits != null) {
+      dynamic dynamicValue = feature.getValue(key);
+      if (dynamicValue is int) {
+        radius = _radius(
+            propertyLimits.min, propertyLimits.max, dynamicValue.toDouble());
+      } else if (dynamicValue is double) {
+        radius = _radius(propertyLimits.min, propertyLimits.max, dynamicValue);
+      }
+    }
+
+    return CircleMaker(
+        offset: offset, radius: radius, scaledRadius: radius / scale);
+  }
+
+  double _radius(double minValue, double maxValue, double dynamicValue) {
+    double valueRange = maxValue - minValue;
+    double p = ((dynamicValue - minValue) / valueRange);
+    return minRadius + ((maxRadius - minRadius) * p);
   }
 }

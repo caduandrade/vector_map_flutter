@@ -70,17 +70,22 @@ class PaintableLayer {
 
 /// [PaintableFeature] builder.
 class PaintableFeatureBuilder {
-  static PaintableFeature build(MapFeature feature, MapTheme theme,
-      CanvasMatrix canvasMatrix, GeometrySimplifier simplifier) {
+  static PaintableFeature build(
+      MapDataSource dataSource,
+      MapFeature feature,
+      MapTheme theme,
+      CanvasMatrix canvasMatrix,
+      GeometrySimplifier simplifier) {
     MapGeometry geometry = feature.geometry;
     if (geometry is MapPoint) {
-      return _point(geometry, feature, theme, canvasMatrix, simplifier);
+      return _point(
+          dataSource, feature, geometry, theme, canvasMatrix, simplifier);
     } else if (geometry is MapLinearRing) {
-      return _linearRing(geometry, feature, theme, canvasMatrix, simplifier);
+      return _linearRing(feature, geometry, theme, canvasMatrix, simplifier);
     } else if (geometry is MapPolygon) {
-      return _polygon(geometry, feature, theme, canvasMatrix, simplifier);
+      return _polygon(feature, geometry, theme, canvasMatrix, simplifier);
     } else if (geometry is MapMultiPolygon) {
-      return _multiPolygon(geometry, feature, theme, canvasMatrix, simplifier);
+      return _multiPolygon(feature, geometry, theme, canvasMatrix, simplifier);
     } else {
       throw VectorMapError(
           'Unrecognized geometry: ' + geometry.runtimeType.toString());
@@ -88,20 +93,22 @@ class PaintableFeatureBuilder {
   }
 
   static PaintableFeature _point(
-      MapPoint point,
+      MapDataSource dataSource,
       MapFeature feature,
+      MapPoint point,
       MapTheme theme,
       CanvasMatrix canvasMatrix,
       GeometrySimplifier simplifier) {
     return theme.markerBuilder.build(
+        dataSource: dataSource,
         feature: feature,
         offset: Offset(point.x, point.y),
         scale: canvasMatrix.scale);
   }
 
   static PaintableFeature _linearRing(
-      MapLinearRing linearRing,
       MapFeature feature,
+      MapLinearRing linearRing,
       MapTheme theme,
       CanvasMatrix canvasMatrix,
       GeometrySimplifier simplifier) {
@@ -111,8 +118,8 @@ class PaintableFeatureBuilder {
   }
 
   static PaintableFeature _polygon(
-      MapPolygon polygon,
       MapFeature feature,
+      MapPolygon polygon,
       MapTheme theme,
       CanvasMatrix canvasMatrix,
       GeometrySimplifier simplifier) {
@@ -122,8 +129,8 @@ class PaintableFeatureBuilder {
   }
 
   static PaintableFeature _multiPolygon(
-      MapMultiPolygon multiPolygon,
       MapFeature feature,
+      MapMultiPolygon multiPolygon,
       MapTheme theme,
       CanvasMatrix canvasMatrix,
       GeometrySimplifier simplifier) {

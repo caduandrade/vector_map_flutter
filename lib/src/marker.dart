@@ -9,7 +9,8 @@ abstract class MarkerBuilder {
 
   /// Builds a [Marker]
   Marker build(
-      {required MapFeature feature,
+      {required MapDataSource dataSource,
+      required MapFeature feature,
       required Offset offset,
       required double scale});
 }
