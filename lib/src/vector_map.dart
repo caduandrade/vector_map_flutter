@@ -288,17 +288,15 @@ class _MapPainter extends CustomPainter {
       if (hover != null && hover!.layerIndex == layerIndex) {
         MapFeature feature = hover!.feature;
         int featureId = feature.id;
-        if (paintableLayer.paintableFeatures.containsKey(featureId) ==
-            false) {
+        if (paintableLayer.paintableFeatures.containsKey(featureId) == false) {
           throw VectorMapError('No path for id: $featureId');
         }
 
         PaintableFeature paintableFeature =
-        paintableLayer.paintableFeatures[featureId]!;
+            paintableLayer.paintableFeatures[featureId]!;
 
         MapLayer layer = paintableLayer.layer;
         if (paintableFeature.visible && layer.hoverTheme != null) {
-
           MapTheme hoverTheme = layer.hoverTheme!;
           Color? hoverColor = hoverTheme.getColor(layer.dataSource, feature);
           if (hoverColor != null || hoverTheme.contourColor != null) {
@@ -330,14 +328,14 @@ class _MapPainter extends CustomPainter {
       PaintableLayer paintableLayer =
           mapResolution.paintableLayers[hover!.layerIndex];
       PaintableFeature paintableFeature =
-      paintableLayer.paintableFeatures[hover!.feature.id]!;
+          paintableLayer.paintableFeatures[hover!.feature.id]!;
       MapLayer layer = paintableLayer.layer;
       if (paintableFeature.visible && layer.hoverTheme != null) {
         canvas.save();
         canvasMatrix.applyOn(canvas);
         MapTheme hoverTheme = layer.hoverTheme!;
-          _drawHoverContour(canvas, paintableLayer.layer, hoverTheme,
-              paintableFeature, canvasMatrix);
+        _drawHoverContour(canvas, paintableLayer.layer, hoverTheme,
+            paintableFeature, canvasMatrix);
         canvas.restore();
       }
     }

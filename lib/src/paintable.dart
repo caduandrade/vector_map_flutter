@@ -64,7 +64,7 @@ class PaintableLayer {
       ..strokeWidth = contourThickness / scale
       ..isAntiAlias = antiAlias;
     for (PaintableFeature paintableFeature in paintableFeatures.values) {
-      if(paintableFeature.visible) {
+      if (paintableFeature.visible) {
         paintableFeature.drawOn(canvas, paint, scale);
       }
     }
