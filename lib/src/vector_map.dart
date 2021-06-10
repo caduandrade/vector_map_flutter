@@ -10,7 +10,8 @@ import 'package:vector_map/src/error.dart';
 import 'package:vector_map/src/layer.dart';
 import 'package:vector_map/src/map_resolution.dart';
 import 'package:vector_map/src/matrix.dart';
-import 'package:vector_map/src/paintable.dart';
+import 'package:vector_map/src/paintable/paintable_feature.dart';
+import 'package:vector_map/src/paintable/paintable_layer.dart';
 import 'package:vector_map/src/simplifier.dart';
 import 'package:vector_map/src/theme.dart';
 

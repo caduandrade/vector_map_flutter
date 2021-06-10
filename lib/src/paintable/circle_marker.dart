@@ -3,7 +3,7 @@ import 'dart:ui';
 
 import 'package:vector_map/src/data_source.dart';
 import 'package:vector_map/src/error.dart';
-import 'package:vector_map/src/marker.dart';
+import 'package:vector_map/src/paintable/marker.dart';
 
 /// Defines a circle marker to be painted on the map.
 class CircleMaker extends Marker {

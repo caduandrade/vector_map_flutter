@@ -1,7 +1,7 @@
 import 'dart:ui';
 
 import 'package:vector_map/src/data_source.dart';
-import 'package:vector_map/src/paintable.dart';
+import 'package:vector_map/src/paintable/paintable_feature.dart';
 
 /// [Marker] builder.
 abstract class MarkerBuilder {
