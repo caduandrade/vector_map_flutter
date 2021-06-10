@@ -207,6 +207,63 @@ class MapPoint extends Offset with MapGeometry {
   int get pointsCount => 1;
 }
 
+/// Line string geometry.
+class MapLineString with MapGeometry {
+  final UnmodifiableListView<MapPoint> points;
+  final Rect bounds;
+
+  MapLineString._(this.points, this.bounds);
+
+  factory MapLineString.coordinates(List<double> coordinates) {
+    List<MapPoint> points = [];
+    for (int i = 0; i < coordinates.length; i = i + 2) {
+      if (i < coordinates.length - 1) {
+        double x = coordinates[i];
+        double y = coordinates[i + 1];
+        points.add(MapPoint(x, y));
+      }
+    }
+    return MapLineString(points);
+  }
+
+  factory MapLineString(List<MapPoint> points) {
+    //TODO exception for insufficient number of points?
+    MapPoint first = points.first;
+    double left = first.dx;
+    double right = first.dx;
+    double top = first.dy;
+    double bottom = first.dy;
+
+    for (int i = 1; i < points.length; i++) {
+      MapPoint point = points[i];
+      left = math.min(point.dx, left);
+      right = math.max(point.dx, right);
+      bottom = math.max(point.dy, bottom);
+      top = math.min(point.dy, top);
+    }
+    Rect bounds = Rect.fromLTRB(left, top, right, bottom);
+    return MapLineString._(UnmodifiableListView<MapPoint>(points), bounds);
+  }
+
+  @override
+  int get pointsCount => points.length;
+
+  SimplifiedPath toSimplifiedPath(
+      CanvasMatrix canvasMatrix, GeometrySimplifier simplifier) {
+    Path path = Path();
+    List<MapPoint> simplifiedPoints = simplifier.simplify(canvasMatrix, points);
+    for (int i = 0; i < simplifiedPoints.length; i++) {
+      MapPoint point = simplifiedPoints[i];
+      if (i == 0) {
+        path.moveTo(point.dx, point.dy);
+      } else {
+        path.lineTo(point.dx, point.dy);
+      }
+    }
+    return SimplifiedPath(path, simplifiedPoints.length);
+  }
+}
+
 /// Line ring geometry.
 class MapLinearRing with MapGeometry {
   final UnmodifiableListView<MapPoint> points;

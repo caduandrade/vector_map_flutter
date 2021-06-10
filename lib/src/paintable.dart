@@ -31,7 +31,7 @@ class PaintableLayer {
 
     for (int featureId in paintableFeatures.keys) {
       PaintableFeature paintableFeature = paintableFeatures[featureId]!;
-      if (paintableFeature.visible) {
+      if (paintableFeature.visible && paintableFeature.hasFill) {
         Color color = colors[featureId]!;
 
         var paint = Paint()
@@ -85,6 +85,8 @@ class PaintableFeatureBuilder {
           dataSource, feature, geometry, theme, canvasMatrix, simplifier);
     } else if (geometry is MapLinearRing) {
       return _linearRing(feature, geometry, theme, canvasMatrix, simplifier);
+    } else if (geometry is MapLineString) {
+      return _lineString(feature, geometry, theme, canvasMatrix, simplifier);
     } else if (geometry is MapPolygon) {
       return _polygon(feature, geometry, theme, canvasMatrix, simplifier);
     } else if (geometry is MapMultiPolygon) {
@@ -109,6 +111,18 @@ class PaintableFeatureBuilder {
         scale: canvasMatrix.scale);
   }
 
+  static PaintableFeature _lineString(
+      MapFeature feature,
+      MapLineString lineString,
+      MapTheme theme,
+      CanvasMatrix canvasMatrix,
+      GeometrySimplifier simplifier) {
+    SimplifiedPath simplifiedPath =
+        lineString.toSimplifiedPath(canvasMatrix, simplifier);
+    return PaintablePath(
+        simplifiedPath.path, simplifiedPath.pointsCount, false);
+  }
+
   static PaintableFeature _linearRing(
       MapFeature feature,
       MapLinearRing linearRing,
@@ -117,7 +131,7 @@ class PaintableFeatureBuilder {
       GeometrySimplifier simplifier) {
     SimplifiedPath simplifiedPath =
         linearRing.toSimplifiedPath(canvasMatrix, simplifier);
-    return PaintablePath(simplifiedPath.path, simplifiedPath.pointsCount);
+    return PaintablePath(simplifiedPath.path, simplifiedPath.pointsCount, true);
   }
 
   static PaintableFeature _polygon(
@@ -128,7 +142,7 @@ class PaintableFeatureBuilder {
       GeometrySimplifier simplifier) {
     SimplifiedPath simplifiedPath =
         polygon.toSimplifiedPath(canvasMatrix, simplifier);
-    return PaintablePath(simplifiedPath.path, simplifiedPath.pointsCount);
+    return PaintablePath(simplifiedPath.path, simplifiedPath.pointsCount, true);
   }
 
   static PaintableFeature _multiPolygon(
@@ -145,7 +159,7 @@ class PaintableFeatureBuilder {
       pointsCount += simplifiedPath.pointsCount;
       path.addPath(simplifiedPath.path, Offset.zero);
     }
-    return PaintablePath(path, pointsCount);
+    return PaintablePath(path, pointsCount, true);
   }
 }
 
@@ -165,16 +179,20 @@ abstract class PaintableFeature {
 
   /// Indicates whether it is visible.
   bool get visible;
+
+  /// Indicates whether to draw the fill
+  bool get hasFill;
 }
 
 /// Defines a path to be painted on the map.
 class PaintablePath extends PaintableFeature {
-  PaintablePath(Path path, int pointsCount)
+  PaintablePath(Path path, int pointsCount, this.hasFill)
       : this._path = path,
         this._pointsCount = pointsCount;
 
   final Path _path;
   final int _pointsCount;
+  final bool hasFill;
 
   @override
   drawOn(Canvas canvas, Paint paint, double scale) {

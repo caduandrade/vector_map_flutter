@@ -22,7 +22,7 @@ class _GeoJSONReaderBase {
       case 'MultiPoint':
         throw UnimplementedError();
       case 'LineString':
-        throw UnimplementedError();
+        return _readLineString(map);
       case 'MultiLineString':
         throw UnimplementedError();
       case 'Polygon':
@@ -49,6 +49,18 @@ class _GeoJSONReaderBase {
 
     throw VectorMapError(
         'Expected 2 coordinates but received ' + coordinates.length.toString());
+  }
+
+  MapGeometry _readLineString(Map<String, dynamic> map) {
+    _checkKeyOn(map, 'coordinates');
+    List coordinates = map['coordinates'];
+    List<MapPoint> points = [];
+    for (List xy in coordinates) {
+      double x = double.parse(xy[0].toString());
+      double y = double.parse(xy[1].toString());
+      points.add(MapPoint(x, y));
+    }
+    return MapLineString(points);
   }
 
   MapGeometry _readPolygon(Map<String, dynamic> map) {

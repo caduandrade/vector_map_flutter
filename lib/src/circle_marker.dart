@@ -36,6 +36,9 @@ class CircleMaker extends Marker {
 
   @override
   bool get visible => _radius > 0 ? true : false;
+
+  @override
+  bool get hasFill => true;
 }
 
 /// A [CircleMaker] builder.
