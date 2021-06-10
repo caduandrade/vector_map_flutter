@@ -3,14 +3,13 @@ import 'dart:ui';
 import 'package:vector_map/src/drawable/drawable_feature.dart';
 
 /// Defines a path to be painted on the map.
-class DrawablePath extends DrawableFeature {
-  DrawablePath(Path path, int pointsCount, this.hasFill)
+abstract class DrawablePath extends DrawableFeature {
+  DrawablePath(Path path, int pointsCount)
       : this._path = path,
         this._pointsCount = pointsCount;
 
   final Path _path;
   final int _pointsCount;
-  final bool hasFill;
 
   @override
   drawOn(Canvas canvas, Paint paint, double scale) {

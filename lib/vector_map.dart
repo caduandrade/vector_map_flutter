@@ -6,6 +6,8 @@ export 'src/error.dart';
 export 'src/drawable/drawable_feature_builder.dart';
 export 'src/drawable/drawable_feature.dart';
 export 'src/drawable/drawable_path.dart';
+export 'src/drawable/drawable_polygon.dart';
+export 'src/drawable/drawable_line.dart';
 export 'src/drawable/drawable_layer.dart';
 export 'src/drawable/marker.dart';
 export 'src/drawable/circle_marker.dart';

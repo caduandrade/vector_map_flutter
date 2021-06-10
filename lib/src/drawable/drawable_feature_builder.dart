@@ -2,7 +2,8 @@ import 'dart:ui';
 
 import 'package:vector_map/src/data_source.dart';
 import 'package:vector_map/src/drawable/drawable_feature.dart';
-import 'package:vector_map/src/drawable/drawable_path.dart';
+import 'package:vector_map/src/drawable/drawable_line.dart';
+import 'package:vector_map/src/drawable/drawable_polygon.dart';
 import 'package:vector_map/src/error.dart';
 import 'package:vector_map/src/matrix.dart';
 import 'package:vector_map/src/simplifier.dart';
@@ -56,7 +57,7 @@ class DrawableFeatureBuilder {
       GeometrySimplifier simplifier) {
     SimplifiedPath simplifiedPath =
         lineString.toSimplifiedPath(canvasMatrix, simplifier);
-    return DrawablePath(simplifiedPath.path, simplifiedPath.pointsCount, false);
+    return DrawableLine(simplifiedPath.path, simplifiedPath.pointsCount);
   }
 
   static DrawableFeature _linearRing(
@@ -67,7 +68,7 @@ class DrawableFeatureBuilder {
       GeometrySimplifier simplifier) {
     SimplifiedPath simplifiedPath =
         linearRing.toSimplifiedPath(canvasMatrix, simplifier);
-    return DrawablePath(simplifiedPath.path, simplifiedPath.pointsCount, true);
+    return DrawablePolygon(simplifiedPath.path, simplifiedPath.pointsCount);
   }
 
   static DrawableFeature _polygon(
@@ -78,7 +79,7 @@ class DrawableFeatureBuilder {
       GeometrySimplifier simplifier) {
     SimplifiedPath simplifiedPath =
         polygon.toSimplifiedPath(canvasMatrix, simplifier);
-    return DrawablePath(simplifiedPath.path, simplifiedPath.pointsCount, true);
+    return DrawablePolygon(simplifiedPath.path, simplifiedPath.pointsCount);
   }
 
   static DrawableFeature _multiPolygon(
@@ -95,6 +96,6 @@ class DrawableFeatureBuilder {
       pointsCount += simplifiedPath.pointsCount;
       path.addPath(simplifiedPath.path, Offset.zero);
     }
-    return DrawablePath(path, pointsCount, true);
+    return DrawablePolygon(path, pointsCount);
   }
 }
