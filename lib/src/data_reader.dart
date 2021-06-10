@@ -42,8 +42,8 @@ class _GeoJSONReaderBase {
     _checkKeyOn(map, 'coordinates');
     List coordinates = map['coordinates'];
     if (coordinates.length == 2) {
-      double x = double.parse(coordinates[0].toString());
-      double y = double.parse(coordinates[1].toString());
+      double x = _toDouble(coordinates[0]);
+      double y = _toDouble(coordinates[1]);
       return MapPoint(x, y);
     }
 
@@ -56,8 +56,8 @@ class _GeoJSONReaderBase {
     List coordinates = map['coordinates'];
     List<MapPoint> points = [];
     for (List xy in coordinates) {
-      double x = double.parse(xy[0].toString());
-      double y = double.parse(xy[1].toString());
+      double x = _toDouble(xy[0]);
+      double y = _toDouble(xy[1]);
       points.add(MapPoint(x, y));
     }
     return MapLineString(points);
@@ -73,8 +73,8 @@ class _GeoJSONReaderBase {
       List<MapPoint> points = [];
       List ring = rings[i];
       for (List xy in ring) {
-        double x = double.parse(xy[0].toString());
-        double y = double.parse(xy[1].toString());
+        double x = _toDouble(xy[0]);
+        double y = _toDouble(xy[1]);
         points.add(MapPoint(x, y));
       }
       if (i == 0) {
@@ -100,8 +100,8 @@ class _GeoJSONReaderBase {
         List<MapPoint> points = [];
         List ring = rings[i];
         for (List xy in ring) {
-          double x = double.parse(xy[0].toString());
-          double y = double.parse(xy[1].toString());
+          double x = _toDouble(xy[0]);
+          double y = _toDouble(xy[1]);
           points.add(MapPoint(x, y));
         }
         if (i == 0) {
@@ -115,6 +115,17 @@ class _GeoJSONReaderBase {
     }
 
     return MapMultiPolygon(mapPolygons);
+  }
+
+  /// Parses a dynamic coordinate to [double].
+  double _toDouble(dynamic coordinate) {
+    if (coordinate is double) {
+      return coordinate;
+    } else if (coordinate is int) {
+      return coordinate.toDouble();
+    }
+    // The coordinate shouldn't be a String but since it is, tries to parse.
+    return double.parse(coordinate.toString());
   }
 }
 
