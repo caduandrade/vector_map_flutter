@@ -297,7 +297,9 @@ class _MapPainter extends CustomPainter {
             drawableLayer.drawableFeatures[featureId]!;
 
         MapLayer layer = drawableLayer.layer;
-        if (drawableFeature.visible && layer.hoverTheme != null) {
+        if (drawableFeature.visible &&
+            layer.hoverTheme != null &&
+            drawableFeature.hasFill) {
           MapTheme hoverTheme = layer.hoverTheme!;
           Color? hoverColor = hoverTheme.getColor(layer.dataSource, feature);
           if (hoverColor != null || hoverTheme.contourColor != null) {
