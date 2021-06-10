@@ -6,12 +6,12 @@ import 'package:flutter/painting.dart';
 import 'package:flutter/widgets.dart';
 import 'package:vector_map/src/data_source.dart';
 import 'package:vector_map/src/debugger.dart';
+import 'package:vector_map/src/drawable/drawable_feature.dart';
+import 'package:vector_map/src/drawable/drawable_layer.dart';
 import 'package:vector_map/src/error.dart';
 import 'package:vector_map/src/layer.dart';
 import 'package:vector_map/src/map_resolution.dart';
 import 'package:vector_map/src/matrix.dart';
-import 'package:vector_map/src/paintable/paintable_feature.dart';
-import 'package:vector_map/src/paintable/paintable_layer.dart';
 import 'package:vector_map/src/simplifier.dart';
 import 'package:vector_map/src/theme.dart';
 
@@ -57,7 +57,7 @@ class VectorMap extends StatefulWidget {
 
   bool get hoverPaintable {
     for (MapLayer layer in layers) {
-      if (layer.hoverPaintable) {
+      if (layer.hoverDrawable) {
         return true;
       }
     }
@@ -206,16 +206,16 @@ class VectorMapState extends State<VectorMap> {
               continue;
             }
 
-            PaintableLayer paintableLayer =
-                _mapResolution!.paintableLayers[layerIndex];
-            if (paintableLayer.paintableFeatures.containsKey(feature.id) ==
+            DrawableLayer drawableLayer =
+                _mapResolution!.drawableLayers[layerIndex];
+            if (drawableLayer.drawableFeatures.containsKey(feature.id) ==
                 false) {
               throw VectorMapError(
-                  'No paintable geometry for id: ' + feature.id.toString());
+                  'No drawable geometry for id: ' + feature.id.toString());
             }
-            PaintableFeature paintableFeature =
-                paintableLayer.paintableFeatures[feature.id]!;
-            found = paintableFeature.contains(o);
+            DrawableFeature drawableFeature =
+                drawableLayer.drawableFeatures[feature.id]!;
+            found = drawableFeature.contains(o);
             if (found) {
               if (_hover == null ||
                   _hover!.layerIndex != layerIndex ||
@@ -267,9 +267,9 @@ class _MapPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     // drawing layers
     for (int layerIndex = 0;
-        layerIndex < mapResolution.paintableLayers.length;
+        layerIndex < mapResolution.drawableLayers.length;
         layerIndex++) {
-      PaintableLayer paintableLayer = mapResolution.paintableLayers[layerIndex];
+      DrawableLayer drawableLayer = mapResolution.drawableLayers[layerIndex];
 
       if (canvasMatrix.widgetSize == mapResolution.widgetSize) {
         canvas.drawImage(
@@ -277,7 +277,7 @@ class _MapPainter extends CustomPainter {
       } else {
         canvas.save();
         canvasMatrix.applyOn(canvas);
-        paintableLayer.drawContourOn(
+        drawableLayer.drawContourOn(
             canvas: canvas,
             contourThickness: contourThickness,
             scale: canvasMatrix.scale,
@@ -289,15 +289,15 @@ class _MapPainter extends CustomPainter {
       if (hover != null && hover!.layerIndex == layerIndex) {
         MapFeature feature = hover!.feature;
         int featureId = feature.id;
-        if (paintableLayer.paintableFeatures.containsKey(featureId) == false) {
+        if (drawableLayer.drawableFeatures.containsKey(featureId) == false) {
           throw VectorMapError('No path for id: $featureId');
         }
 
-        PaintableFeature paintableFeature =
-            paintableLayer.paintableFeatures[featureId]!;
+        DrawableFeature drawableFeature =
+            drawableLayer.drawableFeatures[featureId]!;
 
-        MapLayer layer = paintableLayer.layer;
-        if (paintableFeature.visible && layer.hoverTheme != null) {
+        MapLayer layer = drawableLayer.layer;
+        if (drawableFeature.visible && layer.hoverTheme != null) {
           MapTheme hoverTheme = layer.hoverTheme!;
           Color? hoverColor = hoverTheme.getColor(layer.dataSource, feature);
           if (hoverColor != null || hoverTheme.contourColor != null) {
@@ -310,12 +310,12 @@ class _MapPainter extends CustomPainter {
                 ..style = PaintingStyle.fill
                 ..color = hoverColor
                 ..isAntiAlias = true;
-              paintableFeature.drawOn(canvas, paint, canvasMatrix.scale);
+              drawableFeature.drawOn(canvas, paint, canvasMatrix.scale);
             }
 
             if (contourThickness > 0) {
-              _drawHoverContour(canvas, paintableLayer.layer, hoverTheme,
-                  paintableFeature, canvasMatrix);
+              _drawHoverContour(canvas, drawableLayer.layer, hoverTheme,
+                  drawableFeature, canvasMatrix);
             }
 
             canvas.restore();
@@ -326,36 +326,36 @@ class _MapPainter extends CustomPainter {
 
     // drawing the overlay hover
     if (contourThickness > 0 && overlayHoverContour && hover != null) {
-      PaintableLayer paintableLayer =
-          mapResolution.paintableLayers[hover!.layerIndex];
-      PaintableFeature paintableFeature =
-          paintableLayer.paintableFeatures[hover!.feature.id]!;
-      MapLayer layer = paintableLayer.layer;
-      if (paintableFeature.visible && layer.hoverTheme != null) {
+      DrawableLayer drawableLayer =
+          mapResolution.drawableLayers[hover!.layerIndex];
+      DrawableFeature drawableFeature =
+          drawableLayer.drawableFeatures[hover!.feature.id]!;
+      MapLayer layer = drawableLayer.layer;
+      if (drawableFeature.visible && layer.hoverTheme != null) {
         canvas.save();
         canvasMatrix.applyOn(canvas);
         MapTheme hoverTheme = layer.hoverTheme!;
-        _drawHoverContour(canvas, paintableLayer.layer, hoverTheme,
-            paintableFeature, canvasMatrix);
+        _drawHoverContour(canvas, drawableLayer.layer, hoverTheme,
+            drawableFeature, canvasMatrix);
         canvas.restore();
       }
     }
 
     // drawing labels
     for (int layerIndex = 0;
-        layerIndex < mapResolution.paintableLayers.length;
+        layerIndex < mapResolution.drawableLayers.length;
         layerIndex++) {
-      PaintableLayer paintableLayer = mapResolution.paintableLayers[layerIndex];
-      MapLayer layer = paintableLayer.layer;
+      DrawableLayer drawableLayer = mapResolution.drawableLayers[layerIndex];
+      MapLayer layer = drawableLayer.layer;
       MapDataSource dataSource = layer.dataSource;
       MapTheme theme = layer.theme;
       MapTheme? hoverTheme = layer.hoverTheme;
       if (theme.labelVisibility != null ||
           (hoverTheme != null && hoverTheme.labelVisibility != null)) {
         for (MapFeature feature in dataSource.features.values) {
-          PaintableFeature paintableFeature =
-              paintableLayer.paintableFeatures[feature.id]!;
-          if (paintableFeature.visible && feature.label != null) {
+          DrawableFeature drawableFeature =
+              drawableLayer.drawableFeatures[feature.id]!;
+          if (drawableFeature.visible && feature.label != null) {
             LabelVisibility? labelVisibility;
             if (hover != null &&
                 layerIndex == hover!.layerIndex &&
@@ -397,7 +397,7 @@ class _MapPainter extends CustomPainter {
   }
 
   _drawHoverContour(Canvas canvas, MapLayer layer, MapTheme hoverTheme,
-      PaintableFeature paintableFeature, CanvasMatrix canvasMatrix) {
+      DrawableFeature drawableFeature, CanvasMatrix canvasMatrix) {
     Color contourColor = MapTheme.defaultContourColor;
     if (hoverTheme.contourColor != null) {
       contourColor = hoverTheme.contourColor!;
@@ -410,7 +410,7 @@ class _MapPainter extends CustomPainter {
       ..color = contourColor
       ..strokeWidth = contourThickness / canvasMatrix.scale
       ..isAntiAlias = true;
-    paintableFeature.drawOn(canvas, paint, canvasMatrix.scale);
+    drawableFeature.drawOn(canvas, paint, canvasMatrix.scale);
   }
 
   _drawLabel(Canvas canvas, int layerIndex, MapFeature feature,
@@ -428,11 +428,11 @@ class _MapPainter extends CustomPainter {
       );
     }
 
-    PaintableLayer paintableLayer = mapResolution.paintableLayers[layerIndex];
-    PaintableFeature paintableFeature =
-        paintableLayer.paintableFeatures[feature.id]!;
+    DrawableLayer drawableLayer = mapResolution.drawableLayers[layerIndex];
+    DrawableFeature drawableFeature =
+        drawableLayer.drawableFeatures[feature.id]!;
     Rect bounds = MatrixUtils.transformRect(
-        canvasMatrix.geometryToScreen, paintableFeature.getBounds());
+        canvasMatrix.geometryToScreen, drawableFeature.getBounds());
     _drawText(canvas, bounds.center, feature.label!, labelStyle);
   }
 

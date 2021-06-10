@@ -5,11 +5,11 @@ import 'dart:ui';
 import 'package:flutter/painting.dart';
 import 'package:vector_map/src/data_source.dart';
 import 'package:vector_map/src/debugger.dart';
+import 'package:vector_map/src/drawable/drawable_feature.dart';
+import 'package:vector_map/src/drawable/drawable_feature_builder.dart';
+import 'package:vector_map/src/drawable/drawable_layer.dart';
 import 'package:vector_map/src/layer.dart';
 import 'package:vector_map/src/matrix.dart';
-import 'package:vector_map/src/paintable/paintable_feature.dart';
-import 'package:vector_map/src/paintable/paintable_feature_builder.dart';
-import 'package:vector_map/src/paintable/paintable_layer.dart';
 import 'package:vector_map/src/simplifier.dart';
 import 'package:vector_map/src/theme.dart';
 
@@ -23,12 +23,12 @@ typedef OnFinish = Function(MapResolution newMapResolution);
 class MapResolution {
   MapResolution._(
       {required this.widgetSize,
-      required this.paintableLayers,
+      required this.drawableLayers,
       required this.layerBuffers,
       required this.pointsCount});
 
   final Size widgetSize;
-  final UnmodifiableListView<PaintableLayer> paintableLayers;
+  final UnmodifiableListView<DrawableLayer> drawableLayers;
   final UnmodifiableListView<Image> layerBuffers;
   final int pointsCount;
 
@@ -56,7 +56,7 @@ class MapResolutionBuilder {
   final GeometrySimplifier simplifier;
 
   final OnFinish onFinish;
-  final List<PaintableLayer> _paintableLayers = [];
+  final List<DrawableLayer> _drawableLayers = [];
   final List<Image> _layerBuffers = [];
 
   final MapDebugger? debugger;
@@ -70,11 +70,11 @@ class MapResolutionBuilder {
   start() async {
     if (_state == _State.waiting) {
       debugger?.openMultiResolutionTime();
-      debugger?.clearPaintableBuildDuration();
+      debugger?.clearDrawableBuildDuration();
       debugger?.clearBufferBuildDuration();
       _state = _State.running;
 
-      _paintableLayers.clear();
+      _drawableLayers.clear();
       _layerBuffers.clear();
 
       int pointsCount = 0;
@@ -82,36 +82,35 @@ class MapResolutionBuilder {
         MapDataSource dataSource = layer.dataSource;
         MapTheme theme = layer.theme;
 
-        Map<int, PaintableFeature> paintableFeatures =
-            Map<int, PaintableFeature>();
+        Map<int, DrawableFeature> drawableFeatures =
+            Map<int, DrawableFeature>();
 
         for (MapFeature feature in dataSource.features.values) {
           if (_state == _State.stopped) {
             return;
           }
-          debugger?.openPaintableBuildDuration();
-          PaintableFeature paintableFeature = PaintableFeatureBuilder.build(
+          debugger?.openDrawableBuildDuration();
+          DrawableFeature drawableFeature = DrawableFeatureBuilder.build(
               dataSource, feature, theme, canvasMatrix, simplifier);
-          debugger?.closePaintableBuildDuration();
-          pointsCount += paintableFeature.pointsCount;
-          paintableFeatures[feature.id] = paintableFeature;
+          debugger?.closeDrawableBuildDuration();
+          pointsCount += drawableFeature.pointsCount;
+          drawableFeatures[feature.id] = drawableFeature;
         }
-        PaintableLayer paintableLayer =
-            PaintableLayer(layer, paintableFeatures);
+        DrawableLayer drawableLayer = DrawableLayer(layer, drawableFeatures);
         debugger?.openBufferBuildDuration();
-        Image image = await _createBuffer(canvasMatrix, paintableLayer);
+        Image image = await _createBuffer(canvasMatrix, drawableLayer);
         debugger?.closeBufferBuildDuration();
-        _paintableLayers.add(paintableLayer);
+        _drawableLayers.add(drawableLayer);
         _layerBuffers.add(image);
       }
       if (_state != _State.stopped) {
-        debugger?.updatePaintableBuildDuration();
+        debugger?.updateDrawableBuildDuration();
         debugger?.updateBufferBuildDuration();
         debugger?.closeMultiResolutionTime();
 
         onFinish(MapResolution._(
             widgetSize: canvasMatrix.widgetSize,
-            paintableLayers: UnmodifiableListView(_paintableLayers),
+            drawableLayers: UnmodifiableListView(_drawableLayers),
             layerBuffers: UnmodifiableListView(_layerBuffers),
             pointsCount: pointsCount));
       }
@@ -119,7 +118,7 @@ class MapResolutionBuilder {
   }
 
   Future<Image> _createBuffer(
-      CanvasMatrix canvasMatrix, PaintableLayer paintableLayer) async {
+      CanvasMatrix canvasMatrix, DrawableLayer drawableLayer) async {
     PictureRecorder recorder = PictureRecorder();
     Canvas canvas = new Canvas(
         recorder,
@@ -131,7 +130,7 @@ class MapResolutionBuilder {
     canvas.save();
     canvasMatrix.applyOn(canvas);
 
-    paintableLayer.drawOn(
+    drawableLayer.drawOn(
         canvas: canvas,
         contourThickness: contourThickness,
         scale: canvasMatrix.scale,

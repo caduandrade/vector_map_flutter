@@ -36,7 +36,7 @@ class MapDebugger extends ChangeNotifier {
   int _originalPointsCount = 0;
   int _simplifiedPointsCount = 0;
 
-  DurationDebugger _paintableBuildDuration = DurationDebugger();
+  DurationDebugger _drawableBuildDuration = DurationDebugger();
   DurationDebugger _bufferBuildDuration = DurationDebugger();
 
   DateTime? _initialMultiResolutionTime;
@@ -56,21 +56,21 @@ class MapDebugger extends ChangeNotifier {
     notifyListeners();
   }
 
-  clearPaintableBuildDuration() {
-    _paintableBuildDuration.clear();
+  clearDrawableBuildDuration() {
+    _drawableBuildDuration.clear();
   }
 
-  updatePaintableBuildDuration() {
-    _paintableBuildDuration.update();
+  updateDrawableBuildDuration() {
+    _drawableBuildDuration.update();
     notifyListeners();
   }
 
-  openPaintableBuildDuration() {
-    _paintableBuildDuration.openDuration();
+  openDrawableBuildDuration() {
+    _drawableBuildDuration.openDuration();
   }
 
-  closePaintableBuildDuration() {
-    _paintableBuildDuration.closeDuration();
+  closeDrawableBuildDuration() {
+    _drawableBuildDuration.closeDuration();
   }
 
   clearBufferBuildDuration() {
@@ -136,8 +136,8 @@ class MapDebuggerState extends State<MapDebuggerWidget> {
 
   @override
   Widget build(BuildContext context) {
-    Duration paintableDuration = Duration(
-        milliseconds: widget.debugger._paintableBuildDuration._lastDuration);
+    Duration drawableDuration = Duration(
+        milliseconds: widget.debugger._drawableBuildDuration._lastDuration);
     Duration bufferDuration = Duration(
         milliseconds: widget.debugger._bufferBuildDuration._lastDuration);
 
@@ -148,8 +148,8 @@ class MapDebuggerState extends State<MapDebuggerWidget> {
           formatInt(widget.debugger._originalPointsCount)),
       Text('Simplified points: ' +
           formatInt(widget.debugger._simplifiedPointsCount)),
-      Text('Last paintable build duration: ' +
-          paintableDuration.inMilliseconds.toString() +
+      Text('Last drawable build duration: ' +
+          drawableDuration.inMilliseconds.toString() +
           'ms'),
       Text('Last buffer build duration: ' +
           bufferDuration.inMilliseconds.toString() +

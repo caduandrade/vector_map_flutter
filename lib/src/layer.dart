@@ -13,9 +13,9 @@ class MapLayer {
   final MapTheme? hoverTheme;
   final String? name;
 
-  /// Indicates if the hover is paintable, if there is any hover theme and
+  /// Indicates if the hover is drawable, if there is any hover theme and
   /// if it has a set value.
-  bool get hoverPaintable {
+  bool get hoverDrawable {
     return hoverTheme != null && hoverTheme!.hasValue();
   }
 

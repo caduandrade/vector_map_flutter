@@ -1,16 +1,16 @@
 import 'dart:ui';
 
 import 'package:vector_map/src/data_source.dart';
+import 'package:vector_map/src/drawable/drawable_feature.dart';
+import 'package:vector_map/src/drawable/drawable_path.dart';
 import 'package:vector_map/src/error.dart';
 import 'package:vector_map/src/matrix.dart';
-import 'package:vector_map/src/paintable/paintable_feature.dart';
-import 'package:vector_map/src/paintable/paintable_path.dart';
 import 'package:vector_map/src/simplifier.dart';
 import 'package:vector_map/src/theme.dart';
 
-/// [PaintableFeature] builder.
-class PaintableFeatureBuilder {
-  static PaintableFeature build(
+/// [DrawableFeature] builder.
+class DrawableFeatureBuilder {
+  static DrawableFeature build(
       MapDataSource dataSource,
       MapFeature feature,
       MapTheme theme,
@@ -34,7 +34,7 @@ class PaintableFeatureBuilder {
     }
   }
 
-  static PaintableFeature _point(
+  static DrawableFeature _point(
       MapDataSource dataSource,
       MapFeature feature,
       MapPoint point,
@@ -48,7 +48,7 @@ class PaintableFeatureBuilder {
         scale: canvasMatrix.scale);
   }
 
-  static PaintableFeature _lineString(
+  static DrawableFeature _lineString(
       MapFeature feature,
       MapLineString lineString,
       MapTheme theme,
@@ -56,11 +56,10 @@ class PaintableFeatureBuilder {
       GeometrySimplifier simplifier) {
     SimplifiedPath simplifiedPath =
         lineString.toSimplifiedPath(canvasMatrix, simplifier);
-    return PaintablePath(
-        simplifiedPath.path, simplifiedPath.pointsCount, false);
+    return DrawablePath(simplifiedPath.path, simplifiedPath.pointsCount, false);
   }
 
-  static PaintableFeature _linearRing(
+  static DrawableFeature _linearRing(
       MapFeature feature,
       MapLinearRing linearRing,
       MapTheme theme,
@@ -68,10 +67,10 @@ class PaintableFeatureBuilder {
       GeometrySimplifier simplifier) {
     SimplifiedPath simplifiedPath =
         linearRing.toSimplifiedPath(canvasMatrix, simplifier);
-    return PaintablePath(simplifiedPath.path, simplifiedPath.pointsCount, true);
+    return DrawablePath(simplifiedPath.path, simplifiedPath.pointsCount, true);
   }
 
-  static PaintableFeature _polygon(
+  static DrawableFeature _polygon(
       MapFeature feature,
       MapPolygon polygon,
       MapTheme theme,
@@ -79,10 +78,10 @@ class PaintableFeatureBuilder {
       GeometrySimplifier simplifier) {
     SimplifiedPath simplifiedPath =
         polygon.toSimplifiedPath(canvasMatrix, simplifier);
-    return PaintablePath(simplifiedPath.path, simplifiedPath.pointsCount, true);
+    return DrawablePath(simplifiedPath.path, simplifiedPath.pointsCount, true);
   }
 
-  static PaintableFeature _multiPolygon(
+  static DrawableFeature _multiPolygon(
       MapFeature feature,
       MapMultiPolygon multiPolygon,
       MapTheme theme,
@@ -96,6 +95,6 @@ class PaintableFeatureBuilder {
       pointsCount += simplifiedPath.pointsCount;
       path.addPath(simplifiedPath.path, Offset.zero);
     }
-    return PaintablePath(path, pointsCount, true);
+    return DrawablePath(path, pointsCount, true);
   }
 }

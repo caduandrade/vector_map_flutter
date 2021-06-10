@@ -1,10 +1,10 @@
 import 'dart:ui';
 
-import 'package:vector_map/src/paintable/paintable_feature.dart';
+import 'package:vector_map/src/drawable/drawable_feature.dart';
 
 /// Defines a path to be painted on the map.
-class PaintablePath extends PaintableFeature {
-  PaintablePath(Path path, int pointsCount, this.hasFill)
+class DrawablePath extends DrawableFeature {
+  DrawablePath(Path path, int pointsCount, this.hasFill)
       : this._path = path,
         this._pointsCount = pointsCount;
 

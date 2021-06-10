@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:vector_map/src/data_source.dart';
+import 'package:vector_map/src/drawable/circle_marker.dart';
+import 'package:vector_map/src/drawable/marker.dart';
 import 'package:vector_map/src/error.dart';
-import 'package:vector_map/src/paintable/circle_marker.dart';
-import 'package:vector_map/src/paintable/marker.dart';
 
 typedef LabelVisibility = bool Function(MapFeature feature);
 
