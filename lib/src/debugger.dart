@@ -148,10 +148,15 @@ class MapDebuggerState extends State<MapDebuggerWidget> {
           formatInt(widget.debugger._originalPointsCount)),
       Text('Simplified points: ' +
           formatInt(widget.debugger._simplifiedPointsCount)),
-      Text('Last paintable build duration: ' + paintableDuration.toString()),
-      Text('Last buffer build duration: ' + bufferDuration.toString()),
+      Text('Last paintable build duration: ' +
+          paintableDuration.inMilliseconds.toString() +
+          'ms'),
+      Text('Last buffer build duration: ' +
+          bufferDuration.inMilliseconds.toString() +
+          'ms'),
       Text('Last multi resolution duration: ' +
-          widget.debugger._multiResolutionDuration.toString())
+          widget.debugger._multiResolutionDuration.inMilliseconds.toString() +
+          'ms')
     ], crossAxisAlignment: CrossAxisAlignment.start);
   }
 
