@@ -88,8 +88,8 @@ class _GeoJSONReaderBase {
         List<MapPoint> points = [];
         List ring = rings[i];
         for (List xy in ring) {
-          double x = xy[0];
-          double y = xy[1];
+          double x = double.parse(xy[0].toString());
+          double y = double.parse(xy[1].toString());
           points.add(MapPoint(x, y));
         }
         if (i == 0) {
