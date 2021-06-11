@@ -1,4 +1,6 @@
-import 'package:vector_map/src/data_source.dart';
+
+
+import 'package:vector_map/src/data/map_feature.dart';
 
 typedef FeatureClickListener = Function(MapFeature feature);
 

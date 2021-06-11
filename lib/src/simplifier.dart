@@ -1,9 +1,9 @@
 import 'dart:typed_data';
 
 import 'package:flutter/rendering.dart';
+import 'package:vector_map/src/data/geometries.dart';
 import 'package:vector_map/src/matrix.dart';
 
-import 'data_source.dart';
 
 /// Simplifies geometry by ignoring unnecessary points for viewing
 /// on the screen.

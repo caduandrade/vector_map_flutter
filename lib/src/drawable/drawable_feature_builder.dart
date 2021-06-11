@@ -1,6 +1,9 @@
 import 'dart:ui';
 
-import 'package:vector_map/src/data_source.dart';
+import 'package:vector_map/src/data/data_source.dart';
+import 'package:vector_map/src/data/geometries.dart';
+import 'package:vector_map/src/data/map_feature.dart';
+import 'package:vector_map/src/data/simplified_path.dart';
 import 'package:vector_map/src/drawable/drawable_feature.dart';
 import 'package:vector_map/src/drawable/drawable_line.dart';
 import 'package:vector_map/src/drawable/drawable_polygon.dart';

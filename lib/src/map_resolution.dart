@@ -3,7 +3,8 @@ import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:flutter/painting.dart';
-import 'package:vector_map/src/data_source.dart';
+import 'package:vector_map/src/data/data_source.dart';
+import 'package:vector_map/src/data/map_feature.dart';
 import 'package:vector_map/src/debugger.dart';
 import 'package:vector_map/src/drawable/drawable_feature.dart';
 import 'package:vector_map/src/drawable/drawable_feature_builder.dart';

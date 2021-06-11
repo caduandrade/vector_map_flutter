@@ -1,7 +1,11 @@
 library vector_map;
 
 export 'src/data_reader.dart';
-export 'src/data_source.dart';
+export 'src/data/data_source.dart';
+export 'src/data/geometries.dart';
+export 'src/data/map_feature.dart';
+export 'src/data/simplified_path.dart';
+export 'src/data/property_limits.dart';
 export 'src/error.dart';
 export 'src/typedefs.dart';
 export 'src/drawable/drawable_feature_builder.dart';

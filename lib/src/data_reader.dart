@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'dart:ui';
 
-import 'package:vector_map/src/data_source.dart';
+import 'package:vector_map/src/data/geometries.dart';
+import 'package:vector_map/src/data/map_feature.dart';
 import 'package:vector_map/src/error.dart';
 
 /// Generic GeoJSON reader.
@@ -133,12 +133,11 @@ enum ColorValueFormat { hex }
 
 /// Properties read.
 class _Properties {
-  _Properties({this.label, this.values, this.color});
+  _Properties({this.label, this.values});
 
   /// Label value extracted from [labelKey].
   final String? label;
   final Map<String, dynamic>? values;
-  final Color? color;
 }
 
 /// [MapFeature] reader
@@ -204,7 +203,6 @@ class MapFeatureReader extends _GeoJSONReaderBase {
   _Properties _readProperties(Map<String, dynamic> map) {
     String? label;
     Map<String, dynamic>? values;
-    Color? color;
     if (labelKey != null && map.containsKey(labelKey)) {
       // converting dynamic to String
       label = map[labelKey].toString();
@@ -228,7 +226,7 @@ class MapFeatureReader extends _GeoJSONReaderBase {
         }
       }
     }
-    return _Properties(label: label, values: values, color: color);
+    return _Properties(label: label, values: values);
   }
 
   _addFeature({required MapGeometry geometry, _Properties? properties}) {
@@ -236,8 +234,7 @@ class MapFeatureReader extends _GeoJSONReaderBase {
         id: _list.length + 1,
         geometry: geometry,
         properties: properties?.values,
-        label: properties?.label,
-        color: properties?.color));
+        label: properties?.label));
   }
 }
 
