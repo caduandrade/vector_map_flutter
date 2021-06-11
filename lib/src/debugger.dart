@@ -1,5 +1,5 @@
 import 'package:flutter/cupertino.dart';
-import 'package:vector_map/src/layer.dart';
+import 'package:vector_map/src/data/map_layer.dart';
 import 'package:vector_map/src/map_resolution.dart';
 
 class DurationDebugger {

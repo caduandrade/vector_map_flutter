@@ -3,13 +3,13 @@ import 'dart:typed_data';
 import 'dart:ui';
 
 import 'package:flutter/painting.dart';
-import 'package:vector_map/src/data/data_source.dart';
+import 'package:vector_map/src/data/map_data_source.dart';
 import 'package:vector_map/src/data/map_feature.dart';
 import 'package:vector_map/src/debugger.dart';
 import 'package:vector_map/src/drawable/drawable_feature.dart';
 import 'package:vector_map/src/drawable/drawable_feature_builder.dart';
 import 'package:vector_map/src/drawable/drawable_layer.dart';
-import 'package:vector_map/src/layer.dart';
+import 'package:vector_map/src/data/map_layer.dart';
 import 'package:vector_map/src/matrix.dart';
 import 'package:vector_map/src/simplifier.dart';
 import 'package:vector_map/src/theme/theme.dart';
