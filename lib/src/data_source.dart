@@ -119,6 +119,7 @@ class MapDataSource {
   }
 
   /// Loads a [MapDataSource] from GeoJSON.
+  ///
   /// Geometries are always loaded.
   /// The [keys] argument defines which properties must be loaded.
   /// The [parseToNumber] argument defines which properties will have

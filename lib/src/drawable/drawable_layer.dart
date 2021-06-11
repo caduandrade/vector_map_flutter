@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:vector_map/src/data_source.dart';
 import 'package:vector_map/src/drawable/drawable_feature.dart';
 import 'package:vector_map/src/layer.dart';
-import 'package:vector_map/src/theme.dart';
+import 'package:vector_map/src/theme/theme.dart';
 
 /// Holds all geometry layers to be paint in the current resolution.
 class DrawableLayer {

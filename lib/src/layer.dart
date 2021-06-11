@@ -1,6 +1,6 @@
 import 'package:flutter/painting.dart';
 import 'package:vector_map/src/data_source.dart';
-import 'package:vector_map/src/theme.dart';
+import 'package:vector_map/src/theme/theme.dart';
 
 /// Layer for [VectorMap].
 class MapLayer {

@@ -163,7 +163,7 @@ Setting the colors for the property values:
 ```dart
     MapLayer layer = MapLayer(
         dataSource: polygons,
-        theme: MapTheme.value(
+        theme: MapValueTheme(
             contourColor: Colors.white,
             labelVisibility: (feature) => true,
             key: 'Seq',
@@ -195,7 +195,7 @@ Setting the rules:
 ```dart
     MapLayer layer = MapLayer(
         dataSource: polygons,
-        theme: MapTheme.rule(contourColor: Colors.white, colorRules: [
+        theme: MapRuleTheme(contourColor: Colors.white, colorRules: [
           (feature) {
             String? value = feature.getValue('Name');
             return value == 'Faraday' ? Colors.red : null;
@@ -232,7 +232,7 @@ Uses the min and max values read from data source.
 ```dart
     MapLayer layer = MapLayer(
         dataSource: polygons,
-        theme: MapTheme.gradient(
+        theme: MapGradientTheme(
             contourColor: Colors.white,
             labelVisibility: (feature) => true,
             key: 'Seq',
@@ -256,7 +256,7 @@ If the `max` value is set, all higher values will be displayed using the last gr
 ```dart
     MapLayer layer = MapLayer(
         dataSource: polygons,
-        theme: MapTheme.gradient(
+        theme: MapGradientTheme(
             contourColor: Colors.white,
             labelVisibility: (feature) => true,
             key: 'Seq',
@@ -350,7 +350,7 @@ If the `max` value is set, all higher values will be displayed using the last gr
     // coloring only the 'Darwin' feature
     MapLayer layer = MapLayer(
         dataSource: polygons,
-        theme: MapTheme.value(key: 'Seq', colors: {4: Colors.green}),
+        theme: MapValueTheme(key: 'Seq', colors: {4: Colors.green}),
         hoverTheme: MapTheme(color: Colors.green[900]!));
 
     // enabling hover only for the 'Darwin' feature

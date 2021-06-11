@@ -13,7 +13,7 @@ import 'package:vector_map/src/layer.dart';
 import 'package:vector_map/src/map_resolution.dart';
 import 'package:vector_map/src/matrix.dart';
 import 'package:vector_map/src/simplifier.dart';
-import 'package:vector_map/src/theme.dart';
+import 'package:vector_map/src/theme/theme.dart';
 
 /// Vector map widget.
 class VectorMap extends StatefulWidget {

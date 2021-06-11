@@ -11,15 +11,16 @@ import 'package:vector_map/src/drawable/drawable_layer.dart';
 import 'package:vector_map/src/layer.dart';
 import 'package:vector_map/src/matrix.dart';
 import 'package:vector_map/src/simplifier.dart';
-import 'package:vector_map/src/theme.dart';
+import 'package:vector_map/src/theme/theme.dart';
 
 enum _State { waiting, running, stopped }
 
 /// Event to signal that a map resolution has been created.
 typedef OnFinish = Function(MapResolution newMapResolution);
 
-/// Representation of the map in a given resolution. Stores simplified
-/// paths and an image buffer.
+/// Representation of the map in a given resolution.
+///
+/// Stores simplified paths and an image buffer.
 class MapResolution {
   MapResolution._(
       {required this.widgetSize,

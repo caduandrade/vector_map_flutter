@@ -7,7 +7,7 @@ import 'package:vector_map/src/drawable/drawable_polygon.dart';
 import 'package:vector_map/src/error.dart';
 import 'package:vector_map/src/matrix.dart';
 import 'package:vector_map/src/simplifier.dart';
-import 'package:vector_map/src/theme.dart';
+import 'package:vector_map/src/theme/theme.dart';
 
 /// [DrawableFeature] builder.
 class DrawableFeatureBuilder {

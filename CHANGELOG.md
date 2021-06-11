@@ -1,3 +1,7 @@
+## [0.4.0] - ?
+
+* GeoJSON line geometry reader
+
 ## [0.3.0] - June 5, 2021
 
 * Drastic reduction in package size
