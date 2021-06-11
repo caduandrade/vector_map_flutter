@@ -14,6 +14,7 @@ import 'package:vector_map/src/map_resolution.dart';
 import 'package:vector_map/src/matrix.dart';
 import 'package:vector_map/src/simplifier.dart';
 import 'package:vector_map/src/theme/theme.dart';
+import 'package:vector_map/src/typedefs.dart';
 
 /// Vector map widget.
 class VectorMap extends StatefulWidget {
@@ -64,12 +65,6 @@ class VectorMap extends StatefulWidget {
     return false;
   }
 }
-
-typedef FeatureClickListener = Function(MapFeature feature);
-
-typedef HoverRule = bool Function(MapFeature feature);
-
-typedef HoverListener = Function(MapFeature? feature);
 
 /// [VectorMap] state.
 class VectorMapState extends State<VectorMap> {
@@ -189,46 +184,28 @@ class VectorMapState extends State<VectorMap> {
     }
   }
 
+  /// Triggered when a pointer moves over the map.
   _onHover(PointerHoverEvent event, CanvasMatrix canvasMatrix) {
     if (_mapResolution != null) {
-      Offset o = MatrixUtils.transformPoint(
+      Offset worldCoordinate = MatrixUtils.transformPoint(
           canvasMatrix.screenToWorld, event.localPosition);
 
-      bool found = false;
-      if (widget.layers.isNotEmpty) {
-        for (int layerIndex = widget.layers.length - 1;
-            found == false && layerIndex >= 0;
-            layerIndex--) {
-          MapLayer layer = widget.layers[layerIndex];
-          for (MapFeature feature in layer.dataSource.features.values) {
-            if (widget.hoverRule != null &&
-                widget.hoverRule!(feature) == false) {
-              continue;
-            }
-
-            DrawableLayer drawableLayer =
-                _mapResolution!.drawableLayers[layerIndex];
-            if (drawableLayer.drawableFeatures.containsKey(feature.id) ==
-                false) {
-              throw VectorMapError(
-                  'No drawable geometry for id: ' + feature.id.toString());
-            }
-            DrawableFeature drawableFeature =
-                drawableLayer.drawableFeatures[feature.id]!;
-            found = drawableFeature.contains(o);
-            if (found) {
-              if (_hover == null ||
-                  _hover!.layerIndex != layerIndex ||
-                  _hover!.feature != feature) {
-                _updateHover(_HoverFeature(layerIndex, feature));
-              }
-              break;
-            }
-          }
+      _HoverFeature? hoverFeature;
+      for (int layerIndex = _mapResolution!.drawableLayers.length - 1;
+          layerIndex >= 0;
+          layerIndex--) {
+        DrawableLayer drawableLayer =
+            _mapResolution!.drawableLayers[layerIndex];
+        MapFeature? feature =
+            drawableLayer.featureContains(widget.hoverRule, worldCoordinate);
+        if (feature != null) {
+          hoverFeature = _HoverFeature(layerIndex, feature);
+          break;
         }
       }
-      if (found == false && _hover != null) {
-        _updateHover(null);
+
+      if (_hover != hoverFeature) {
+        _updateHover(hoverFeature);
       }
     }
   }
@@ -477,4 +454,15 @@ class _HoverFeature {
 
   final MapFeature feature;
   final int layerIndex;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is _HoverFeature &&
+          runtimeType == other.runtimeType &&
+          feature == other.feature &&
+          layerIndex == other.layerIndex;
+
+  @override
+  int get hashCode => feature.hashCode ^ layerIndex.hashCode;
 }

@@ -2,8 +2,10 @@ import 'dart:ui';
 
 import 'package:vector_map/src/data_source.dart';
 import 'package:vector_map/src/drawable/drawable_feature.dart';
+import 'package:vector_map/src/error.dart';
 import 'package:vector_map/src/layer.dart';
 import 'package:vector_map/src/theme/theme.dart';
+import 'package:vector_map/src/typedefs.dart';
 
 /// Holds all geometry layers to be paint in the current resolution.
 class DrawableLayer {
@@ -11,6 +13,24 @@ class DrawableLayer {
 
   final MapLayer layer;
   final Map<int, DrawableFeature> drawableFeatures;
+
+  /// Finds the first feature that contains a coordinate.
+  MapFeature? featureContains(HoverRule? hoverRule, Offset worldCoordinate) {
+    for (MapFeature feature in layer.dataSource.features.values) {
+      if (hoverRule != null && hoverRule(feature) == false) {
+        continue;
+      }
+
+      if (drawableFeatures.containsKey(feature.id) == false) {
+        throw VectorMapError(
+            'No drawable geometry for id: ' + feature.id.toString());
+      }
+      DrawableFeature drawableFeature = drawableFeatures[feature.id]!;
+      if (drawableFeature.contains(worldCoordinate)) {
+        return feature;
+      }
+    }
+  }
 
   drawOn(
       {required Canvas canvas,

@@ -3,6 +3,7 @@ library vector_map;
 export 'src/data_reader.dart';
 export 'src/data_source.dart';
 export 'src/error.dart';
+export 'src/typedefs.dart';
 export 'src/drawable/drawable_feature_builder.dart';
 export 'src/drawable/drawable_feature.dart';
 export 'src/drawable/drawable_path.dart';
