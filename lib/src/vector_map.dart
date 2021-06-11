@@ -55,7 +55,7 @@ class VectorMap extends StatefulWidget {
   @override
   State<StatefulWidget> createState() => VectorMapState();
 
-  bool get hoverPaintable {
+  bool get hoverDrawable {
     for (MapLayer layer in layers) {
       if (layer.hoverDrawable) {
         return true;
@@ -160,7 +160,7 @@ class VectorMapState extends State<VectorMap> {
 
         Widget map = CustomPaint(painter: mapPainter, child: Container());
 
-        if (widget.hoverPaintable ||
+        if (widget.hoverDrawable ||
             widget.hoverListener != null ||
             widget.clickListener != null) {
           map = MouseRegion(
@@ -234,7 +234,7 @@ class VectorMapState extends State<VectorMap> {
   }
 
   _updateHover(_HoverFeature? newHover) {
-    if (widget.hoverPaintable) {
+    if (widget.hoverDrawable) {
       // repaint
       setState(() {
         _hover = newHover;
