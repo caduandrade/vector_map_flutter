@@ -130,7 +130,7 @@ class VectorMapState extends State<VectorMap> {
         CanvasMatrix canvasMatrix = CanvasMatrix(
             widgetWidth: constraints.maxWidth,
             widgetHeight: constraints.maxHeight,
-            geometryBounds: widget.layersBounds!);
+            worldBounds: widget.layersBounds!);
 
         if (_lastBuildSize != canvasMatrix.widgetSize) {
           _lastBuildSize = canvasMatrix.widgetSize;
@@ -192,7 +192,7 @@ class VectorMapState extends State<VectorMap> {
   _onHover(PointerHoverEvent event, CanvasMatrix canvasMatrix) {
     if (_mapResolution != null) {
       Offset o = MatrixUtils.transformPoint(
-          canvasMatrix.screenToGeometry, event.localPosition);
+          canvasMatrix.screenToWorld, event.localPosition);
 
       bool found = false;
       if (widget.layers.isNotEmpty) {
@@ -434,7 +434,7 @@ class _MapPainter extends CustomPainter {
     DrawableFeature drawableFeature =
         drawableLayer.drawableFeatures[feature.id]!;
     Rect bounds = MatrixUtils.transformRect(
-        canvasMatrix.geometryToScreen, drawableFeature.getBounds());
+        canvasMatrix.worldToScreen, drawableFeature.getBounds());
     _drawText(canvas, bounds.center, feature.label!, labelStyle);
   }
 

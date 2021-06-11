@@ -44,7 +44,7 @@ class IntegerSimplifier extends GeometrySimplifier {
     MapPoint? lastMapPoint;
     for (MapPoint point in points) {
       MapPoint transformedPoint =
-          transformPoint(canvasMatrix.geometryToScreen, point);
+          transformPoint(canvasMatrix.worldToScreen, point);
 
       transformedPoint = MapPoint(transformedPoint.x.truncateToDouble(),
           transformedPoint.y.truncateToDouble());
