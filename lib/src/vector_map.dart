@@ -120,9 +120,9 @@ class VectorMapState extends State<VectorMap> {
       padding = EdgeInsets.all(widget.padding!);
     }
 
-    Widget? content;
+    Widget? layoutBuilder;
     if (widget.layers.isNotEmpty) {
-      content = LayoutBuilder(
+      layoutBuilder = LayoutBuilder(
           builder: (BuildContext context, BoxConstraints constraints) {
         CanvasMatrix canvasMatrix = CanvasMatrix(
             widgetWidth: constraints.maxWidth,
@@ -155,29 +155,26 @@ class VectorMapState extends State<VectorMap> {
             contourThickness: widget.contourThickness,
             overlayHoverContour: widget.overlayHoverContour);
 
-        Widget map = CustomPaint(painter: mapPainter, child: Container());
+        CustomPaint customPaint =
+            CustomPaint(painter: mapPainter, child: Container());
 
-        if (widget.hoverDrawable ||
-            widget.hoverListener != null ||
-            widget.clickListener != null) {
-          map = MouseRegion(
-            child: map,
-            onHover: (event) => _onHover(event, canvasMatrix),
-            onExit: (event) {
-              if (_hover != null) {
-                _updateHover(null);
-              }
-            },
-          );
-        }
-        if (widget.clickListener != null) {
-          map = GestureDetector(child: map, onTap: () => _onClick());
-        }
-        return ClipRect(child: map);
+        MouseRegion mouseRegion = MouseRegion(
+          child: customPaint,
+          onHover: (event) => _onHover(event, canvasMatrix),
+          onExit: (event) {
+            if (_hover != null) {
+              _updateHover(null);
+            }
+          },
+        );
+
+        return ClipRect(
+            child:
+                GestureDetector(child: mouseRegion, onTap: () => _onClick()));
       });
     }
-    // empty container without map
-    return Container(child: content, decoration: decoration, padding: padding);
+    return Container(
+        child: layoutBuilder, decoration: decoration, padding: padding);
   }
 
   _onClick() {
