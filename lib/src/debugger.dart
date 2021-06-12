@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:flutter/cupertino.dart';
 import 'package:vector_map/src/data/map_layer.dart';
 import 'package:vector_map/src/map_resolution.dart';
@@ -142,22 +144,49 @@ class MapDebuggerState extends State<MapDebuggerWidget> {
         milliseconds: widget.debugger._bufferBuildDuration._lastDuration);
 
     return Column(children: [
-      Text('Layers: ' + formatInt(widget.debugger._layersCount)),
-      Text('Features: ' + formatInt(widget.debugger._featuresCount)),
-      Text('Original points: ' +
-          formatInt(widget.debugger._originalPointsCount)),
-      Text('Simplified points: ' +
-          formatInt(widget.debugger._simplifiedPointsCount)),
-      Text('Last drawable build duration: ' +
-          drawableDuration.inMilliseconds.toString() +
-          'ms'),
-      Text('Last buffer build duration: ' +
-          bufferDuration.inMilliseconds.toString() +
-          'ms'),
-      Text('Last multi resolution duration: ' +
-          widget.debugger._multiResolutionDuration.inMilliseconds.toString() +
-          'ms')
+      Padding(
+          padding: EdgeInsets.fromLTRB(0, 12, 0, 12),
+          child: Text('Quantities',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+      _buildFormattedInt('Layers: ', widget.debugger._layersCount),
+      _buildFormattedInt('Features: ', widget.debugger._featuresCount),
+      _buildFormattedInt(
+          'Original points: ', widget.debugger._originalPointsCount),
+      _buildFormattedInt(
+          'Simplified points: ', widget.debugger._simplifiedPointsCount),
+      Padding(
+          padding: EdgeInsets.fromLTRB(0, 12, 0, 12),
+          child: Text('Last durations',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+      _buildDuration(
+          'Multi resolution: ', widget.debugger._multiResolutionDuration),
+      _buildDuration('-- Drawable build: ', drawableDuration),
+      _buildDuration('-- Buffer build: ', bufferDuration)
     ], crossAxisAlignment: CrossAxisAlignment.start);
+  }
+
+  Widget _buildFormattedInt(String name, int value) {
+    return _buildItem(name, formatInt(value));
+  }
+
+  Widget _buildDuration(String name, Duration value) {
+    return _buildItem(name, value.inMilliseconds.toString() + 'ms');
+  }
+
+  Widget _buildItem(String name, String value) {
+    return Padding(
+        padding: EdgeInsets.fromLTRB(0, 4, 0, 0),
+        child: RichText(
+          text: new TextSpan(
+            style: TextStyle(fontSize: 12),
+            children: <TextSpan>[
+              new TextSpan(text: name),
+              new TextSpan(
+                  text: value,
+                  style: new TextStyle(fontWeight: FontWeight.bold)),
+            ],
+          ),
+        ));
   }
 
   @override

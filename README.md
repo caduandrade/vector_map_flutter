@@ -555,6 +555,28 @@ Uses the property values as radius values.
         });
 ```
 
+## Debugger
+
+Building a debugger
+
+```dart
+    MapDebugger debugger = MapDebugger();
+```
+
+Binding the debugger on the map
+
+```dart
+    VectorMap map = VectorMap(debugger: debugger, layers: [layer]);
+```
+
+Building the debugger widget
+
+```dart
+    MapDebuggerWidget debuggerWidget = MapDebuggerWidget(debugger);
+```
+
+![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/debugger_v1.png)
+
 ## Agenda for the next few days
 
 * More theming features
