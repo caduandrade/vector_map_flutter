@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/widgets.dart';
 import 'package:vector_map/src/data/map_layer.dart';
 import 'package:vector_map/src/error.dart';
@@ -11,20 +12,36 @@ class GradientLegend extends Legend {
   /// The layer's theme must be a [MapGradientTheme].
   GradientLegend(
       {required MapLayer layer,
+      double? height,
       EdgeInsetsGeometry? padding = const EdgeInsets.all(8)})
-      : super(layer: layer, padding: padding) {
+      : this._height = height != null ? height : 150,
+        super(layer: layer, padding: padding) {
     if (layer.theme is MapGradientTheme == false) {
       throw VectorMapError('Theme must be a MapGradientTheme');
     }
   }
 
+  final double _height;
+
   @override
-  Widget buildWidget(BuildContext context) {
+  Widget buildWidget(
+      BuildContext context, double widgetWidth, double widgetHeight) {
     MapGradientTheme gradientTheme = layer.theme as MapGradientTheme;
 
-    Container gradient = Container(decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.bottomCenter,
-        end:   Alignment.topCenter,colors: gradientTheme.colors)), width: 30, height: 200);
+    double height = math.min(widgetHeight, _height);
+    if(padding!=null){
+      height-=padding!.vertical;
+    }
 
-    return Container(padding: padding, child:gradient);
+    Container gradient = Container(
+        decoration: BoxDecoration(
+            gradient: LinearGradient(
+                begin: Alignment.bottomCenter,
+                end: Alignment.topCenter,
+                colors: gradientTheme.colors)),
+        width: 25,
+        height: height);
+
+    return Container(padding: padding, child: gradient);
   }
 }

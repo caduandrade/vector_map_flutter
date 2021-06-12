@@ -210,9 +210,11 @@ class MapDebuggerState extends State<MapDebuggerWidget> {
 
   _refresh() {
     Future.delayed(Duration.zero, () async {
-      setState(() {
-        // rebuild
-      });
+      if (mounted) {
+        setState(() {
+          // rebuild
+        });
+      }
     });
   }
 }

@@ -117,71 +117,86 @@ class VectorMapState extends State<VectorMap> {
       decoration = BoxDecoration(color: widget.color, border: border);
     }
 
-    Widget? layoutBuilder;
-    if (widget.layers.isNotEmpty) {
-      layoutBuilder = LayoutBuilder(
-          builder: (BuildContext context, BoxConstraints constraints) {
-        CanvasMatrix canvasMatrix = CanvasMatrix(
-            widgetWidth: constraints.maxWidth,
-            widgetHeight: constraints.maxHeight,
-            worldBounds: widget.layersBounds!);
-
-        if (_lastBuildSize != canvasMatrix.widgetSize) {
-          _lastBuildSize = canvasMatrix.widgetSize;
-          if (_mapResolution == null) {
-            if (_mapResolutionBuilder == null) {
-              // first build without delay
-              Future.microtask(() => _updateMapResolution(canvasMatrix));
-            }
-            return Center(
-              child: Text('updating...'),
-            );
-          } else {
-            // updating map resolution
-            Future.delayed(
-                Duration(milliseconds: widget.delayToRefreshResolution), () {
-              _updateMapResolution(canvasMatrix);
-            });
+    return Container(
+        decoration: decoration,
+        child: LayoutBuilder(
+            builder: (BuildContext context, BoxConstraints constraints) {
+          double canvasAreaWidth = constraints.maxWidth;
+          double canvasAreaHeight = constraints.maxHeight;
+          if (widget.padding != null) {
+            canvasAreaWidth -= widget.padding!.horizontal;
+            canvasAreaHeight -= widget.padding!.vertical;
           }
-        }
+          Widget? mapCanvas = _buildMapCanvas(canvasAreaWidth, canvasAreaHeight);
 
-        _MapPainter mapPainter = _MapPainter(
-            mapResolution: _mapResolution!,
-            hover: _hover,
-            canvasMatrix: canvasMatrix,
-            contourThickness: widget.contourThickness,
-            overlayHoverContour: widget.overlayHoverContour);
-
-        CustomPaint customPaint =
-            CustomPaint(painter: mapPainter, child: Container());
-
-        MouseRegion mouseRegion = MouseRegion(
-          child: customPaint,
-          onHover: (event) => _onHover(event, canvasMatrix),
-          onExit: (event) {
-            if (_hover != null) {
-              _updateHover(null);
+          if (mapCanvas != null) {
+            if (widget.addons != null) {
+              List<Widget> stackChildren = [Positioned(child: mapCanvas)];
+              for (MapAddon addon in widget.addons!) {
+                stackChildren.add(Positioned(
+                    child: addon.buildWidget(context,constraints.maxWidth,constraints.maxHeight), right: 0, bottom: 0));
+              }
+              return Stack(children: stackChildren);
             }
-          },
-        );
+            return mapCanvas;
+          }
+          return Center();
+        }));
+  }
 
-        return ClipRect(
-            child:
-                GestureDetector(child: mouseRegion, onTap: () => _onClick()));
-      });
-    }
-    Container container = Container(
-        child: layoutBuilder, decoration: decoration, padding: widget.padding);
+  /// Builds the canvas area
+  Widget? _buildMapCanvas(double canvasAreaWidth, double canvasAreaHeight) {
+    if (widget.layers.isNotEmpty) {
+      CanvasMatrix canvasMatrix = CanvasMatrix(
+          widgetWidth: canvasAreaWidth,
+          widgetHeight: canvasAreaHeight,
+          worldBounds: widget.layersBounds!);
 
-    if (widget.addons != null) {
-      List<Widget> stackChildren = [Positioned(child: container)];
-      for (MapAddon addon in widget.addons!) {
-        stackChildren.add(
-            Positioned(child: addon.buildWidget(context), right: 0, bottom: 0));
+      if (_lastBuildSize != canvasMatrix.widgetSize) {
+        _lastBuildSize = canvasMatrix.widgetSize;
+        if (_mapResolution == null) {
+          if (_mapResolutionBuilder == null) {
+            // first build without delay
+            Future.microtask(() => _updateMapResolution(canvasMatrix));
+          }
+          return Center(
+            child: Text('updating...'),
+          );
+        } else {
+          // updating map resolution
+          Future.delayed(
+              Duration(milliseconds: widget.delayToRefreshResolution), () {
+            _updateMapResolution(canvasMatrix);
+          });
+        }
       }
-      return Stack(children: stackChildren);
+
+      _MapPainter mapPainter = _MapPainter(
+          mapResolution: _mapResolution!,
+          hover: _hover,
+          canvasMatrix: canvasMatrix,
+          contourThickness: widget.contourThickness,
+          overlayHoverContour: widget.overlayHoverContour);
+
+      CustomPaint customPaint =
+          CustomPaint(painter: mapPainter, child: Container());
+
+      MouseRegion mouseRegion = MouseRegion(
+        child: customPaint,
+        onHover: (event) => _onHover(event, canvasMatrix),
+        onExit: (event) {
+          if (_hover != null) {
+            _updateHover(null);
+          }
+        },
+      );
+
+      return Container(
+          child: ClipRect(
+              child:
+                  GestureDetector(child: mouseRegion, onTap: () => _onClick())),
+          padding: widget.padding);
     }
-    return container;
   }
 
   _onClick() {
