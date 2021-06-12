@@ -3,6 +3,9 @@
 * Debugger
 * GeoJSON line geometry reader
   * It remains to calculate buffered area to allow the hover to be detected
+* Experimental (the API will change)
+  * Addons
+    * Gradient legend
 
 ## [0.3.0] - June 5, 2021
 

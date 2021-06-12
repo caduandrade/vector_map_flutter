@@ -11,6 +11,7 @@ import 'package:vector_map/src/debugger.dart';
 import 'package:vector_map/src/drawable/drawable_feature.dart';
 import 'package:vector_map/src/drawable/drawable_layer.dart';
 import 'package:vector_map/src/error.dart';
+import 'package:vector_map/src/map_addon.dart';
 import 'package:vector_map/src/map_resolution.dart';
 import 'package:vector_map/src/matrix.dart';
 import 'package:vector_map/src/simplifier.dart';
@@ -27,12 +28,13 @@ class VectorMap extends StatefulWidget {
       this.borderColor = Colors.black54,
       this.borderThickness = 1,
       this.contourThickness = 1,
-      this.padding = 8,
+      this.padding = const EdgeInsets.all(8),
       this.hoverRule,
       this.hoverListener,
       this.clickListener,
       this.overlayHoverContour = false,
-      this.debugger})
+      this.debugger,
+      this.addons})
       : this.layers = layers != null ? layers : [],
         this.layersBounds = layers != null ? MapLayer.boundsOf(layers) : null,
         super(key: key) {
@@ -46,12 +48,13 @@ class VectorMap extends StatefulWidget {
   final Color? color;
   final Color? borderColor;
   final double? borderThickness;
-  final double? padding;
+  final EdgeInsetsGeometry? padding;
   final HoverRule? hoverRule;
   final HoverListener? hoverListener;
   final FeatureClickListener? clickListener;
   final bool overlayHoverContour;
   final MapDebugger? debugger;
+  final List<MapAddon>? addons;
 
   @override
   State<StatefulWidget> createState() => VectorMapState();
@@ -113,10 +116,6 @@ class VectorMapState extends State<VectorMap> {
     if (widget.color != null || border != null) {
       decoration = BoxDecoration(color: widget.color, border: border);
     }
-    EdgeInsetsGeometry? padding;
-    if (widget.padding != null && widget.padding! > 0) {
-      padding = EdgeInsets.all(widget.padding!);
-    }
 
     Widget? layoutBuilder;
     if (widget.layers.isNotEmpty) {
@@ -171,8 +170,18 @@ class VectorMapState extends State<VectorMap> {
                 GestureDetector(child: mouseRegion, onTap: () => _onClick()));
       });
     }
-    return Container(
-        child: layoutBuilder, decoration: decoration, padding: padding);
+    Container container = Container(
+        child: layoutBuilder, decoration: decoration, padding: widget.padding);
+
+    if (widget.addons != null) {
+      List<Widget> stackChildren = [Positioned(child: container)];
+      for (MapAddon addon in widget.addons!) {
+        stackChildren.add(
+            Positioned(child: addon.buildWidget(context), right: 0, bottom: 0));
+      }
+      return Stack(children: stackChildren);
+    }
+    return container;
   }
 
   _onClick() {
