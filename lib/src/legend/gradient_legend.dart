@@ -29,8 +29,8 @@ class GradientLegend extends Legend {
     MapGradientTheme gradientTheme = layer.theme as MapGradientTheme;
 
     double height = math.min(widgetHeight, _height);
-    if(padding!=null){
-      height-=padding!.vertical;
+    if (padding != null) {
+      height -= padding!.vertical;
     }
 
     Container gradient = Container(

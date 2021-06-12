@@ -127,14 +127,18 @@ class VectorMapState extends State<VectorMap> {
             canvasAreaWidth -= widget.padding!.horizontal;
             canvasAreaHeight -= widget.padding!.vertical;
           }
-          Widget? mapCanvas = _buildMapCanvas(canvasAreaWidth, canvasAreaHeight);
+          Widget? mapCanvas =
+              _buildMapCanvas(canvasAreaWidth, canvasAreaHeight);
 
           if (mapCanvas != null) {
             if (widget.addons != null) {
               List<Widget> stackChildren = [Positioned(child: mapCanvas)];
               for (MapAddon addon in widget.addons!) {
                 stackChildren.add(Positioned(
-                    child: addon.buildWidget(context,constraints.maxWidth,constraints.maxHeight), right: 0, bottom: 0));
+                    child: addon.buildWidget(
+                        context, constraints.maxWidth, constraints.maxHeight),
+                    right: 0,
+                    bottom: 0));
               }
               return Stack(children: stackChildren);
             }
