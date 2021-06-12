@@ -2,7 +2,7 @@ import 'package:flutter/rendering.dart';
 import 'package:vector_map/src/data/map_data_source.dart';
 import 'package:vector_map/src/data/map_feature.dart';
 import 'package:vector_map/src/drawable/marker.dart';
-import 'package:vector_map/src/theme/theme.dart';
+import 'package:vector_map/src/theme/map_theme.dart';
 
 /// Theme for colors by value.
 class MapValueTheme extends MapTheme {

@@ -2,7 +2,7 @@ import 'package:flutter/rendering.dart';
 import 'package:vector_map/src/data/map_data_source.dart';
 import 'package:vector_map/src/data/map_feature.dart';
 import 'package:vector_map/src/drawable/marker.dart';
-import 'package:vector_map/src/theme/theme.dart';
+import 'package:vector_map/src/theme/map_theme.dart';
 
 /// Theme for colors by rule.
 ///
@@ -45,3 +45,6 @@ class MapRuleTheme extends MapTheme {
     return color != null ? color : super.getColor(dataSource, feature);
   }
 }
+
+/// Rule to obtain a color of a feature.
+typedef ColorRule = Color? Function(MapFeature feature);

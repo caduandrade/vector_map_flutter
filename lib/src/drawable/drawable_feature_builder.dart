@@ -1,7 +1,7 @@
 import 'dart:ui';
 
-import 'package:vector_map/src/data/map_data_source.dart';
 import 'package:vector_map/src/data/geometries.dart';
+import 'package:vector_map/src/data/map_data_source.dart';
 import 'package:vector_map/src/data/map_feature.dart';
 import 'package:vector_map/src/data/simplified_path.dart';
 import 'package:vector_map/src/drawable/drawable_feature.dart';
@@ -10,7 +10,7 @@ import 'package:vector_map/src/drawable/drawable_polygon.dart';
 import 'package:vector_map/src/error.dart';
 import 'package:vector_map/src/matrix.dart';
 import 'package:vector_map/src/simplifier.dart';
-import 'package:vector_map/src/theme/theme.dart';
+import 'package:vector_map/src/theme/map_theme.dart';
 
 /// [DrawableFeature] builder.
 class DrawableFeatureBuilder {

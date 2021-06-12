@@ -6,16 +6,15 @@ import 'package:flutter/painting.dart';
 import 'package:flutter/widgets.dart';
 import 'package:vector_map/src/data/map_data_source.dart';
 import 'package:vector_map/src/data/map_feature.dart';
+import 'package:vector_map/src/data/map_layer.dart';
 import 'package:vector_map/src/debugger.dart';
 import 'package:vector_map/src/drawable/drawable_feature.dart';
 import 'package:vector_map/src/drawable/drawable_layer.dart';
 import 'package:vector_map/src/error.dart';
-import 'package:vector_map/src/data/map_layer.dart';
 import 'package:vector_map/src/map_resolution.dart';
 import 'package:vector_map/src/matrix.dart';
 import 'package:vector_map/src/simplifier.dart';
-import 'package:vector_map/src/theme/theme.dart';
-import 'package:vector_map/src/typedefs.dart';
+import 'package:vector_map/src/theme/map_theme.dart';
 
 /// Vector map widget.
 class VectorMap extends StatefulWidget {
@@ -70,7 +69,6 @@ class VectorMap extends StatefulWidget {
 /// [VectorMap] state.
 class VectorMapState extends State<VectorMap> {
   _HoverFeature? _hover;
-  _FeatureUnderMouse? _featureUnderMouse;
 
   Size? _lastBuildSize;
   MapResolution? _mapResolution;
@@ -178,8 +176,8 @@ class VectorMapState extends State<VectorMap> {
   }
 
   _onClick() {
-    if (_featureUnderMouse != null && widget.clickListener != null) {
-      widget.clickListener!(_featureUnderMouse!.feature);
+    if (_hover != null && widget.clickListener != null) {
+      widget.clickListener!(_hover!.feature);
     }
   }
 
@@ -190,26 +188,41 @@ class VectorMapState extends State<VectorMap> {
           canvasMatrix.screenToWorld, event.localPosition);
 
       _HoverFeature? hoverFeature;
-      _FeatureUnderMouse? featureUnderMouse;
       for (int layerIndex = _mapResolution!.drawableLayers.length - 1;
           layerIndex >= 0;
           layerIndex--) {
         DrawableLayer drawableLayer =
             _mapResolution!.drawableLayers[layerIndex];
-        MapFeature? feature =
-            drawableLayer.featureContains(widget.hoverRule, worldCoordinate);
+        MapFeature? feature = _hoverFindFeature(drawableLayer, worldCoordinate);
         if (feature != null) {
           hoverFeature = _HoverFeature(layerIndex, feature);
-          featureUnderMouse = _FeatureUnderMouse(layerIndex, feature);
           break;
         }
       }
 
-      if (_featureUnderMouse != featureUnderMouse) {
-        _featureUnderMouse = featureUnderMouse;
-      }
       if (_hover != hoverFeature) {
         _updateHover(hoverFeature);
+      }
+    }
+  }
+
+  /// Finds the first feature that contains a coordinate.
+  MapFeature? _hoverFindFeature(
+      DrawableLayer drawableLayer, Offset worldCoordinate) {
+    MapLayer layer = drawableLayer.layer;
+    for (MapFeature feature in layer.dataSource.features.values) {
+      if (widget.hoverRule != null && widget.hoverRule!(feature) == false) {
+        continue;
+      }
+
+      if (drawableLayer.drawableFeatures.containsKey(feature.id) == false) {
+        throw VectorMapError(
+            'No drawable geometry for id: ' + feature.id.toString());
+      }
+      DrawableFeature drawableFeature =
+          drawableLayer.drawableFeatures[feature.id]!;
+      if (drawableFeature.contains(worldCoordinate)) {
+        return feature;
       }
     }
   }
@@ -307,7 +320,7 @@ class _MapPainter extends CustomPainter {
       }
     }
 
-    // drawing the overlay hover
+    // drawing the overlay hover contour
     if (contourThickness > 0 && overlayHoverContour && hover != null) {
       DrawableLayer drawableLayer =
           mapResolution.drawableLayers[hover!.layerIndex];
@@ -453,13 +466,6 @@ class _MapPainter extends CustomPainter {
   }
 }
 
-class _FeatureUnderMouse {
-  _FeatureUnderMouse(this.layerIndex, this.feature);
-
-  final MapFeature feature;
-  final int layerIndex;
-}
-
 class _HoverFeature {
   _HoverFeature(this.layerIndex, this.feature);
 
@@ -477,3 +483,9 @@ class _HoverFeature {
   @override
   int get hashCode => feature.hashCode ^ layerIndex.hashCode;
 }
+
+typedef FeatureClickListener = Function(MapFeature feature);
+
+typedef HoverRule = bool Function(MapFeature feature);
+
+typedef HoverListener = Function(MapFeature? feature);

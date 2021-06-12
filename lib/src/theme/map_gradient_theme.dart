@@ -4,7 +4,7 @@ import 'package:vector_map/src/data/map_feature.dart';
 import 'package:vector_map/src/data/property_limits.dart';
 import 'package:vector_map/src/drawable/marker.dart';
 import 'package:vector_map/src/error.dart';
-import 'package:vector_map/src/theme/theme.dart';
+import 'package:vector_map/src/theme/map_theme.dart';
 
 /// Theme for gradient colors.
 ///

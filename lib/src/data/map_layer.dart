@@ -1,16 +1,22 @@
 import 'package:flutter/painting.dart';
 import 'package:vector_map/src/data/map_data_source.dart';
-import 'package:vector_map/src/theme/theme.dart';
+import 'package:vector_map/src/theme/map_highlight_theme.dart';
+import 'package:vector_map/src/theme/map_theme.dart';
 
 /// Layer for [VectorMap].
 class MapLayer {
   MapLayer(
-      {required this.dataSource, MapTheme? theme, this.hoverTheme, this.name})
+      {required this.dataSource,
+      MapTheme? theme,
+      this.hoverTheme,
+      this.highlightTheme,
+      this.name})
       : this.theme = theme != null ? theme : MapTheme();
 
   final MapDataSource dataSource;
   final MapTheme theme;
   final MapTheme? hoverTheme;
+  final MapHighlightTheme? highlightTheme;
   final String? name;
 
   /// Indicates if the hover is drawable, if there is any hover theme and

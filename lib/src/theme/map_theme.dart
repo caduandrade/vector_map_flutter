@@ -4,16 +4,6 @@ import 'package:vector_map/src/data/map_feature.dart';
 import 'package:vector_map/src/drawable/circle_marker.dart';
 import 'package:vector_map/src/drawable/marker.dart';
 
-/// Defines the visibility of a [MapFeature]
-typedef LabelVisibility = bool Function(MapFeature feature);
-
-/// Rule to obtain a color of a feature.
-typedef ColorRule = Color? Function(MapFeature feature);
-
-/// The label style builder.
-typedef LabelStyleBuilder = TextStyle Function(
-    MapFeature feature, Color featureColor, Color labelColor);
-
 /// The [VectorMap] theme.
 class MapTheme {
   static const Color defaultColor = Color(0xFFE0E0E0);
@@ -28,7 +18,7 @@ class MapTheme {
     return MapTheme.defaultColor;
   }
 
-  /// Theme for [VectorMap]
+  /// Builds a [VectorMap]
   MapTheme(
       {Color? color,
       this.contourColor,
@@ -56,3 +46,10 @@ class MapTheme {
     return _color;
   }
 }
+
+/// Defines the visibility of a [MapFeature]
+typedef LabelVisibility = bool Function(MapFeature feature);
+
+/// The label style builder.
+typedef LabelStyleBuilder = TextStyle Function(
+    MapFeature feature, Color featureColor, Color labelColor);
