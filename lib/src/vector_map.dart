@@ -70,6 +70,7 @@ class VectorMap extends StatefulWidget {
 /// [VectorMap] state.
 class VectorMapState extends State<VectorMap> {
   _HoverFeature? _hover;
+  _FeatureUnderMouse? _featureUnderMouse;
 
   Size? _lastBuildSize;
   MapResolution? _mapResolution;
@@ -180,8 +181,8 @@ class VectorMapState extends State<VectorMap> {
   }
 
   _onClick() {
-    if (_hover != null && widget.clickListener != null) {
-      widget.clickListener!(_hover!.feature);
+    if (_featureUnderMouse != null && widget.clickListener != null) {
+      widget.clickListener!(_featureUnderMouse!.feature);
     }
   }
 
@@ -192,6 +193,7 @@ class VectorMapState extends State<VectorMap> {
           canvasMatrix.screenToWorld, event.localPosition);
 
       _HoverFeature? hoverFeature;
+      _FeatureUnderMouse? featureUnderMouse;
       for (int layerIndex = _mapResolution!.drawableLayers.length - 1;
           layerIndex >= 0;
           layerIndex--) {
@@ -201,10 +203,14 @@ class VectorMapState extends State<VectorMap> {
             drawableLayer.featureContains(widget.hoverRule, worldCoordinate);
         if (feature != null) {
           hoverFeature = _HoverFeature(layerIndex, feature);
+          featureUnderMouse = _FeatureUnderMouse(layerIndex, feature);
           break;
         }
       }
 
+      if (_featureUnderMouse != featureUnderMouse) {
+        _featureUnderMouse = featureUnderMouse;
+      }
       if (_hover != hoverFeature) {
         _updateHover(hoverFeature);
       }
@@ -448,6 +454,13 @@ class _MapPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
     return false;
   }
+}
+
+class _FeatureUnderMouse {
+  _FeatureUnderMouse(this.layerIndex, this.feature);
+
+  final MapFeature feature;
+  final int layerIndex;
 }
 
 class _HoverFeature {
