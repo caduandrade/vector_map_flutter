@@ -1,4 +1,4 @@
-## [0.4.0] - ?
+## [0.4.0] - June 13, 2021
 
 * Debugger
 * GeoJSON line geometry reader

@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'dart:async';
 
 import 'package:flutter/gestures.dart';
@@ -34,7 +35,7 @@ class VectorMap extends StatefulWidget {
       this.clickListener,
       this.overlayHoverContour = false,
       this.debugger,
-      this.addons})
+      this.addon})
       : this.layers = layers != null ? layers : [],
         this.layersBounds = layers != null ? MapLayer.boundsOf(layers) : null,
         super(key: key) {
@@ -54,7 +55,7 @@ class VectorMap extends StatefulWidget {
   final FeatureClickListener? clickListener;
   final bool overlayHoverContour;
   final MapDebugger? debugger;
-  final List<MapAddon>? addons;
+  final MapAddon? addon;
 
   @override
   State<StatefulWidget> createState() => VectorMapState();
@@ -131,15 +132,15 @@ class VectorMapState extends State<VectorMap> {
               _buildMapCanvas(canvasAreaWidth, canvasAreaHeight);
 
           if (mapCanvas != null) {
-            if (widget.addons != null) {
+            if (widget.addon != null) {
               List<Widget> stackChildren = [Positioned(child: mapCanvas)];
-              for (MapAddon addon in widget.addons!) {
-                stackChildren.add(Positioned(
-                    child: addon.buildWidget(
-                        context, constraints.maxWidth, constraints.maxHeight),
-                    right: 0,
-                    bottom: 0));
-              }
+              stackChildren.add(Positioned(
+                  child: widget.addon!.buildWidget(
+                      context, constraints.maxWidth, constraints.maxHeight),
+                  right: 0,
+                  bottom: 0,
+                  height: math.min(150, constraints.maxHeight),
+                  width: math.min(50, constraints.maxWidth)));
               return Stack(children: stackChildren);
             }
             return mapCanvas;

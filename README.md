@@ -269,6 +269,30 @@ If the `max` value is set, all higher values will be displayed using the last gr
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/gradient_min_max_v2.png)
 
+##### Legend (experimental)
+
+```dart
+    MapDataSource polygons = await MapDataSource.geoJSON(
+        geojson: polygonsGeoJSON, keys: ['Seq'], labelKey: 'Seq');
+```
+
+```dart
+    MapLayer layer = MapLayer(
+        dataSource: polygons,
+        theme: MapGradientTheme(
+            contourColor: Colors.white,
+            labelVisibility: (feature) => true,
+            key: 'Seq',
+            colors: [Colors.blue, Colors.yellow, Colors.red]));
+
+    VectorMap map = VectorMap(
+        padding: EdgeInsets.fromLTRB(8, 8, 50, 8),
+        layers: [layer],
+        addon: GradientLegend(layer: layer));
+```
+
+![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/gradient_legend_v1.png)
+
 ## Contour
 
 #### Thickness
