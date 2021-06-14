@@ -20,7 +20,6 @@ export 'src/debugger.dart';
 export 'src/map_resolution.dart';
 export 'src/matrix.dart';
 export 'src/addon/map_addon.dart';
-export 'src/addon/addon_container.dart';
 export 'src/addon/legend/legend.dart';
 export 'src/addon/legend/gradient_legend.dart';
 export 'src/simplifier.dart';

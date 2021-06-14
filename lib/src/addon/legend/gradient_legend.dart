@@ -13,13 +13,20 @@ class GradientLegend extends Legend {
   /// The layer's theme must be a [MapGradientTheme].
   GradientLegend(
       {required MapLayer layer,
-      this.height = 150,
+      EdgeInsetsGeometry? padding,
+      EdgeInsetsGeometry? margin,
+      Decoration? decoration,
+      this.gradientHeight = 150,
       double? fontSize,
       this.gradientWidth = 25,
       this.maxTextWidth = 80,
       this.gap = 8})
       : this.fontSize = fontSize != null ? math.max(fontSize, 6) : 12,
-        super(layer: layer) {
+        super(
+            layer: layer,
+            padding: padding,
+            margin: margin,
+            decoration: decoration) {
     if (layer.theme is MapGradientTheme == false) {
       throw VectorMapError('Theme must be a MapGradientTheme');
     }
@@ -28,23 +35,11 @@ class GradientLegend extends Legend {
   final double gap;
   final double maxTextWidth;
   final double gradientWidth;
-
-  @override
-  final double height;
-
+  final double gradientHeight;
   final double fontSize;
 
   @override
-  double get width {
-    if (maxTextWidth == double.infinity) {
-      return double.infinity;
-    }
-    return gap + maxTextWidth + gradientWidth;
-  }
-
-  @override
-  Widget buildWidget(
-      BuildContext context, double availableWidth, double availableHeight) {
+  Widget buildWidget(BuildContext context) {
     MapGradientTheme gradientTheme = layer.theme as MapGradientTheme;
 
     List<LayoutId> children = [];
@@ -69,11 +64,15 @@ class GradientLegend extends Legend {
     }
 
     return Container(
+      decoration: decoration,
+      margin: margin,
+      padding: padding,
       child: CustomMultiChildLayout(
           children: children,
           delegate: _Delegate(
               gap: gap,
               gradientWidth: gradientWidth,
+              gradientHeight: gradientHeight,
               maxTextWidth: maxTextWidth)),
       color: Colors.red.withOpacity(.5),
     );
@@ -94,11 +93,21 @@ class _Delegate extends MultiChildLayoutDelegate {
   final double gap;
   final double maxTextWidth;
   final double gradientWidth;
+  final double gradientHeight;
 
   _Delegate(
       {required this.gap,
       required this.maxTextWidth,
-      required this.gradientWidth});
+      required this.gradientWidth,
+      required this.gradientHeight});
+
+  @override
+  Size getSize(BoxConstraints constraints) {
+    if (maxTextWidth == double.infinity) {
+      return Size(constraints.maxWidth, gradientHeight);
+    }
+    return Size(gap + maxTextWidth + gradientWidth, gradientHeight);
+  }
 
   @override
   void performLayout(Size size) {

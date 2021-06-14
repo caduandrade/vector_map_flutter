@@ -4,7 +4,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/widgets.dart';
-import 'package:vector_map/src/addon/addon_container.dart';
+import 'package:vector_map/src/addon/map_addon.dart';
 import 'package:vector_map/src/data/map_data_source.dart';
 import 'package:vector_map/src/data/map_feature.dart';
 import 'package:vector_map/src/data/map_layer.dart';
@@ -54,7 +54,7 @@ class VectorMap extends StatefulWidget {
   final FeatureClickListener? clickListener;
   final bool overlayHoverContour;
   final MapDebugger? debugger;
-  final List<AddonContainer>? addons;
+  final List<MapAddon>? addons;
 
   @override
   State<StatefulWidget> createState() => VectorMapState();
@@ -133,15 +133,15 @@ class VectorMapState extends State<VectorMap> {
                 widgetHeight: canvasAreaHeight,
                 worldBounds: widget.layersBounds!));
             if (widget.addons != null) {
-              List<Widget> stackChildren = [Positioned(child: mapCanvas)];
-              for (AddonContainer addonContainer in widget.addons!) {
-                Positioned? positioned = addonContainer.buildPositioned(
-                    context, constraints.maxWidth, constraints.maxHeight);
-                if (positioned != null) {
-                  stackChildren.add(positioned);
-                }
+              List<LayoutId> children = [LayoutId(id: 0, child: mapCanvas)];
+              int id = 1;
+              for (MapAddon addon in widget.addons!) {
+                children
+                    .add(LayoutId(id: id, child: addon.buildWidget(context)));
+                id++;
               }
-              return Stack(children: stackChildren);
+              return CustomMultiChildLayout(
+                  children: children, delegate: _VectorMapLayoutDelegate(id));
             }
             return mapCanvas;
           }
@@ -490,9 +490,27 @@ class _MapPainter extends CustomPainter {
 
 /// The [VectorMap] layout.
 class _VectorMapLayoutDelegate extends MultiChildLayoutDelegate {
+  _VectorMapLayoutDelegate(this.count);
+
+  final int count;
+
   @override
   void performLayout(Size size) {
-    // TODO: implement performLayout
+    Size childSize = Size.zero;
+    for (int id = 0; id < count; id++) {
+      if (hasChild(id)) {
+        if (id == 0) {
+          childSize = layoutChild(id, BoxConstraints.tight(size));
+          positionChild(id, Offset.zero);
+        } else {
+          childSize = layoutChild(id, BoxConstraints.loose(size));
+          positionChild(
+              id,
+              Offset(size.width - childSize.width,
+                  size.height - childSize.height));
+        }
+      }
+    }
   }
 
   @override
