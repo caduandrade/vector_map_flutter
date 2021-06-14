@@ -22,11 +22,13 @@ class MapGradientTheme extends MapTheme {
       LabelVisibility? labelVisibility,
       LabelStyleBuilder? labelStyleBuilder,
       MarkerBuilder? markerBuilder,
-      this.min,
-      this.max,
+      double? min,
+      double? max,
       required this.key,
       required this.colors})
-      : super(
+      : this._max = max,
+        this._min = min,
+        super(
             color: color,
             contourColor: contourColor,
             labelVisibility: labelVisibility,
@@ -37,8 +39,8 @@ class MapGradientTheme extends MapTheme {
     }
   }
 
-  final double? min;
-  final double? max;
+  final double? _min;
+  final double? _max;
   final String key;
   final List<Color> colors;
 
@@ -48,22 +50,32 @@ class MapGradientTheme extends MapTheme {
     return true;
   }
 
-  @override
-  Color? getColor(MapDataSource dataSource, MapFeature feature) {
-    double? min = this.min;
-    double? max = this.max;
-
-    if (min == null || max == null) {
+  double? min(MapDataSource dataSource) {
+    double? min = this._min;
+    if (min == null) {
       PropertyLimits? propertyLimits = dataSource.getPropertyLimits(key);
       if (propertyLimits != null) {
-        if (min == null) {
-          min = propertyLimits.min;
-        }
-        if (max == null) {
-          max = propertyLimits.max;
-        }
+        min = propertyLimits.min;
       }
     }
+    return min;
+  }
+
+  double? max(MapDataSource dataSource) {
+    double? max = this._max;
+    if (max == null) {
+      PropertyLimits? propertyLimits = dataSource.getPropertyLimits(key);
+      if (propertyLimits != null) {
+        max = propertyLimits.max;
+      }
+    }
+    return max;
+  }
+
+  @override
+  Color? getColor(MapDataSource dataSource, MapFeature feature) {
+    double? min = this.min(dataSource);
+    double? max = this.max(dataSource);
 
     if (min != null && max != null) {
       dynamic dynamicValue = feature.getValue(key);

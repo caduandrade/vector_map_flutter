@@ -5,6 +5,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/widgets.dart';
+import 'package:vector_map/src/addon/addon_container.dart';
 import 'package:vector_map/src/data/map_data_source.dart';
 import 'package:vector_map/src/data/map_feature.dart';
 import 'package:vector_map/src/data/map_layer.dart';
@@ -12,7 +13,7 @@ import 'package:vector_map/src/debugger.dart';
 import 'package:vector_map/src/drawable/drawable_feature.dart';
 import 'package:vector_map/src/drawable/drawable_layer.dart';
 import 'package:vector_map/src/error.dart';
-import 'package:vector_map/src/map_addon.dart';
+import 'package:vector_map/src/addon/map_addon.dart';
 import 'package:vector_map/src/map_resolution.dart';
 import 'package:vector_map/src/matrix.dart';
 import 'package:vector_map/src/simplifier.dart';
@@ -35,7 +36,7 @@ class VectorMap extends StatefulWidget {
       this.clickListener,
       this.overlayHoverContour = false,
       this.debugger,
-      this.addon})
+      this.addons})
       : this.layers = layers != null ? layers : [],
         this.layersBounds = layers != null ? MapLayer.boundsOf(layers) : null,
         super(key: key) {
@@ -55,7 +56,7 @@ class VectorMap extends StatefulWidget {
   final FeatureClickListener? clickListener;
   final bool overlayHoverContour;
   final MapDebugger? debugger;
-  final MapAddon? addon;
+  final List<AddonContainer>? addons;
 
   @override
   State<StatefulWidget> createState() => VectorMapState();
@@ -132,15 +133,15 @@ class VectorMapState extends State<VectorMap> {
               _buildMapCanvas(canvasAreaWidth, canvasAreaHeight);
 
           if (mapCanvas != null) {
-            if (widget.addon != null) {
+            if (widget.addons != null) {
               List<Widget> stackChildren = [Positioned(child: mapCanvas)];
-              stackChildren.add(Positioned(
-                  child: widget.addon!.buildWidget(
-                      context, constraints.maxWidth, constraints.maxHeight),
-                  right: 0,
-                  bottom: 0,
-                  height: math.min(150, constraints.maxHeight),
-                  width: math.min(50, constraints.maxWidth)));
+              for (AddonContainer addonContainer in widget.addons!) {
+                Positioned? positioned = addonContainer.buildPositioned(
+                    context, constraints.maxWidth, constraints.maxHeight);
+                if (positioned != null) {
+                  stackChildren.add(positioned);
+                }
+              }
               return Stack(children: stackChildren);
             }
             return mapCanvas;

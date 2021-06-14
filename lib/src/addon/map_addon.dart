@@ -4,5 +4,9 @@ import 'package:flutter/widgets.dart';
 abstract class MapAddon {
   /// Builds the [Widget] for this addon
   Widget buildWidget(
-      BuildContext context, double widgetWidth, double widgetHeight);
+      BuildContext context, double availableWidth, double availableHeight);
+
+  double get width;
+
+  double get height;
 }
