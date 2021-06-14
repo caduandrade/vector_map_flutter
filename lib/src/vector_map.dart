@@ -1,4 +1,3 @@
-import 'dart:math' as math;
 import 'dart:async';
 
 import 'package:flutter/gestures.dart';
@@ -13,7 +12,6 @@ import 'package:vector_map/src/debugger.dart';
 import 'package:vector_map/src/drawable/drawable_feature.dart';
 import 'package:vector_map/src/drawable/drawable_layer.dart';
 import 'package:vector_map/src/error.dart';
-import 'package:vector_map/src/addon/map_addon.dart';
 import 'package:vector_map/src/map_resolution.dart';
 import 'package:vector_map/src/matrix.dart';
 import 'package:vector_map/src/simplifier.dart';
@@ -129,10 +127,11 @@ class VectorMapState extends State<VectorMap> {
             canvasAreaWidth -= widget.padding!.horizontal;
             canvasAreaHeight -= widget.padding!.vertical;
           }
-          Widget? mapCanvas =
-              _buildMapCanvas(canvasAreaWidth, canvasAreaHeight);
-
-          if (mapCanvas != null) {
+          if (widget.layers.isNotEmpty) {
+            Widget mapCanvas = _buildMapCanvas(CanvasMatrix(
+                widgetWidth: canvasAreaWidth,
+                widgetHeight: canvasAreaHeight,
+                worldBounds: widget.layersBounds!));
             if (widget.addons != null) {
               List<Widget> stackChildren = [Positioned(child: mapCanvas)];
               for (AddonContainer addonContainer in widget.addons!) {
@@ -151,58 +150,51 @@ class VectorMapState extends State<VectorMap> {
   }
 
   /// Builds the canvas area
-  Widget? _buildMapCanvas(double canvasAreaWidth, double canvasAreaHeight) {
-    if (widget.layers.isNotEmpty) {
-      CanvasMatrix canvasMatrix = CanvasMatrix(
-          widgetWidth: canvasAreaWidth,
-          widgetHeight: canvasAreaHeight,
-          worldBounds: widget.layersBounds!);
-
-      if (_lastBuildSize != canvasMatrix.widgetSize) {
-        _lastBuildSize = canvasMatrix.widgetSize;
-        if (_mapResolution == null) {
-          if (_mapResolutionBuilder == null) {
-            // first build without delay
-            Future.microtask(() => _updateMapResolution(canvasMatrix));
-          }
-          return Center(
-            child: Text('updating...'),
-          );
-        } else {
-          // updating map resolution
-          Future.delayed(
-              Duration(milliseconds: widget.delayToRefreshResolution), () {
-            _updateMapResolution(canvasMatrix);
-          });
+  Widget _buildMapCanvas(CanvasMatrix canvasMatrix) {
+    if (_lastBuildSize != canvasMatrix.widgetSize) {
+      _lastBuildSize = canvasMatrix.widgetSize;
+      if (_mapResolution == null) {
+        if (_mapResolutionBuilder == null) {
+          // first build without delay
+          Future.microtask(() => _updateMapResolution(canvasMatrix));
         }
+        return Center(
+          child: Text('updating...'),
+        );
+      } else {
+        // updating map resolution
+        Future.delayed(Duration(milliseconds: widget.delayToRefreshResolution),
+            () {
+          _updateMapResolution(canvasMatrix);
+        });
       }
-
-      _MapPainter mapPainter = _MapPainter(
-          mapResolution: _mapResolution!,
-          hover: _hover,
-          canvasMatrix: canvasMatrix,
-          contourThickness: widget.contourThickness,
-          overlayHoverContour: widget.overlayHoverContour);
-
-      CustomPaint customPaint =
-          CustomPaint(painter: mapPainter, child: Container());
-
-      MouseRegion mouseRegion = MouseRegion(
-        child: customPaint,
-        onHover: (event) => _onHover(event, canvasMatrix),
-        onExit: (event) {
-          if (_hover != null) {
-            _updateHover(null);
-          }
-        },
-      );
-
-      return Container(
-          child: ClipRect(
-              child:
-                  GestureDetector(child: mouseRegion, onTap: () => _onClick())),
-          padding: widget.padding);
     }
+
+    _MapPainter mapPainter = _MapPainter(
+        mapResolution: _mapResolution!,
+        hover: _hover,
+        canvasMatrix: canvasMatrix,
+        contourThickness: widget.contourThickness,
+        overlayHoverContour: widget.overlayHoverContour);
+
+    CustomPaint customPaint =
+        CustomPaint(painter: mapPainter, child: Container());
+
+    MouseRegion mouseRegion = MouseRegion(
+      child: customPaint,
+      onHover: (event) => _onHover(event, canvasMatrix),
+      onExit: (event) {
+        if (_hover != null) {
+          _updateHover(null);
+        }
+      },
+    );
+
+    return Container(
+        child: ClipRect(
+            child:
+                GestureDetector(child: mouseRegion, onTap: () => _onClick())),
+        padding: widget.padding);
   }
 
   _onClick() {
@@ -492,6 +484,19 @@ class _MapPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
+    return false;
+  }
+}
+
+/// The [VectorMap] layout.
+class _VectorMapLayoutDelegate extends MultiChildLayoutDelegate {
+  @override
+  void performLayout(Size size) {
+    // TODO: implement performLayout
+  }
+
+  @override
+  bool shouldRelayout(covariant MultiChildLayoutDelegate oldDelegate) {
     return false;
   }
 }
