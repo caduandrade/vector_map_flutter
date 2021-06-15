@@ -78,13 +78,7 @@ class MapGradientTheme extends MapTheme {
     double? max = this.max(dataSource);
 
     if (min != null && max != null) {
-      dynamic dynamicValue = feature.getValue(key);
-      double? value;
-      if (dynamicValue is int) {
-        value = dynamicValue.toDouble();
-      } else if (dynamicValue is double) {
-        value = dynamicValue;
-      }
+      double? value = feature.getDoubleValue(key);
       if (value != null) {
         if (value <= min) {
           return colors.first;

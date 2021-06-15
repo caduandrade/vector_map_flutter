@@ -12,6 +12,7 @@ import 'package:vector_map/src/debugger.dart';
 import 'package:vector_map/src/drawable/drawable_feature.dart';
 import 'package:vector_map/src/drawable/drawable_layer.dart';
 import 'package:vector_map/src/error.dart';
+import 'package:vector_map/src/highlight_rule.dart';
 import 'package:vector_map/src/map_resolution.dart';
 import 'package:vector_map/src/matrix.dart';
 import 'package:vector_map/src/simplifier.dart';
@@ -73,9 +74,30 @@ class VectorMap extends StatefulWidget {
 class VectorMapState extends State<VectorMap> {
   _HoverFeature? _hover;
 
+  HighlightRule? _highlightRule;
+
   Size? _lastBuildSize;
   MapResolution? _mapResolution;
   MapResolutionBuilder? _mapResolutionBuilder;
+
+  /// Gets the instance of the [VectorMapState]
+  static VectorMapState? of(BuildContext context) {
+    return context.findAncestorStateOfType();
+  }
+
+  disableHighlightRule() {
+    setState(() {
+      _highlightRule = null;
+    });
+  }
+
+  enableHighlightRule(
+      {required String key, required double value, required double precision}) {
+    setState(() {
+      _highlightRule =
+          HighlightRule(key: key, value: value, precision: precision);
+    });
+  }
 
   _updateMapResolution(CanvasMatrix canvasMatrix) {
     if (mounted && _lastBuildSize == canvasMatrix.widgetSize) {
@@ -136,8 +158,9 @@ class VectorMapState extends State<VectorMap> {
               List<LayoutId> children = [LayoutId(id: 0, child: mapCanvas)];
               int id = 1;
               for (MapAddon addon in widget.addons!) {
-                children
-                    .add(LayoutId(id: id, child: addon.buildWidget(context)));
+                children.add(LayoutId(
+                    id: id,
+                    child: addon.buildWidget(context, _hover?.feature)));
                 id++;
               }
               return CustomMultiChildLayout(
@@ -173,6 +196,7 @@ class VectorMapState extends State<VectorMap> {
     _MapPainter mapPainter = _MapPainter(
         mapResolution: _mapResolution!,
         hover: _hover,
+        highlightRule: _highlightRule,
         canvasMatrix: canvasMatrix,
         contourThickness: widget.contourThickness,
         overlayHoverContour: widget.overlayHoverContour);
@@ -271,9 +295,11 @@ class _MapPainter extends CustomPainter {
       required this.canvasMatrix,
       required this.contourThickness,
       required this.overlayHoverContour,
-      this.hover});
+      this.hover,
+      this.highlightRule});
 
   final CanvasMatrix canvasMatrix;
+  final HighlightRule? highlightRule;
   final double contourThickness;
   final _HoverFeature? hover;
   final MapResolution mapResolution;
@@ -287,7 +313,17 @@ class _MapPainter extends CustomPainter {
         layerIndex++) {
       DrawableLayer drawableLayer = mapResolution.drawableLayers[layerIndex];
 
-      if (canvasMatrix.widgetSize == mapResolution.widgetSize) {
+      if (highlightRule != null) {
+        canvas.save();
+        canvasMatrix.applyOn(canvas);
+        drawableLayer.drawOn(
+            canvas: canvas,
+            contourThickness: contourThickness,
+            scale: canvasMatrix.scale,
+            antiAlias: true,
+            highlightRule: highlightRule);
+        canvas.restore();
+      } else if (canvasMatrix.widgetSize == mapResolution.widgetSize) {
         canvas.drawImage(
             mapResolution.layerBuffers[layerIndex], Offset.zero, Paint());
       } else {
@@ -301,61 +337,63 @@ class _MapPainter extends CustomPainter {
         canvas.restore();
       }
 
-      // drawing the hover
-      if (hover != null && hover!.layerIndex == layerIndex) {
-        MapFeature feature = hover!.feature;
-        int featureId = feature.id;
-        if (drawableLayer.drawableFeatures.containsKey(featureId) == false) {
-          throw VectorMapError('No path for id: $featureId');
-        }
+      if (highlightRule == null) {
+        if (hover != null && hover!.layerIndex == layerIndex) {
+          // drawing the hover
+          MapFeature feature = hover!.feature;
+          int featureId = feature.id;
+          if (drawableLayer.drawableFeatures.containsKey(featureId) == false) {
+            throw VectorMapError('No path for id: $featureId');
+          }
 
-        DrawableFeature drawableFeature =
-            drawableLayer.drawableFeatures[featureId]!;
+          DrawableFeature drawableFeature =
+              drawableLayer.drawableFeatures[featureId]!;
 
-        MapLayer layer = drawableLayer.layer;
-        if (drawableFeature.visible &&
-            layer.hoverTheme != null &&
-            drawableFeature.hasFill) {
-          MapTheme hoverTheme = layer.hoverTheme!;
-          Color? hoverColor = hoverTheme.getColor(layer.dataSource, feature);
-          if (hoverColor != null || hoverTheme.contourColor != null) {
-            canvas.save();
+          MapLayer layer = drawableLayer.layer;
+          if (drawableFeature.visible &&
+              layer.hoverTheme != null &&
+              drawableFeature.hasFill) {
+            MapTheme hoverTheme = layer.hoverTheme!;
+            Color? hoverColor = hoverTheme.getColor(layer.dataSource, feature);
+            if (hoverColor != null || hoverTheme.contourColor != null) {
+              canvas.save();
 
-            canvasMatrix.applyOn(canvas);
+              canvasMatrix.applyOn(canvas);
 
-            if (hoverColor != null) {
-              var paint = Paint()
-                ..style = PaintingStyle.fill
-                ..color = hoverColor
-                ..isAntiAlias = true;
-              drawableFeature.drawOn(canvas, paint, canvasMatrix.scale);
+              if (hoverColor != null) {
+                var paint = Paint()
+                  ..style = PaintingStyle.fill
+                  ..color = hoverColor
+                  ..isAntiAlias = true;
+                drawableFeature.drawOn(canvas, paint, canvasMatrix.scale);
+              }
+
+              if (contourThickness > 0) {
+                _drawHoverContour(canvas, drawableLayer.layer, hoverTheme,
+                    drawableFeature, canvasMatrix);
+              }
+
+              canvas.restore();
             }
-
-            if (contourThickness > 0) {
-              _drawHoverContour(canvas, drawableLayer.layer, hoverTheme,
-                  drawableFeature, canvasMatrix);
-            }
-
-            canvas.restore();
           }
         }
       }
-    }
 
-    // drawing the overlay hover contour
-    if (contourThickness > 0 && overlayHoverContour && hover != null) {
-      DrawableLayer drawableLayer =
-          mapResolution.drawableLayers[hover!.layerIndex];
-      DrawableFeature drawableFeature =
-          drawableLayer.drawableFeatures[hover!.feature.id]!;
-      MapLayer layer = drawableLayer.layer;
-      if (drawableFeature.visible && layer.hoverTheme != null) {
-        canvas.save();
-        canvasMatrix.applyOn(canvas);
-        MapTheme hoverTheme = layer.hoverTheme!;
-        _drawHoverContour(canvas, drawableLayer.layer, hoverTheme,
-            drawableFeature, canvasMatrix);
-        canvas.restore();
+      // drawing the overlay hover contour
+      if (contourThickness > 0 && overlayHoverContour && hover != null) {
+        DrawableLayer drawableLayer =
+            mapResolution.drawableLayers[hover!.layerIndex];
+        DrawableFeature drawableFeature =
+            drawableLayer.drawableFeatures[hover!.feature.id]!;
+        MapLayer layer = drawableLayer.layer;
+        if (drawableFeature.visible && layer.hoverTheme != null) {
+          canvas.save();
+          canvasMatrix.applyOn(canvas);
+          MapTheme hoverTheme = layer.hoverTheme!;
+          _drawHoverContour(canvas, drawableLayer.layer, hoverTheme,
+              drawableFeature, canvasMatrix);
+          canvas.restore();
+        }
       }
     }
 

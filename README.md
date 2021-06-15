@@ -19,19 +19,19 @@ The full code is at https://github.com/caduandrade/vector_map_flutter_demo.
 
 **polygons.json** ([link](https://raw.githubusercontent.com/caduandrade/vector_map_flutter_demo/main/assets/polygons.json))
 
-Name | Seq | Rnd
---- | --- | ---
-"Einstein" | 1 | "73"
-"Newton" | 2 | "92"
-"Galileu" | 3 | "10"
-"Darwin" | 4 |
-"Pasteur" | 5 | "77"
-"Faraday" | 6 | "32"
-"Arquimedes" | 7 | "87"
-"Tesla" | 8 | "17"
-"Lavoisier" | 9 |
-"Kepler" | 10 | "32"
-"Turing" | 11 | "93"
+Name | Seq | Rnd | Gts
+--- | --- | --- | ---
+"Einstein" | 1 | "73" | 15000
+"Newton" | 2 | "92" | 7500
+"Galileu" | 3 | "10" | 3000
+"Darwin" | 4 |  | 15000
+"Pasteur" | 5 | "77" | 17000
+"Faraday" | 6 | "32" | 17500
+"Arquimedes" | 7 | "87" | 25000
+"Tesla" | 8 | "17" | 12500
+"Lavoisier" | 9 |  | 4000
+"Kepler" | 10 | "32" | 18000
+"Turing" | 11 | "93" | 31400
 
 **points.json** ([link](https://raw.githubusercontent.com/caduandrade/vector_map_flutter_demo/main/assets/points.json))
 

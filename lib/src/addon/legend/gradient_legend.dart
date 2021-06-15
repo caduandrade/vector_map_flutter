@@ -1,10 +1,13 @@
 import 'dart:math' as math;
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:vector_map/src/addon/legend/legend.dart';
+import 'package:vector_map/src/data/map_feature.dart';
 import 'package:vector_map/src/data/map_layer.dart';
 import 'package:vector_map/src/error.dart';
 import 'package:vector_map/src/theme/map_gradient_theme.dart';
+import 'package:vector_map/src/vector_map.dart';
 
 /// Legend for [MapGradientTheme]
 class GradientLegend extends Legend {
@@ -39,7 +42,7 @@ class GradientLegend extends Legend {
   final double fontSize;
 
   @override
-  Widget buildWidget(BuildContext context) {
+  Widget buildWidget(BuildContext context, MapFeature? hover) {
     MapGradientTheme gradientTheme = layer.theme as MapGradientTheme;
 
     List<LayoutId> children = [];
@@ -50,13 +53,8 @@ class GradientLegend extends Legend {
     if (max != null && min != null) {
       children.add(LayoutId(
           id: _ChildId.gradient,
-          child: Container(
-            decoration: BoxDecoration(
-                gradient: LinearGradient(
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.topCenter,
-                    colors: gradientTheme.colors)),
-          )));
+          child:
+              _GradientBar(gradientTheme.key, min, max, gradientTheme.colors)));
 
       children.add(LayoutId(
           id: _ChildId.max,
@@ -88,6 +86,52 @@ class GradientLegend extends Legend {
         textAlign: TextAlign.end,
         maxLines: 1,
         overflow: TextOverflow.ellipsis);
+  }
+}
+
+/// Gradient bar widget
+class _GradientBar extends StatelessWidget {
+  const _GradientBar(this.propertyKey, this.min, this.max, this.colors);
+
+  final String propertyKey;
+  final double min;
+  final double max;
+  final List<Color> colors;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+      return MouseRegion(
+          child: Container(
+            decoration: BoxDecoration(
+                gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: colors)),
+          ),
+          onHover: (event) => _highlightOn(context, constraints.maxHeight,
+              constraints.maxHeight - event.localPosition.dy),
+          onExit: (event) => _highlightOff(context));
+    });
+  }
+
+  _highlightOn(BuildContext context, double maxHeight, double y) {
+    VectorMapState? state = VectorMapState.of(context);
+    if (state != null) {
+      double range = max - min;
+      state.enableHighlightRule(
+          key: propertyKey,
+          value: min + ((y * range) / maxHeight),
+          precision: range / maxHeight);
+    }
+  }
+
+  _highlightOff(BuildContext context) {
+    VectorMapState? state = VectorMapState.of(context);
+    if (state != null) {
+      state.disableHighlightRule();
+    }
   }
 }
 
