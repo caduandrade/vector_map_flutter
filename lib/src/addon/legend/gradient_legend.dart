@@ -44,23 +44,27 @@ class GradientLegend extends Legend {
 
     List<LayoutId> children = [];
 
-    children.add(LayoutId(
-        id: _Child.gradient,
-        child: Container(
-          decoration: BoxDecoration(
-              gradient: LinearGradient(
-                  begin: Alignment.bottomCenter,
-                  end: Alignment.topCenter,
-                  colors: gradientTheme.colors)),
-        )));
-
     double? min = gradientTheme.min(layer.dataSource);
     double? max = gradientTheme.max(layer.dataSource);
 
-    if (max != null) {
+    if (max != null && min != null) {
       children.add(LayoutId(
-          id: _Child.max,
+          id: _ChildId.gradient,
+          child: Container(
+            decoration: BoxDecoration(
+                gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: gradientTheme.colors)),
+          )));
+
+      children.add(LayoutId(
+          id: _ChildId.max,
           child: LimitedBox(child: _text(max), maxWidth: maxTextWidth)));
+
+      children.add(LayoutId(
+          id: _ChildId.min,
+          child: LimitedBox(child: _text(min), maxWidth: maxTextWidth)));
     }
 
     return Container(
@@ -87,7 +91,7 @@ class GradientLegend extends Legend {
   }
 }
 
-enum _Child { gradient, max, min }
+enum _ChildId { gradient, max, min }
 
 class _Delegate extends MultiChildLayoutDelegate {
   final double gap;
@@ -113,32 +117,43 @@ class _Delegate extends MultiChildLayoutDelegate {
   void performLayout(Size size) {
     Size childSize = Size.zero;
 
-    double fontHeight = 0;
-    if (hasChild(_Child.max)) {
-      if (maxTextWidth == double.infinity) {
-        childSize = layoutChild(_Child.max,
-            BoxConstraints.tightFor(width: size.width - gradientWidth - gap));
-      } else {
-        childSize = layoutChild(
-            _Child.max,
-            BoxConstraints.tightFor(
-                width:
-                    math.min(maxTextWidth, size.width - gradientWidth - gap)));
-      }
-      fontHeight = childSize.height;
-
-      positionChild(_Child.max,
+    double textHeight = 0;
+    if (hasChild(_ChildId.max)) {
+      childSize = _layoutChild(_ChildId.max, size);
+      textHeight = childSize.height;
+      positionChild(_ChildId.max,
           Offset(size.width - childSize.width - gap - gradientWidth, 0));
+    }
 
-      if (hasChild(_Child.gradient)) {
-        double gradientHeight = math.max(0, size.height - fontHeight);
-        childSize = layoutChild(
-            _Child.gradient,
-            BoxConstraints.tightFor(
-                width: gradientWidth, height: gradientHeight));
-        positionChild(_Child.gradient,
-            Offset(size.width - childSize.width, fontHeight / 2));
-      }
+    if (hasChild(_ChildId.gradient)) {
+      double gradientHeight = math.max(0, size.height - textHeight);
+      childSize = layoutChild(
+          _ChildId.gradient,
+          BoxConstraints.tightFor(
+              width: gradientWidth, height: gradientHeight));
+      positionChild(_ChildId.gradient,
+          Offset(size.width - childSize.width, textHeight / 2));
+    }
+
+    if (hasChild(_ChildId.min)) {
+      childSize = _layoutChild(_ChildId.min, size);
+      textHeight = childSize.height;
+      positionChild(
+          _ChildId.min,
+          Offset(size.width - childSize.width - gap - gradientWidth,
+              size.height - textHeight));
+    }
+  }
+
+  Size _layoutChild(_ChildId id, Size size) {
+    if (maxTextWidth == double.infinity) {
+      return layoutChild(
+          id, BoxConstraints.tightFor(width: size.width - gradientWidth - gap));
+    } else {
+      return layoutChild(
+          id,
+          BoxConstraints.tightFor(
+              width: math.min(maxTextWidth, size.width - gradientWidth - gap)));
     }
   }
 
