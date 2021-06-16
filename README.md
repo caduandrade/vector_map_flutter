@@ -605,6 +605,6 @@ Building the debugger widget
 
 * More theming features
 * Zoom / Pan
-* Legends
-* Addons
+* More legends
+* More addons
 * Release the final version (1.0.0). The API may have some small changes.
