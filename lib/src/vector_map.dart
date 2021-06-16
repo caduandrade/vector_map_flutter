@@ -166,6 +166,9 @@ class VectorMapState extends State<VectorMap> {
   Widget _buildMapCanvas() {
     LayoutBuilder layoutBuilder = LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
+      if (constraints.maxWidth == 0 || constraints.maxHeight == 0) {
+        return Container();
+      }
       CanvasMatrix canvasMatrix = CanvasMatrix(
           widgetWidth: constraints.maxWidth,
           widgetHeight: constraints.maxHeight,
