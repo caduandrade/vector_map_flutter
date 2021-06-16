@@ -6,6 +6,7 @@ import 'package:vector_map/src/addon/legend/legend.dart';
 import 'package:vector_map/src/data/map_feature.dart';
 import 'package:vector_map/src/data/map_layer.dart';
 import 'package:vector_map/src/error.dart';
+import 'package:vector_map/src/highlight_rule.dart';
 import 'package:vector_map/src/theme/map_gradient_theme.dart';
 import 'package:vector_map/src/vector_map.dart';
 
@@ -160,8 +161,8 @@ class _GradientBar extends StatelessWidget {
     if (state != null) {
       double range = max - min;
       double value = min + (((maxHeight - y) * range) / maxHeight);
-      state.enableHighlightRule(
-          key: propertyKey, value: value, precision: range / maxHeight);
+      state.setHighlightRule(HighlightRule(
+          key: propertyKey, value: value, rangePerPixel: range / maxHeight));
       valuePositionUpdater(_ValuePosition(y, value.roundToDouble()));
     }
   }
@@ -169,7 +170,7 @@ class _GradientBar extends StatelessWidget {
   _highlightOff(BuildContext context) {
     VectorMapState? state = VectorMapState.of(context);
     if (state != null) {
-      state.disableHighlightRule();
+      state.setHighlightRule(null);
       valuePositionUpdater(null);
     }
   }

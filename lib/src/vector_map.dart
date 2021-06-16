@@ -85,17 +85,9 @@ class VectorMapState extends State<VectorMap> {
     return context.findAncestorStateOfType();
   }
 
-  disableHighlightRule() {
+  setHighlightRule(HighlightRule? newHighlightRule) {
     setState(() {
-      _highlightRule = null;
-    });
-  }
-
-  enableHighlightRule(
-      {required String key, required double value, required double precision}) {
-    setState(() {
-      _highlightRule =
-          HighlightRule(key: key, value: value, precision: precision);
+      _highlightRule = newHighlightRule;
     });
   }
 
