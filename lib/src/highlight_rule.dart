@@ -27,6 +27,7 @@ class HighlightRule {
         comparator: comparator);
   }
 
+  /// Builds a [HighlightRule]
   HighlightRule._(
       {required this.key,
       required this.value,
@@ -59,10 +60,12 @@ class HighlightRule {
     return false;
   }
 
+  /// Indicates whether to compare with larger values.
   bool greater() {
     return comparator == 1;
   }
 
+  /// Indicates whether to compare with smaller values.
   bool smaller() {
     return comparator == -1;
   }

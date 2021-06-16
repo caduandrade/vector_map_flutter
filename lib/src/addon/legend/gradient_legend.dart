@@ -202,14 +202,48 @@ class _Delegate extends MultiChildLayoutDelegate {
     Size childSize = Size.zero;
 
     double textHeight = 0;
-    if (hasChild(_ChildId.max)) {
-      childSize = _layoutChild(_ChildId.max, size);
+
+    Rect? valueBounds;
+    Offset? valueOffset;
+    if (hasChild(_ChildId.value) && valuePosition != null) {
+      childSize = _layoutChild(_ChildId.value, size);
       textHeight = childSize.height;
+      valueOffset = Offset(
+          size.width - childSize.width - legend.gap - legend.gradientWidth,
+          valuePosition!);
+      positionChild(_ChildId.value, valueOffset);
+      valueBounds = Rect.fromLTWH(
+          valueOffset.dx, valueOffset.dy, childSize.width, childSize.height);
+    }
+
+    if (hasChild(_ChildId.max)) {
+      if (valueOffset != null && valueOffset.dy < textHeight) {
+        childSize = _layoutChild(_ChildId.max, Size.zero);
+      } else {
+        childSize = _layoutChild(_ChildId.max, size);
+        textHeight = childSize.height;
+      }
+
       positionChild(
           _ChildId.max,
           Offset(
               size.width - childSize.width - legend.gap - legend.gradientWidth,
               0));
+    }
+
+    if (hasChild(_ChildId.min)) {
+      if (valueOffset != null &&
+          valueOffset.dy + textHeight > size.height - textHeight) {
+        childSize = _layoutChild(_ChildId.min, Size.zero);
+      } else {
+        childSize = _layoutChild(_ChildId.min, size);
+        textHeight = childSize.height;
+      }
+      positionChild(
+          _ChildId.min,
+          Offset(
+              size.width - childSize.width - legend.gap - legend.gradientWidth,
+              size.height - textHeight));
     }
 
     if (hasChild(_ChildId.gradient)) {
@@ -221,26 +255,6 @@ class _Delegate extends MultiChildLayoutDelegate {
       positionChild(_ChildId.gradient,
           Offset(size.width - childSize.width, textHeight / 2));
     }
-
-    if (hasChild(_ChildId.min)) {
-      childSize = _layoutChild(_ChildId.min, size);
-      textHeight = childSize.height;
-      positionChild(
-          _ChildId.min,
-          Offset(
-              size.width - childSize.width - legend.gap - legend.gradientWidth,
-              size.height - textHeight));
-    }
-
-    if (hasChild(_ChildId.value) && valuePosition != null) {
-      childSize = _layoutChild(_ChildId.value, size);
-      textHeight = childSize.height;
-      positionChild(
-          _ChildId.value,
-          Offset(
-              size.width - childSize.width - legend.gap - legend.gradientWidth,
-              valuePosition!));
-    }
   }
 
   Size _layoutChild(_ChildId id, Size size) {
@@ -249,6 +263,8 @@ class _Delegate extends MultiChildLayoutDelegate {
           id,
           BoxConstraints.tightFor(
               width: size.width - legend.gradientWidth - legend.gap));
+    } else if (size == Size.zero) {
+      return layoutChild(id, BoxConstraints.loose(size));
     } else {
       return layoutChild(
           id,
