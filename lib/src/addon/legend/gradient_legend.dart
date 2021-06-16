@@ -203,7 +203,6 @@ class _Delegate extends MultiChildLayoutDelegate {
 
     double textHeight = 0;
 
-    Rect? valueBounds;
     Offset? valueOffset;
     if (hasChild(_ChildId.value) && valuePosition != null) {
       childSize = _layoutChild(_ChildId.value, size);
@@ -212,8 +211,6 @@ class _Delegate extends MultiChildLayoutDelegate {
           size.width - childSize.width - legend.gap - legend.gradientWidth,
           valuePosition!);
       positionChild(_ChildId.value, valueOffset);
-      valueBounds = Rect.fromLTWH(
-          valueOffset.dx, valueOffset.dy, childSize.width, childSize.height);
     }
 
     if (hasChild(_ChildId.max)) {
