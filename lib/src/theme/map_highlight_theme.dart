@@ -9,9 +9,4 @@ class MapHighlightTheme {
 
   final Color? color;
   final Color? contourColor;
-
-  /// Indicates whether the theme has any value set.
-  bool hasValue() {
-    return color != null || contourColor != null;
-  }
 }

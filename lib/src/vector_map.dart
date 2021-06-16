@@ -310,21 +310,24 @@ class _MapPainter extends CustomPainter {
         layerIndex++) {
       DrawableLayer drawableLayer = mapResolution.drawableLayers[layerIndex];
 
-      if (highlightRule != null) {
-        canvas.save();
-        canvasMatrix.applyOn(canvas);
-        drawableLayer.drawOn(
-            canvas: canvas,
-            contourThickness: contourThickness,
-            scale: canvasMatrix.scale,
-            antiAlias: true,
-            highlightRule: highlightRule);
-        canvas.restore();
-      } else if (canvasMatrix.widgetSize == mapResolution.widgetSize) {
+      if (canvasMatrix.widgetSize == mapResolution.widgetSize) {
         canvas.drawPicture(mapResolution.layerBuffers[layerIndex]);
+        if (highlightRule != null) {
+          canvas.save();
+          canvasMatrix.applyOn(canvas);
+          drawableLayer.drawOn(
+              canvas: canvas,
+              contourThickness: contourThickness,
+              scale: canvasMatrix.scale,
+              antiAlias: true,
+              highlightRule: highlightRule);
+          canvas.restore();
+        }
       } else {
+        // resizing, panning or zooming
         canvas.save();
         canvasMatrix.applyOn(canvas);
+        // drawing contour only to be faster
         drawableLayer.drawContourOn(
             canvas: canvas,
             contourThickness: contourThickness,
@@ -423,7 +426,12 @@ class _MapPainter extends CustomPainter {
               Color? featureColor;
               LabelStyleBuilder? labelStyleBuilder;
 
-              if (hover != null &&
+              if (highlightRule != null) {
+                if (layer.highlightTheme?.color != null &&
+                    highlightRule!.applies(feature)) {
+                  featureColor = layer.highlightTheme!.color!;
+                }
+              } else if (hover != null &&
                   layerIndex == hover!.layerIndex &&
                   hover!.feature == feature &&
                   hoverTheme != null) {

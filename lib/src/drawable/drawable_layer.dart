@@ -15,6 +15,9 @@ class DrawableLayer {
   final MapLayer layer;
   final Map<int, DrawableFeature> drawableFeatures;
 
+  /// Draws the features on a given canvas.
+  ///
+  /// Only features that match [highlightRule] will be drawn.
   drawOn(
       {required Canvas canvas,
       required double contourThickness,
@@ -23,20 +26,22 @@ class DrawableLayer {
       HighlightRule? highlightRule}) {
     MapDataSource dataSource = layer.dataSource;
     MapTheme theme = layer.theme;
+    Color? highlightColor = layer.highlightTheme?.color;
 
     Map<int, Color> colors = Map<int, Color>();
     for (int id in drawableFeatures.keys) {
       MapFeature feature = dataSource.features[id]!;
-
-      Color color = MapTheme.getThemeOrDefaultColor(dataSource, feature, theme);
-      if (highlightRule != null && highlightRule.applies(feature)) {
-        color = Colors.black;
+      if (highlightRule != null) {
+        if (highlightColor != null && highlightRule.applies(feature)) {
+          colors[feature.id] = highlightColor;
+        }
+      } else {
+        colors[feature.id] =
+            MapTheme.getThemeOrDefaultColor(dataSource, feature, theme);
       }
-
-      colors[feature.id] = color;
     }
 
-    for (int featureId in drawableFeatures.keys) {
+    for (int featureId in colors.keys) {
       DrawableFeature drawableFeature = drawableFeatures[featureId]!;
       if (drawableFeature.visible && drawableFeature.hasFill) {
         Color color = colors[featureId]!;
@@ -53,25 +58,46 @@ class DrawableLayer {
           canvas: canvas,
           contourThickness: contourThickness,
           scale: scale,
-          antiAlias: antiAlias);
+          antiAlias: antiAlias,
+          highlightRule: highlightRule);
     }
   }
 
+  /// Draws the contour of the features on a given canvas.
+  ///
+  /// Only features that match [highlightRule] will be drawn.
   drawContourOn(
       {required Canvas canvas,
       required double contourThickness,
       required double scale,
-      required bool antiAlias}) {
+      required bool antiAlias,
+      HighlightRule? highlightRule}) {
     MapTheme theme = layer.theme;
+
+    late Color contourColor;
+    if (highlightRule != null && layer.highlightTheme?.contourColor != null) {
+      contourColor = layer.highlightTheme!.contourColor!;
+    } else {
+      contourColor = theme.contourColor != null
+          ? theme.contourColor!
+          : MapTheme.defaultContourColor;
+    }
+
     var paint = Paint()
       ..style = PaintingStyle.stroke
-      ..color = theme.contourColor != null
-          ? theme.contourColor!
-          : MapTheme.defaultContourColor
+      ..color = contourColor
       ..strokeWidth = contourThickness / scale
       ..isAntiAlias = antiAlias;
-    for (DrawableFeature drawableFeature in drawableFeatures.values) {
+
+    for (int id in drawableFeatures.keys) {
+      DrawableFeature drawableFeature = drawableFeatures[id]!;
       if (drawableFeature.visible) {
+        if (highlightRule != null) {
+          MapFeature feature = layer.dataSource.features[id]!;
+          if (highlightRule.applies(feature) == false) {
+            continue;
+          }
+        }
         drawableFeature.drawOn(canvas, paint, scale);
       }
     }
