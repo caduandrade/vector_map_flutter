@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:vector_map/src/addon/legend/legend.dart';
 import 'package:vector_map/src/data/map_feature.dart';
@@ -20,9 +21,9 @@ class GradientLegend extends Legend {
       EdgeInsetsGeometry? padding,
       EdgeInsetsGeometry? margin,
       Decoration? decoration,
-      this.gradientHeight = 150,
+      this.barHeight = 130,
       double? fontSize,
-      this.gradientWidth = 15,
+      this.barWidth = 15,
       this.maxTextWidth = 80,
       this.gap = 8})
       : this.fontSize = fontSize != null ? math.max(fontSize, 6) : 12,
@@ -38,8 +39,8 @@ class GradientLegend extends Legend {
 
   final double gap;
   final double maxTextWidth;
-  final double gradientWidth;
-  final double gradientHeight;
+  final double barWidth;
+  final double barHeight;
   final double fontSize;
 
   @override
@@ -73,7 +74,7 @@ class _GradientLegendState extends State<_GradientLegendWidget> {
 
     if (max != null && min != null) {
       children.add(LayoutId(
-          id: _ChildId.gradient,
+          id: _ChildId.bar,
           child: _GradientBar(gradientTheme.key, min, max, gradientTheme.colors,
               _updateValuePosition)));
 
@@ -91,10 +92,10 @@ class _GradientLegendState extends State<_GradientLegendWidget> {
       decoration: legend.decoration,
       margin: legend.margin,
       padding: legend.padding,
-      child: CustomMultiChildLayout(
+      child: _GradientLegendLayout(
           children: children,
-          delegate: _Delegate(
-              legend: widget.legend, valuePosition: valuePosition?.y)),
+          legend: widget.legend,
+          valuePosition: valuePosition?.y),
       color: Colors.red.withOpacity(.5),
     );
   }
@@ -180,99 +181,247 @@ class _GradientBar extends StatelessWidget {
   }
 }
 
-enum _ChildId { gradient, max, min, value }
+enum _ChildId { bar, max, min, value }
 
-class _Delegate extends MultiChildLayoutDelegate {
+class _GradientLegendLayout extends MultiChildRenderObjectWidget {
+  _GradientLegendLayout(
+      {Key? key,
+      required List<LayoutId> children,
+      required this.legend,
+      this.valuePosition})
+      : super(
+          key: key,
+          children: children,
+        );
+
   final GradientLegend legend;
   final double? valuePosition;
 
-  _Delegate({required this.legend, this.valuePosition});
-
   @override
-  Size getSize(BoxConstraints constraints) {
-    if (legend.maxTextWidth == double.infinity) {
-      return Size(constraints.maxWidth, legend.gradientHeight);
-    }
-    return Size(legend.gap + legend.maxTextWidth + legend.gradientWidth,
-        legend.gradientHeight);
+  _GradientLegendLayoutElement createElement() {
+    return _GradientLegendLayoutElement(this);
   }
 
   @override
-  void performLayout(Size size) {
-    Size childSize = Size.zero;
+  _GradientLegendLayoutRenderBox createRenderObject(BuildContext context) {
+    return _GradientLegendLayoutRenderBox(legend, valuePosition);
+  }
 
-    double textHeight = 0;
+  @override
+  void updateRenderObject(
+      BuildContext context, _GradientLegendLayoutRenderBox renderObject) {
+    renderObject..legend = legend;
+    renderObject..valuePosition = valuePosition;
+  }
+}
 
-    Offset? valueOffset;
-    if (hasChild(_ChildId.value) && valuePosition != null) {
-      childSize = _layoutChild(_ChildId.value, size);
-      textHeight = childSize.height;
-      valueOffset = Offset(
-          size.width - childSize.width - legend.gap - legend.gradientWidth,
-          valuePosition!);
-      positionChild(_ChildId.value, valueOffset);
-    }
+class _GradientLegendLayoutElement extends MultiChildRenderObjectElement {
+  _GradientLegendLayoutElement(_GradientLegendLayout widget) : super(widget);
 
-    if (hasChild(_ChildId.max)) {
-      if (valueOffset != null && valueOffset.dy < textHeight) {
-        childSize = _layoutChild(_ChildId.max, Size.zero);
-      } else {
-        childSize = _layoutChild(_ChildId.max, size);
-        textHeight = childSize.height;
+  @override
+  void debugVisitOnstageChildren(ElementVisitor visitor) {
+    children.forEach((child) {
+      if (child.renderObject != null) {
+        _GradientLegendLayoutParentData parentData =
+            child.renderObject!.parentData as _GradientLegendLayoutParentData;
+        if (parentData.visible) {
+          visitor(child);
+        }
       }
+    });
+  }
+}
 
-      positionChild(
-          _ChildId.max,
-          Offset(
-              size.width - childSize.width - legend.gap - legend.gradientWidth,
-              0));
-    }
+class _GradientLegendLayoutParentData extends MultiChildLayoutParentData {
+  bool visible = false;
+}
 
-    if (hasChild(_ChildId.min)) {
-      if (valueOffset != null &&
-          valueOffset.dy + textHeight > size.height - textHeight) {
-        childSize = _layoutChild(_ChildId.min, Size.zero);
-      } else {
-        childSize = _layoutChild(_ChildId.min, size);
-        textHeight = childSize.height;
-      }
-      positionChild(
-          _ChildId.min,
-          Offset(
-              size.width - childSize.width - legend.gap - legend.gradientWidth,
-              size.height - textHeight));
-    }
+class _GradientLegendLayoutRenderBox extends RenderBox
+    with
+        ContainerRenderObjectMixin<RenderBox, _GradientLegendLayoutParentData>,
+        RenderBoxContainerDefaultsMixin<RenderBox,
+            _GradientLegendLayoutParentData> {
+  _GradientLegendLayoutRenderBox(this.legend, this.valuePosition);
 
-    if (hasChild(_ChildId.gradient)) {
-      double gradientHeight = math.max(0, size.height - textHeight);
-      childSize = layoutChild(
-          _ChildId.gradient,
-          BoxConstraints.tightFor(
-              width: legend.gradientWidth, height: gradientHeight));
-      positionChild(_ChildId.gradient,
-          Offset(size.width - childSize.width, textHeight / 2));
+  GradientLegend legend;
+  double? valuePosition;
+
+  @override
+  void setupParentData(RenderBox child) {
+    if (child.parentData is! _GradientLegendLayoutParentData) {
+      child.parentData = _GradientLegendLayoutParentData();
     }
   }
 
-  Size _layoutChild(_ChildId id, Size size) {
+  @override
+  void performLayout() {
+    RenderBox? minRenderBox;
+    _GradientLegendLayoutParentData? minParentData;
+    RenderBox? maxRenderBox;
+    _GradientLegendLayoutParentData? maxParentData;
+    RenderBox? valueRenderBox;
+    _GradientLegendLayoutParentData? valueParentData;
+    RenderBox? barRenderBox;
+    _GradientLegendLayoutParentData? barParentData;
+
+    visitChildren((child) {
+      final _GradientLegendLayoutParentData parentData =
+          child.gradientLegendLayoutParentData();
+      parentData.visible = true;
+      if (parentData.id == _ChildId.bar) {
+        barRenderBox = child as RenderBox;
+        barParentData = barRenderBox!.gradientLegendLayoutParentData();
+      } else if (parentData.id == _ChildId.min) {
+        minRenderBox = child as RenderBox;
+        minParentData = minRenderBox!.gradientLegendLayoutParentData();
+      } else if (parentData.id == _ChildId.max) {
+        maxRenderBox = child as RenderBox;
+        maxParentData = maxRenderBox!.gradientLegendLayoutParentData();
+      } else if (parentData.id == _ChildId.value) {
+        valueRenderBox = child as RenderBox;
+        valueParentData = valueRenderBox!.gradientLegendLayoutParentData();
+      }
+    });
+
+    double maxTextWidth = 0;
+    double maxTextHeight = 0;
+    double height = 0;
+    if (valueRenderBox != null) {
+      if (valuePosition != null) {
+        _layoutTextChild(valueRenderBox!);
+        maxTextHeight = math.max(maxTextHeight, valueRenderBox!.size.height);
+        maxTextWidth = math.max(maxTextWidth, valueRenderBox!.size.width);
+      } else {
+        valueParentData!.visible = false;
+      }
+    }
+    if (maxRenderBox != null) {
+      _layoutTextChild(maxRenderBox!);
+      maxTextHeight = math.max(maxTextHeight, maxRenderBox!.size.height);
+      maxTextWidth = math.max(maxTextWidth, maxRenderBox!.size.width);
+    }
+    if (minRenderBox != null) {
+      _layoutTextChild(minRenderBox!);
+      maxTextHeight = math.max(maxTextHeight, minRenderBox!.size.height);
+      maxTextWidth = math.max(maxTextWidth, minRenderBox!.size.width);
+    }
+    double barHeight = 0;
+    if (barRenderBox != null) {
+      barHeight =
+          math.min(legend.barHeight, constraints.maxHeight - maxTextHeight);
+      barRenderBox!.layout(
+          BoxConstraints.tightFor(width: legend.barWidth, height: barHeight),
+          parentUsesSize: true);
+      height += barHeight;
+    }
+
+    // new size
+    height += maxTextHeight;
     if (legend.maxTextWidth == double.infinity) {
-      return layoutChild(
-          id,
-          BoxConstraints.tightFor(
-              width: size.width - legend.gradientWidth - legend.gap));
-    } else if (size == Size.zero) {
-      return layoutChild(id, BoxConstraints.loose(size));
+      size = Size(constraints.maxWidth, height);
     } else {
-      return layoutChild(
-          id,
-          BoxConstraints.tightFor(
-              width: math.min(legend.maxTextWidth,
-                  size.width - legend.gradientWidth - legend.gap)));
+      size = Size(maxTextWidth + legend.barWidth + legend.gap, height);
+    }
+
+    if (valueRenderBox != null && valuePosition != null) {
+      valueParentData!.offset = Offset(
+          size.width -
+              valueRenderBox!.size.width -
+              legend.gap -
+              legend.barWidth,
+          valuePosition!);
+    }
+    if (maxRenderBox != null) {
+      if (valuePosition != null && valuePosition! < maxTextHeight) {
+        maxParentData!.visible = false;
+      } else {
+        maxParentData!.offset = Offset(
+            size.width -
+                maxRenderBox!.size.width -
+                legend.gap -
+                legend.barWidth,
+            0);
+      }
+    }
+
+    if (minRenderBox != null) {
+      if (valuePosition != null && valuePosition! > barHeight - maxTextHeight) {
+        minParentData!.visible = false;
+      } else {
+        minParentData!.offset = Offset(
+            size.width -
+                minRenderBox!.size.width -
+                legend.gap -
+                legend.barWidth,
+            size.height - maxTextHeight);
+      }
+    }
+    if (barRenderBox != null) {
+      barParentData!.offset =
+          Offset(size.width - barRenderBox!.size.width, maxTextHeight / 2);
     }
   }
 
+  _layoutTextChild(RenderBox child) {
+    if (legend.maxTextWidth == double.infinity) {
+      child.layout(
+          BoxConstraints.tightFor(
+              width: constraints.maxWidth - legend.barWidth - legend.gap),
+          parentUsesSize: true);
+    } else {
+      child.layout(
+          BoxConstraints.loose(Size(
+              constraints.maxWidth - legend.barWidth - legend.gap,
+              constraints.maxHeight)),
+          parentUsesSize: true);
+    }
+  }
+
+  void visitVisibleChildren(RenderObjectVisitor visitor) {
+    visitChildren((child) {
+      if (child.gradientLegendLayoutParentData().visible) {
+        visitor(child);
+      }
+    });
+  }
+
   @override
-  bool shouldRelayout(covariant MultiChildLayoutDelegate oldDelegate) {
+  void visitChildrenForSemantics(RenderObjectVisitor visitor) {
+    visitVisibleChildren(visitor);
+  }
+
+  @override
+  void paint(PaintingContext context, Offset offset) {
+    visitVisibleChildren((RenderObject child) {
+      final _GradientLegendLayoutParentData childParentData =
+          child.gradientLegendLayoutParentData();
+      context.paintChild(child, childParentData.offset + offset);
+    });
+  }
+
+  @override
+  bool hitTestChildren(BoxHitTestResult result, {required Offset position}) {
+    visitVisibleChildren((renderObject) {
+      final RenderBox child = renderObject as RenderBox;
+      final _GradientLegendLayoutParentData childParentData =
+          child.gradientLegendLayoutParentData();
+      result.addWithPaintOffset(
+        offset: childParentData.offset,
+        position: position,
+        hitTest: (BoxHitTestResult result, Offset transformed) {
+          assert(transformed == position - childParentData.offset);
+          return child.hitTest(result, position: transformed);
+        },
+      );
+    });
+
     return false;
+  }
+}
+
+/// Utility extension to facilitate obtaining parent data.
+extension __GradientLegendLayoutParentDataGetter on RenderObject {
+  _GradientLegendLayoutParentData gradientLegendLayoutParentData() {
+    return this.parentData as _GradientLegendLayoutParentData;
   }
 }
