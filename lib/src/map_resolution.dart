@@ -31,7 +31,7 @@ class MapResolution {
 
   final Size widgetSize;
   final UnmodifiableListView<DrawableLayer> drawableLayers;
-  final UnmodifiableListView<Image> layerBuffers;
+  final UnmodifiableListView<Picture> layerBuffers;
   final int pointsCount;
 
   Future<MemoryImage> toMemoryImageProvider(Image image) async {
@@ -59,7 +59,7 @@ class MapResolutionBuilder {
 
   final OnFinish onFinish;
   final List<DrawableLayer> _drawableLayers = [];
-  final List<Image> _layerBuffers = [];
+  final List<Picture> _layerBuffers = [];
 
   final MapDebugger? debugger;
 
@@ -100,10 +100,10 @@ class MapResolutionBuilder {
         }
         DrawableLayer drawableLayer = DrawableLayer(layer, drawableFeatures);
         debugger?.openBufferBuildDuration();
-        Image image = await _createBuffer(canvasMatrix, drawableLayer);
+        Picture buffer = _createBuffer(canvasMatrix, drawableLayer);
         debugger?.closeBufferBuildDuration();
         _drawableLayers.add(drawableLayer);
-        _layerBuffers.add(image);
+        _layerBuffers.add(buffer);
       }
       if (_state != _State.stopped) {
         debugger?.updateDrawableBuildDuration();
@@ -119,12 +119,12 @@ class MapResolutionBuilder {
     }
   }
 
-  Future<Image> _createBuffer(
-      CanvasMatrix canvasMatrix, DrawableLayer drawableLayer) async {
+  Picture _createBuffer(
+      CanvasMatrix canvasMatrix, DrawableLayer drawableLayer) {
     PictureRecorder recorder = PictureRecorder();
-    Canvas canvas = new Canvas(
+    Canvas canvas = Canvas(
         recorder,
-        new Rect.fromPoints(
+        Rect.fromPoints(
             Offset.zero,
             Offset(canvasMatrix.widgetSize.width,
                 canvasMatrix.widgetSize.height)));
@@ -140,8 +140,6 @@ class MapResolutionBuilder {
 
     canvas.restore();
 
-    Picture picture = recorder.endRecording();
-    return await picture.toImage(canvasMatrix.widgetSize.width.toInt(),
-        canvasMatrix.widgetSize.height.toInt());
+    return recorder.endRecording();
   }
 }

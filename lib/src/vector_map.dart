@@ -127,6 +127,26 @@ class VectorMapState extends State<VectorMap> {
 
   @override
   Widget build(BuildContext context) {
+    Widget? content;
+    if (widget.layers.isNotEmpty) {
+      Widget mapCanvas = _buildMapCanvas();
+      if (widget.addons != null) {
+        List<LayoutId> children = [LayoutId(id: 0, child: mapCanvas)];
+        int count = 1;
+        for (MapAddon addon in widget.addons!) {
+          children.add(LayoutId(
+              id: count, child: addon.buildWidget(context, _hover?.feature)));
+          count++;
+        }
+        content = CustomMultiChildLayout(
+            children: children, delegate: _VectorMapLayoutDelegate(count));
+      } else {
+        content = mapCanvas;
+      }
+    } else {
+      content = Center();
+    }
+
     BoxBorder? border;
     if (widget.borderColor != null &&
         widget.borderThickness != null &&
@@ -139,86 +159,63 @@ class VectorMapState extends State<VectorMap> {
       decoration = BoxDecoration(color: widget.color, border: border);
     }
 
-    return Container(
-        decoration: decoration,
-        child: LayoutBuilder(
-            builder: (BuildContext context, BoxConstraints constraints) {
-          double canvasAreaWidth = constraints.maxWidth;
-          double canvasAreaHeight = constraints.maxHeight;
-          if (widget.padding != null) {
-            canvasAreaWidth -= widget.padding!.horizontal;
-            canvasAreaHeight -= widget.padding!.vertical;
-          }
-          if (widget.layers.isNotEmpty) {
-            Widget mapCanvas = _buildMapCanvas(CanvasMatrix(
-                widgetWidth: canvasAreaWidth,
-                widgetHeight: canvasAreaHeight,
-                worldBounds: widget.layersBounds!));
-            if (widget.addons != null) {
-              List<LayoutId> children = [LayoutId(id: 0, child: mapCanvas)];
-              int id = 1;
-              for (MapAddon addon in widget.addons!) {
-                children.add(LayoutId(
-                    id: id,
-                    child: addon.buildWidget(context, _hover?.feature)));
-                id++;
-              }
-              return CustomMultiChildLayout(
-                  children: children, delegate: _VectorMapLayoutDelegate(id));
-            }
-            return mapCanvas;
-          }
-          return Center();
-        }));
+    return Container(decoration: decoration, child: content);
   }
 
   /// Builds the canvas area
-  Widget _buildMapCanvas(CanvasMatrix canvasMatrix) {
-    if (_lastBuildSize != canvasMatrix.widgetSize) {
-      _lastBuildSize = canvasMatrix.widgetSize;
-      if (_mapResolution == null) {
-        if (_mapResolutionBuilder == null) {
-          // first build without delay
-          Future.microtask(() => _updateMapResolution(canvasMatrix));
+  Widget _buildMapCanvas() {
+    LayoutBuilder layoutBuilder = LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+      CanvasMatrix canvasMatrix = CanvasMatrix(
+          widgetWidth: constraints.maxWidth,
+          widgetHeight: constraints.maxHeight,
+          worldBounds: widget.layersBounds!);
+
+      if (_lastBuildSize != canvasMatrix.widgetSize) {
+        _lastBuildSize = canvasMatrix.widgetSize;
+        if (_mapResolution == null) {
+          if (_mapResolutionBuilder == null) {
+            // first build without delay
+            Future.microtask(() => _updateMapResolution(canvasMatrix));
+          }
+          return Center(
+            child: Text('Updating...'),
+          );
+        } else {
+          // updating map resolution
+          Future.delayed(
+              Duration(milliseconds: widget.delayToRefreshResolution), () {
+            _updateMapResolution(canvasMatrix);
+          });
         }
-        return Center(
-          child: Text('updating...'),
-        );
-      } else {
-        // updating map resolution
-        Future.delayed(Duration(milliseconds: widget.delayToRefreshResolution),
-            () {
-          _updateMapResolution(canvasMatrix);
-        });
       }
-    }
 
-    _MapPainter mapPainter = _MapPainter(
-        mapResolution: _mapResolution!,
-        hover: _hover,
-        highlightRule: _highlightRule,
-        canvasMatrix: canvasMatrix,
-        contourThickness: widget.contourThickness,
-        overlayHoverContour: widget.overlayHoverContour);
+      _MapPainter mapPainter = _MapPainter(
+          mapResolution: _mapResolution!,
+          hover: _hover,
+          highlightRule: _highlightRule,
+          canvasMatrix: canvasMatrix,
+          contourThickness: widget.contourThickness,
+          overlayHoverContour: widget.overlayHoverContour);
 
-    CustomPaint customPaint =
-        CustomPaint(painter: mapPainter, child: Container());
+      CustomPaint customPaint =
+          CustomPaint(painter: mapPainter, child: Container());
 
-    MouseRegion mouseRegion = MouseRegion(
-      child: customPaint,
-      onHover: (event) => _onHover(event, canvasMatrix),
-      onExit: (event) {
-        if (_hover != null) {
-          _updateHover(null);
-        }
-      },
-    );
+      MouseRegion mouseRegion = MouseRegion(
+        child: customPaint,
+        onHover: (event) => _onHover(event, canvasMatrix),
+        onExit: (event) {
+          if (_hover != null) {
+            _updateHover(null);
+          }
+        },
+      );
 
-    return Container(
-        child: ClipRect(
-            child:
-                GestureDetector(child: mouseRegion, onTap: () => _onClick())),
-        padding: widget.padding);
+      return ClipRect(
+          child: GestureDetector(child: mouseRegion, onTap: () => _onClick()));
+    });
+
+    return Container(child: layoutBuilder, padding: widget.padding);
   }
 
   _onClick() {
@@ -324,8 +321,7 @@ class _MapPainter extends CustomPainter {
             highlightRule: highlightRule);
         canvas.restore();
       } else if (canvasMatrix.widgetSize == mapResolution.widgetSize) {
-        canvas.drawImage(
-            mapResolution.layerBuffers[layerIndex], Offset.zero, Paint());
+        canvas.drawPicture(mapResolution.layerBuffers[layerIndex]);
       } else {
         canvas.save();
         canvasMatrix.applyOn(canvas);
