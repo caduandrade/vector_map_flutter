@@ -82,9 +82,8 @@ class _GradientLegendState extends State<_GradientLegendWidget> {
       children.add(LayoutId(id: _ChildId.min, child: _text(min.toString())));
 
       if (valuePosition != null) {
-        children.add(LayoutId(
-            id: _ChildId.value,
-            child: _text('≈ ' + valuePosition!.value.toString())));
+        children.add(
+            LayoutId(id: _ChildId.value, child: _text(valuePosition!.value)));
       }
     }
 
@@ -124,7 +123,7 @@ class _ValuePosition {
   _ValuePosition(this.y, this.value);
 
   final double y;
-  final double value;
+  final String value;
 }
 
 /// Gradient bar widget
@@ -161,9 +160,14 @@ class _GradientBar extends StatelessWidget {
     if (state != null) {
       double range = max - min;
       double value = min + (((maxHeight - y) * range) / maxHeight);
-      state.setHighlightRule(HighlightRule(
-          key: propertyKey, value: value, rangePerPixel: range / maxHeight));
-      valuePositionUpdater(_ValuePosition(y, value.roundToDouble()));
+      HighlightRule highlightRule = HighlightRule(
+          key: propertyKey,
+          value: value,
+          rangePerPixel: range / maxHeight,
+          min: min,
+          max: max);
+      state.setHighlightRule(highlightRule);
+      valuePositionUpdater(_ValuePosition(y, highlightRule.toString()));
     }
   }
 
