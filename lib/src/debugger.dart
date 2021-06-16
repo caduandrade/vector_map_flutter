@@ -143,7 +143,8 @@ class MapDebuggerState extends State<MapDebuggerWidget> {
     Duration bufferDuration = Duration(
         milliseconds: widget.debugger._bufferBuildDuration._lastDuration);
 
-    return Column(children: [
+    return SingleChildScrollView(
+        child: Column(children: [
       Padding(
           padding: EdgeInsets.fromLTRB(0, 12, 0, 12),
           child: Text('Quantities',
@@ -162,7 +163,7 @@ class MapDebuggerState extends State<MapDebuggerWidget> {
           'Multi resolution: ', widget.debugger._multiResolutionDuration),
       _buildDuration('-- Drawable build: ', drawableDuration),
       _buildDuration('-- Buffer build: ', bufferDuration)
-    ], crossAxisAlignment: CrossAxisAlignment.start);
+    ], crossAxisAlignment: CrossAxisAlignment.start));
   }
 
   Widget _buildFormattedInt(String name, int value) {
