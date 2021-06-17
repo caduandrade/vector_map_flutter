@@ -24,7 +24,6 @@ class GradientLegend extends Legend {
       this.barHeight = 130,
       double? fontSize,
       this.barWidth = 15,
-      this.maxTextWidth = 80,
       this.gap = 8})
       : this.fontSize = fontSize != null ? math.max(fontSize, 6) : 12,
         super(
@@ -38,7 +37,6 @@ class GradientLegend extends Legend {
   }
 
   final double gap;
-  final double maxTextWidth;
   final double barWidth;
   final double barHeight;
   final double fontSize;
@@ -101,13 +99,11 @@ class _GradientLegendState extends State<_GradientLegendWidget> {
   }
 
   Widget _text(String value) {
-    return LimitedBox(
-        child: Text(value.toString(),
-            style: TextStyle(fontSize: widget.legend.fontSize),
-            textAlign: TextAlign.end,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis),
-        maxWidth: widget.legend.maxTextWidth);
+    return Text(value.toString(),
+        style: TextStyle(fontSize: widget.legend.fontSize),
+        textAlign: TextAlign.end,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis);
   }
 
   _updateValuePosition(_ValuePosition? newValuePosition) {
@@ -317,11 +313,7 @@ class _GradientLegendLayoutRenderBox extends RenderBox
 
     // new size
     height += maxTextHeight;
-    if (legend.maxTextWidth == double.infinity) {
-      size = Size(constraints.maxWidth, height);
-    } else {
-      size = Size(maxTextWidth + legend.barWidth + legend.gap, height);
-    }
+    size = Size(maxTextWidth + legend.barWidth + legend.gap, height);
 
     if (valueRenderBox != null && valuePosition != null) {
       valueParentData!.offset = Offset(
@@ -363,18 +355,11 @@ class _GradientLegendLayoutRenderBox extends RenderBox
   }
 
   _layoutTextChild(RenderBox child) {
-    if (legend.maxTextWidth == double.infinity) {
-      child.layout(
-          BoxConstraints.tightFor(
-              width: constraints.maxWidth - legend.barWidth - legend.gap),
-          parentUsesSize: true);
-    } else {
-      child.layout(
-          BoxConstraints.loose(Size(
-              constraints.maxWidth - legend.barWidth - legend.gap,
-              constraints.maxHeight)),
-          parentUsesSize: true);
-    }
+    child.layout(
+        BoxConstraints.loose(Size(
+            constraints.maxWidth - legend.barWidth - legend.gap,
+            constraints.maxHeight)),
+        parentUsesSize: true);
   }
 
   void visitVisibleChildren(RenderObjectVisitor visitor) {
