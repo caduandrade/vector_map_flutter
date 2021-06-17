@@ -87,15 +87,13 @@ class _GradientLegendState extends State<_GradientLegendWidget> {
     }
 
     return Container(
-      decoration: legend.decoration,
-      margin: legend.margin,
-      padding: legend.padding,
-      child: _GradientLegendLayout(
-          children: children,
-          legend: widget.legend,
-          valuePosition: valuePosition?.y),
-      color: Colors.red.withOpacity(.5),
-    );
+        decoration: legend.decoration,
+        margin: legend.margin,
+        padding: legend.padding,
+        child: _GradientLegendLayout(
+            children: children,
+            legend: widget.legend,
+            valuePosition: valuePosition?.y));
   }
 
   Widget _text(String value) {
