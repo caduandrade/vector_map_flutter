@@ -21,7 +21,7 @@ class GradientLegend extends Legend {
       EdgeInsetsGeometry? padding,
       EdgeInsetsGeometry? margin,
       Decoration? decoration,
-      this.barHeight = 130,
+      this.barHeight = 100,
       double? fontSize,
       this.barWidth = 15,
       this.gap = 8})
@@ -97,11 +97,14 @@ class _GradientLegendState extends State<_GradientLegendWidget> {
   }
 
   Widget _text(String value) {
-    return Text(value.toString(),
-        style: TextStyle(fontSize: widget.legend.fontSize),
-        textAlign: TextAlign.end,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis);
+    return Container(
+        child: Text(value.toString(),
+            style: TextStyle(fontSize: widget.legend.fontSize),
+            textAlign: TextAlign.end,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis),
+        padding: EdgeInsets.all(2),
+        color: Colors.white.withOpacity(.7));
   }
 
   _updateValuePosition(_ValuePosition? newValuePosition) {
