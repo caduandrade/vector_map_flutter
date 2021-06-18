@@ -19,12 +19,12 @@ class GradientLegend extends Legend {
   GradientLegend(
       {required MapLayer layer,
       EdgeInsetsGeometry? padding,
-      EdgeInsetsGeometry? margin,
+      EdgeInsetsGeometry? margin = const EdgeInsets.all(8),
       Decoration? decoration,
       this.barHeight = 100,
       double? fontSize,
       this.barWidth = 15,
-      this.gap = 8})
+      this.textGap = 8})
       : this.fontSize = fontSize != null ? math.max(fontSize, 6) : 12,
         super(
             layer: layer,
@@ -32,11 +32,11 @@ class GradientLegend extends Legend {
             margin: margin,
             decoration: decoration) {
     if (layer.theme is MapGradientTheme == false) {
-      throw VectorMapError('Theme must be a MapGradientTheme');
+      throw VectorMapError('The layer theme must be a MapGradientTheme');
     }
   }
 
-  final double gap;
+  final double textGap;
   final double barWidth;
   final double barHeight;
   final double fontSize;
@@ -314,13 +314,13 @@ class _GradientLegendLayoutRenderBox extends RenderBox
 
     // new size
     height += maxTextHeight;
-    size = Size(maxTextWidth + legend.barWidth + legend.gap, height);
+    size = Size(maxTextWidth + legend.barWidth + legend.textGap, height);
 
     if (valueRenderBox != null && valuePosition != null) {
       valueParentData!.offset = Offset(
           size.width -
               valueRenderBox!.size.width -
-              legend.gap -
+              legend.textGap -
               legend.barWidth,
           valuePosition!);
     }
@@ -331,7 +331,7 @@ class _GradientLegendLayoutRenderBox extends RenderBox
         maxParentData!.offset = Offset(
             size.width -
                 maxRenderBox!.size.width -
-                legend.gap -
+                legend.textGap -
                 legend.barWidth,
             0);
       }
@@ -344,7 +344,7 @@ class _GradientLegendLayoutRenderBox extends RenderBox
         minParentData!.offset = Offset(
             size.width -
                 minRenderBox!.size.width -
-                legend.gap -
+                legend.textGap -
                 legend.barWidth,
             size.height - maxTextHeight);
       }
@@ -358,7 +358,7 @@ class _GradientLegendLayoutRenderBox extends RenderBox
   _layoutTextChild(RenderBox child) {
     child.layout(
         BoxConstraints.loose(Size(
-            constraints.maxWidth - legend.barWidth - legend.gap,
+            constraints.maxWidth - legend.barWidth - legend.textGap,
             constraints.maxHeight)),
         parentUsesSize: true);
   }
