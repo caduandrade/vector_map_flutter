@@ -11,7 +11,32 @@
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/vector_map_v1.png)
 
-## Examples
+## Usage
+
+* [Reading GeoJSON from String](#reading-geojson-from-string)
+* [Reading GeoJSON properties](#reading-geojson-properties)
+* [Creating the Widget](#creating-the-widget)
+* [Theme](#theme)
+ * [Label visibility](#label-visibility)
+ * [Label style](#label-style)
+ * [Color by property value](#color-by-property-value)
+ * [Color by rule](#color-by-rule)
+ * [Gradient](#gradient)
+* [Contour](#contour)
+* Hover
+ * [Theme](#hover-theme)
+ * [Rule](#hover-rule)
+ * [Listener](#hover-listener)
+* [Layers](#layers)
+ * [Overlay hover contour](#overlay-hover-contour)
+* [Marker](#marker)
+ * Circle
+   * [Fixed radius](#fixed-radius)
+   * [Radius by mapping values](#radius-by-mapping-values)
+   * [Radius by property values](#radius-by-property-values)
+   * [Radius in proportion to property values](#radius-in-proportion-to-property-values)
+* [Click listener](#click-listener)
+* [Debugger](#debugger)
 
 Simplified GeoJSONs will be used in the examples to demonstrate package usage.
 The following examples will assume that GeoJSONs have already been loaded into Strings.
@@ -46,22 +71,12 @@ Name | AN
 
 ## Reading GeoJSON from String
 
-No properties are loaded, only the geometries.
+Reading the geometries only.
 
 ```dart
     MapDataSource polygons =
         await MapDataSource.geoJSON(geojson: polygonsGeoJSON);
 ```
-
-## Creating the Widget
-
-```dart
-    MapLayer layer = MapLayer(dataSource: polygons);
-
-    VectorMap map = VectorMap(layers: [layer]);
-```
-
-![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/get_started_v1.png)
 
 ## Reading GeoJSON properties
 
@@ -77,6 +92,17 @@ The `labelKey` defines which property will be used to display its values as feat
         labelKey: 'Rnd');
 ```
 
+## Creating the Widget
+
+```dart
+    MapLayer layer = MapLayer(dataSource: polygons);
+
+    VectorMap map = VectorMap(layers: [layer]);
+```
+
+![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/get_started_v1.png)
+
+
 ## Theme
 
 ```dart
@@ -89,16 +115,12 @@ The `labelKey` defines which property will be used to display its values as feat
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/default_colors_v1.png)
 
-### Label
-
-Mapping label property:
+### Label visibility
 
 ```dart
     MapDataSource polygons =
         await MapDataSource.geoJSON(geojson: polygonsGeoJSON, labelKey: 'Name');
 ```
-
-Visibility:
 
 ```dart
     MapLayer layer = MapLayer(
@@ -121,7 +143,7 @@ Visibility:
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/label_rule_v1.png)
 
-##### Label style
+### Label style
 
 ```dart
     MapLayer layer = MapLayer(
@@ -345,23 +367,7 @@ If the `max` value is set, all higher values will be displayed using the last gr
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/label_hover_v1.png)
 
-#### Listener
-
-```dart
-    MapLayer layer = MapLayer(
-        dataSource: polygons, hoverTheme: MapTheme(color: Colors.grey[700]));
-
-    VectorMap map = VectorMap(
-        layers: [layer],
-        hoverListener: (MapFeature? feature) {
-          if (feature != null) {
-            int id = feature.id;
-            print('Hover - Feature id: $id');
-          }
-        });
-```
-
-#### Rule
+## Hover rule
 
 ##### Enabling hover by property value
 
@@ -386,6 +392,22 @@ If the `max` value is set, all higher values will be displayed using the last gr
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/enable_hover_by_value_v1.gif)
+
+## Hover listener
+
+```dart
+    MapLayer layer = MapLayer(
+        dataSource: polygons, hoverTheme: MapTheme(color: Colors.grey[700]));
+
+    VectorMap map = VectorMap(
+        layers: [layer],
+        hoverListener: (MapFeature? feature) {
+          if (feature != null) {
+            int id = feature.id;
+            print('Hover - Feature id: $id');
+          }
+        });
+```
 
 ## Layers
 
