@@ -24,7 +24,8 @@ class GradientLegend extends Legend {
       this.barHeight = 100,
       double? fontSize,
       this.barWidth = 15,
-      this.textGap = 8})
+      this.textGap = 8,
+      this.barBorder})
       : this.fontSize = fontSize != null ? math.max(fontSize, 6) : 12,
         super(
             layer: layer,
@@ -40,10 +41,32 @@ class GradientLegend extends Legend {
   final double barWidth;
   final double barHeight;
   final double fontSize;
+  final BoxBorder? barBorder;
 
   @override
   Widget buildWidget(BuildContext context, MapFeature? hover) {
     return _GradientLegendWidget(this);
+  }
+
+  double get _totalBarWidth {
+    if (barBorder != null) {
+      return barWidth + barBorder!.dimensions.horizontal;
+    }
+    return barWidth;
+  }
+
+  double get _totalBarHeight {
+    if (barBorder != null) {
+      return barHeight + barBorder!.dimensions.vertical;
+    }
+    return barHeight;
+  }
+
+  double get _barBorderHeight {
+    if (barBorder != null) {
+      return barBorder!.dimensions.vertical;
+    }
+    return 0;
   }
 }
 
@@ -74,7 +97,7 @@ class _GradientLegendState extends State<_GradientLegendWidget> {
       children.add(LayoutId(
           id: _ChildId.bar,
           child: _GradientBar(gradientTheme.key, min, max, gradientTheme.colors,
-              _updateValuePosition)));
+              _updateValuePosition, widget.legend.barBorder)));
 
       children.add(LayoutId(id: _ChildId.max, child: _text(max.toString())));
 
@@ -127,19 +150,20 @@ class _ValuePosition {
 /// Gradient bar widget
 class _GradientBar extends StatelessWidget {
   const _GradientBar(this.propertyKey, this.min, this.max, this.colors,
-      this.valuePositionUpdater);
+      this.valuePositionUpdater, this.border);
 
   final String propertyKey;
   final double min;
   final double max;
   final List<Color> colors;
   final _ValuePositionUpdater valuePositionUpdater;
+  final BoxBorder? border;
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
-      return MouseRegion(
+      MouseRegion mouseRegion = MouseRegion(
           child: Container(
             decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -150,6 +174,11 @@ class _GradientBar extends StatelessWidget {
           onHover: (event) => _highlightOn(
               context, constraints.maxHeight, event.localPosition.dy),
           onExit: (event) => _highlightOff(context));
+      if (border != null) {
+        return Container(
+            child: mouseRegion, decoration: BoxDecoration(border: border));
+      }
+      return mouseRegion;
     });
   }
 
@@ -304,25 +333,34 @@ class _GradientLegendLayoutRenderBox extends RenderBox
     }
     double barHeight = 0;
     if (barRenderBox != null) {
-      barHeight =
-          math.min(legend.barHeight, constraints.maxHeight - maxTextHeight);
+      barHeight = math.min(
+          legend._totalBarHeight, constraints.maxHeight - maxTextHeight);
       barRenderBox!.layout(
-          BoxConstraints.tightFor(width: legend.barWidth, height: barHeight),
+          BoxConstraints.tightFor(
+              width: legend._totalBarWidth, height: barHeight),
           parentUsesSize: true);
       height += barHeight;
     }
 
     // new size
     height += maxTextHeight;
-    size = Size(maxTextWidth + legend.barWidth + legend.textGap, height);
+    size = Size(maxTextWidth + legend._totalBarWidth + legend.textGap, height);
+
+    if (barHeight - legend._barBorderHeight < 6) {
+      barParentData?.visible = false;
+      valueParentData?.visible = false;
+      maxParentData?.visible = false;
+      minParentData?.visible = false;
+      return;
+    }
 
     if (valueRenderBox != null && valuePosition != null) {
       valueParentData!.offset = Offset(
           size.width -
               valueRenderBox!.size.width -
               legend.textGap -
-              legend.barWidth,
-          valuePosition!);
+              legend._totalBarWidth,
+          valuePosition! + legend._barBorderHeight / 2);
     }
     if (maxRenderBox != null) {
       if (valuePosition != null && valuePosition! < maxTextHeight) {
@@ -332,21 +370,23 @@ class _GradientLegendLayoutRenderBox extends RenderBox
             size.width -
                 maxRenderBox!.size.width -
                 legend.textGap -
-                legend.barWidth,
-            0);
+                legend._totalBarWidth,
+            legend._barBorderHeight / 2);
       }
     }
 
     if (minRenderBox != null) {
-      if (valuePosition != null && valuePosition! > barHeight - maxTextHeight) {
+      if (valuePosition != null &&
+          valuePosition! >
+              barHeight - maxTextHeight - legend._barBorderHeight) {
         minParentData!.visible = false;
       } else {
         minParentData!.offset = Offset(
             size.width -
                 minRenderBox!.size.width -
                 legend.textGap -
-                legend.barWidth,
-            size.height - maxTextHeight);
+                legend._totalBarWidth,
+            size.height - maxTextHeight - legend._barBorderHeight / 2);
       }
     }
     if (barRenderBox != null) {
@@ -358,7 +398,7 @@ class _GradientLegendLayoutRenderBox extends RenderBox
   _layoutTextChild(RenderBox child) {
     child.layout(
         BoxConstraints.loose(Size(
-            constraints.maxWidth - legend.barWidth - legend.textGap,
+            constraints.maxWidth - legend._totalBarWidth - legend.textGap,
             constraints.maxHeight)),
         parentUsesSize: true);
   }
