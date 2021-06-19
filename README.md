@@ -23,7 +23,7 @@
   * [Color by property value](#color-by-property-value)
   * [Color by rule](#color-by-rule)
   * [Gradient](#gradient)
-* [Contour](#contour)
+* [Contour thickness](#contour-thickness)
 * Hover
   * [Theme](#hover-theme)
   * [Rule](#hover-rule)
@@ -318,9 +318,7 @@ If the `max` value is set, all higher values will be displayed using the last gr
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/gradient_legend_v1.png)
 
-## Contour
-
-#### Thickness
+## Contour thickness
 
 ```dart
     VectorMap map = VectorMap(
