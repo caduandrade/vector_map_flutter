@@ -23,9 +23,9 @@
   * [Color by property value](#color-by-property-value)
   * [Color by rule](#color-by-rule)
   * [Gradient](#gradient)
+* [Highlight theme](#highlight-theme)
 * [Contour thickness](#contour-thickness)
 * Hover
-  * [Theme](#hover-theme)
   * [Rule](#hover-rule)
   * [Listener](#hover-listener)
 * [Layers](#layers)
@@ -318,16 +318,9 @@ If the `max` value is set, all higher values will be displayed using the last gr
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/gradient_legend_v1.png)
 
-## Contour thickness
+## Highlight theme
 
-```dart
-    VectorMap map = VectorMap(
-        layers: [MapLayer(dataSource: polygons)], contourThickness: 3);
-```
-
-![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/contour_thickness_v1.png)
-
-## Hover theme
+Used by addons and cursor hover to highlight layer features on the map.
 
 #### Color
 
@@ -369,6 +362,15 @@ If the `max` value is set, all higher values will be displayed using the last gr
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/label_hover_v1.png)
+
+## Contour thickness
+
+```dart
+    VectorMap map = VectorMap(
+        layers: [MapLayer(dataSource: polygons)], contourThickness: 3);
+```
+
+![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/contour_thickness_v1.png)
 
 ## Hover rule
 
