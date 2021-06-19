@@ -23,6 +23,8 @@
   * [Color by property value](#color-by-property-value)
   * [Color by rule](#color-by-rule)
   * [Gradient](#gradient)
+    * [Legend](#gradient-legend)
+      * [Highlight](#gradient-legend---highlight)
 * [Highlight theme](#highlight-theme)
 * [Contour thickness](#contour-thickness)
 * Cursor hover
@@ -245,7 +247,7 @@ Setting the rules:
 The gradient is created given the colors and limit values of the chosen property.
 The property must have numeric values.
 
-##### Auto min/max values
+#### Auto min/max values
 
 Uses the min and max values read from data source.
 
@@ -268,7 +270,7 @@ Uses the min and max values read from data source.
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/gradient_auto_v2.png)
 
-##### Setting min or max values manually
+#### Setting min or max values manually
 
 If the `min` value is set, all lower values will be displayed using the first gradient color.
 If the `max` value is set, all higher values will be displayed using the last gradient color.
@@ -294,7 +296,7 @@ If the `max` value is set, all higher values will be displayed using the last gr
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/gradient_min_max_v2.png)
 
-##### Legend (experimental)
+#### Gradient legend
 
 ```dart
     MapDataSource polygons = await MapDataSource.geoJSON(
@@ -307,22 +309,70 @@ If the `max` value is set, all higher values will be displayed using the last gr
         theme: MapGradientTheme(
             contourColor: Colors.white,
             labelVisibility: (feature) => true,
-            key: 'Seq',
+            key: 'Gts',
             colors: [Colors.blue, Colors.yellow, Colors.red]));
 
     VectorMap map = VectorMap(
-        padding: EdgeInsets.fromLTRB(8, 8, 50, 8),
+        layersPadding: EdgeInsets.fromLTRB(8, 8, 56, 8),
         layers: [layer],
-        addon: GradientLegend(layer: layer));
+        addons: [GradientLegend(layer: layer)]);
 ```
 
-![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/gradient_legend_v1.png)
+![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/gradient_legend_v2.png)
+
+Setting min and max values
+
+```dart
+    MapLayer layer = MapLayer(
+        dataSource: polygons,
+        theme: MapGradientTheme(
+            contourColor: Colors.white,
+            labelVisibility: (feature) => true,
+            key: 'Gts',
+            min: 7500,
+            max: 25000,
+            colors: [Colors.blue, Colors.yellow, Colors.red]));
+
+    VectorMap map = VectorMap(
+        layersPadding: EdgeInsets.fromLTRB(8, 8, 56, 8),
+        layers: [layer],
+        addons: [GradientLegend(layer: layer)]);
+```
+
+![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/gradient_legend_min_max_v1.png)
+
+#### Gradient legend - highlight
+
+```dart
+    MapDataSource polygons = await MapDataSource.geoJSON(
+        geojson: polygonsGeoJSON, keys: ['Seq'], labelKey: 'Seq');
+```
+
+```dart
+    MapLayer layer = MapLayer(
+        dataSource: polygons,
+        theme: MapGradientTheme(
+            contourColor: Colors.white,
+            labelVisibility: (feature) => true,
+            key: 'Gts',
+            min: 7500,
+            max: 25000,
+            colors: [Colors.blue, Colors.yellow, Colors.red]),
+        highlightTheme: MapHighlightTheme(color: Colors.brown[900]));
+
+    VectorMap map = VectorMap(
+        layersPadding: EdgeInsets.fromLTRB(8, 8, 56, 8),
+        layers: [layer],
+        addons: [GradientLegend(layer: layer)]);
+```
+
+![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/gradient_legend_highlight_fill_v1.png)
 
 ## Highlight theme
 
 Used by addons and cursor hover to highlight layer features on the map.
 
-#### Color
+### Color
 
 ```dart
     MapLayer layer = MapLayer(
@@ -334,7 +384,7 @@ Used by addons and cursor hover to highlight layer features on the map.
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/hover_color_v1.png)
 
-#### Contour color
+### Contour color
 
 ```dart
     MapLayer layer = MapLayer(
@@ -346,7 +396,7 @@ Used by addons and cursor hover to highlight layer features on the map.
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/hover_contour_v1.png)
 
-#### Label
+### Label
 
 ```dart
     MapDataSource polygons =
@@ -374,7 +424,7 @@ Used by addons and cursor hover to highlight layer features on the map.
 
 ## Cursor hover rule
 
-##### Enabling hover by property value
+### Enabling hover by property value
 
 ```dart
     MapDataSource polygons =
@@ -442,7 +492,7 @@ Creating a map with multiple layers:
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/multiple_layers_v1.gif)
 
-#### Overlay hover contour
+### Overlay hover contour
 
 Allows you to draw the contour over all layers
 
@@ -501,11 +551,11 @@ Overlay enabled:
 
 Allows different displays for point geometry.
 
-#### Circle marker
+### Circle marker
 
 Default marker.
 
-##### Fixed radius
+#### Fixed radius
 
 Sets a fixed size radius.
 
@@ -530,7 +580,7 @@ Sets a fixed size radius.
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/circle_marker_fixed_v1.png)
 
-##### Radius by mapping values
+#### Radius by mapping values
 
 Maps property values to radius values.
 
@@ -557,7 +607,7 @@ Maps property values to radius values.
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/circle_marker_map_v2.png)
 
-##### Radius by property values
+#### Radius by property values
 
 Uses the property values as radius values.
 
@@ -583,7 +633,7 @@ Uses the property values as radius values.
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/circle_marker_property_v2.png)
 
-##### Radius in proportion to property values
+#### Radius in proportion to property values
 
 ```dart
     MapDataSource polygons =
