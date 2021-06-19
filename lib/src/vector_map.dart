@@ -12,10 +12,11 @@ import 'package:vector_map/src/debugger.dart';
 import 'package:vector_map/src/drawable/drawable_feature.dart';
 import 'package:vector_map/src/drawable/drawable_layer.dart';
 import 'package:vector_map/src/error.dart';
-import 'package:vector_map/src/highlight_rule.dart';
+import 'package:vector_map/src/map_highlight.dart';
 import 'package:vector_map/src/map_resolution.dart';
 import 'package:vector_map/src/matrix.dart';
 import 'package:vector_map/src/simplifier.dart';
+import 'package:vector_map/src/theme/map_highlight_theme.dart';
 import 'package:vector_map/src/theme/map_theme.dart';
 
 /// Vector map widget.
@@ -33,16 +34,23 @@ class VectorMap extends StatefulWidget {
       this.hoverRule,
       this.hoverListener,
       this.clickListener,
-      this.overlayHoverContour = false,
       this.debugger,
       this.addons})
       : this.layers = layers != null ? layers : [],
         this.layersBounds = layers != null ? MapLayer.boundsOf(layers) : null,
         super(key: key) {
     debugger?.initialize(this.layers);
+    for (int index = 0; index < this.layers.length; index++) {
+      MapLayer layer = this.layers[index];
+      if (_idAndIndexLayers.containsKey(layer.id)) {
+        throw VectorMapError('Duplicate layer id: ' + layer.id.toString());
+      }
+      _idAndIndexLayers[layer.id] = index;
+    }
   }
 
   final List<MapLayer> layers;
+  final Map<int, int> _idAndIndexLayers = Map<int, int>();
   final Rect? layersBounds;
   final double contourThickness;
   final int delayToRefreshResolution;
@@ -53,7 +61,6 @@ class VectorMap extends StatefulWidget {
   final HoverRule? hoverRule;
   final HoverListener? hoverListener;
   final FeatureClickListener? clickListener;
-  final bool overlayHoverContour;
   final MapDebugger? debugger;
   final List<MapAddon>? addons;
 
@@ -72,9 +79,7 @@ class VectorMap extends StatefulWidget {
 
 /// [VectorMap] state.
 class VectorMapState extends State<VectorMap> {
-  _HoverFeature? _hover;
-
-  HighlightRule? _highlightRule;
+  MapHighlight? _highlight;
 
   Size? _lastBuildSize;
   MapResolution? _mapResolution;
@@ -85,9 +90,18 @@ class VectorMapState extends State<VectorMap> {
     return context.findAncestorStateOfType();
   }
 
-  setHighlightRule(HighlightRule? newHighlightRule) {
+  /// Gets a layer index given a layer id.
+  int getLayerIndexById(int id) {
+    int? index = widget._idAndIndexLayers[id];
+    if (index == null) {
+      throw VectorMapError('Invalid layer id: $id');
+    }
+    return index;
+  }
+
+  setHighlight(MapHighlight? newHighlight) {
     setState(() {
-      _highlightRule = newHighlightRule;
+      _highlight = newHighlight;
     });
   }
 
@@ -126,8 +140,12 @@ class VectorMapState extends State<VectorMap> {
         List<LayoutId> children = [LayoutId(id: 0, child: mapCanvas)];
         int count = 1;
         for (MapAddon addon in widget.addons!) {
-          children.add(LayoutId(
-              id: count, child: addon.buildWidget(context, _hover?.feature)));
+          MapFeature? hover;
+          if (_highlight != null && _highlight is MapSingleHighlight) {
+            hover = (_highlight as MapSingleHighlight).feature;
+          }
+          children.add(
+              LayoutId(id: count, child: addon.buildWidget(context, hover)));
           count++;
         }
         content = CustomMultiChildLayout(
@@ -187,11 +205,9 @@ class VectorMapState extends State<VectorMap> {
 
       _MapPainter mapPainter = _MapPainter(
           mapResolution: _mapResolution!,
-          hover: _hover,
-          highlightRule: _highlightRule,
+          highlight: _highlight,
           canvasMatrix: canvasMatrix,
-          contourThickness: widget.contourThickness,
-          overlayHoverContour: widget.overlayHoverContour);
+          contourThickness: widget.contourThickness);
 
       CustomPaint customPaint =
           CustomPaint(painter: mapPainter, child: Container());
@@ -200,7 +216,7 @@ class VectorMapState extends State<VectorMap> {
         child: customPaint,
         onHover: (event) => _onHover(event, canvasMatrix),
         onExit: (event) {
-          if (_hover != null) {
+          if (_highlight != null) {
             _updateHover(null);
           }
         },
@@ -214,8 +230,10 @@ class VectorMapState extends State<VectorMap> {
   }
 
   _onClick() {
-    if (_hover != null && widget.clickListener != null) {
-      widget.clickListener!(_hover!.feature);
+    if (_highlight != null &&
+        _highlight is MapSingleHighlight &&
+        widget.clickListener != null) {
+      widget.clickListener!((_highlight as MapSingleHighlight).feature);
     }
   }
 
@@ -225,7 +243,7 @@ class VectorMapState extends State<VectorMap> {
       Offset worldCoordinate = MatrixUtils.transformPoint(
           canvasMatrix.screenToWorld, event.localPosition);
 
-      _HoverFeature? hoverFeature;
+      MapSingleHighlight? hoverHighlightRule;
       for (int layerIndex = _mapResolution!.drawableLayers.length - 1;
           layerIndex >= 0;
           layerIndex--) {
@@ -233,13 +251,13 @@ class VectorMapState extends State<VectorMap> {
             _mapResolution!.drawableLayers[layerIndex];
         MapFeature? feature = _hoverFindFeature(drawableLayer, worldCoordinate);
         if (feature != null) {
-          hoverFeature = _HoverFeature(layerIndex, feature);
+          hoverHighlightRule = MapSingleHighlight(layerIndex, feature);
           break;
         }
       }
 
-      if (_hover != hoverFeature) {
-        _updateHover(hoverFeature);
+      if (_highlight != hoverHighlightRule) {
+        _updateHover(hoverHighlightRule);
       }
     }
   }
@@ -265,17 +283,17 @@ class VectorMapState extends State<VectorMap> {
     }
   }
 
-  _updateHover(_HoverFeature? newHover) {
+  _updateHover(MapSingleHighlight? hoverHighlightRule) {
     if (widget.hoverDrawable) {
       // repaint
       setState(() {
-        _hover = newHover;
+        _highlight = hoverHighlightRule;
       });
     } else {
-      _hover = newHover;
+      _highlight = hoverHighlightRule;
     }
     if (widget.hoverListener != null) {
-      widget.hoverListener!(newHover?.feature);
+      widget.hoverListener!(hoverHighlightRule?.feature);
     }
   }
 }
@@ -286,16 +304,12 @@ class _MapPainter extends CustomPainter {
       {required this.mapResolution,
       required this.canvasMatrix,
       required this.contourThickness,
-      required this.overlayHoverContour,
-      this.hover,
-      this.highlightRule});
+      this.highlight});
 
   final CanvasMatrix canvasMatrix;
-  final HighlightRule? highlightRule;
+  final MapHighlight? highlight;
   final double contourThickness;
-  final _HoverFeature? hover;
   final MapResolution mapResolution;
-  final bool overlayHoverContour;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -306,18 +320,8 @@ class _MapPainter extends CustomPainter {
       DrawableLayer drawableLayer = mapResolution.drawableLayers[layerIndex];
 
       if (canvasMatrix.widgetSize == mapResolution.widgetSize) {
-        canvas.drawImage(mapResolution.layerBuffers[layerIndex], Offset.zero, Paint());
-        if (highlightRule != null) {
-          canvas.save();
-          canvasMatrix.applyOn(canvas);
-          drawableLayer.drawOn(
-              canvas: canvas,
-              contourThickness: contourThickness,
-              scale: canvasMatrix.scale,
-              antiAlias: true,
-              highlightRule: highlightRule);
-          canvas.restore();
-        }
+        canvas.drawImage(
+            mapResolution.layerBuffers[layerIndex], Offset.zero, Paint());
       } else {
         // resizing, panning or zooming
         canvas.save();
@@ -331,61 +335,55 @@ class _MapPainter extends CustomPainter {
         canvas.restore();
       }
 
-      if (highlightRule == null) {
-        if (hover != null && hover!.layerIndex == layerIndex) {
-          // drawing the hover
-          MapFeature feature = hover!.feature;
-          int featureId = feature.id;
-          if (drawableLayer.drawableFeatures.containsKey(featureId) == false) {
-            throw VectorMapError('No path for id: $featureId');
-          }
-
-          DrawableFeature drawableFeature =
-              drawableLayer.drawableFeatures[featureId]!;
-
-          MapLayer layer = drawableLayer.layer;
-          if (drawableFeature.visible &&
-              layer.hoverTheme != null &&
-              drawableFeature.hasFill) {
-            MapTheme hoverTheme = layer.hoverTheme!;
-            Color? hoverColor = hoverTheme.getColor(layer.dataSource, feature);
-            if (hoverColor != null || hoverTheme.contourColor != null) {
-              canvas.save();
-
-              canvasMatrix.applyOn(canvas);
-
-              if (hoverColor != null) {
-                var paint = Paint()
-                  ..style = PaintingStyle.fill
-                  ..color = hoverColor
-                  ..isAntiAlias = true;
-                drawableFeature.drawOn(canvas, paint, canvasMatrix.scale);
-              }
-
-              if (contourThickness > 0) {
-                _drawHoverContour(canvas, drawableLayer.layer, hoverTheme,
-                    drawableFeature, canvasMatrix);
-              }
-
-              canvas.restore();
-            }
-          }
-        }
-      }
-
-      // drawing the overlay hover contour
-      if (contourThickness > 0 && overlayHoverContour && hover != null) {
-        DrawableLayer drawableLayer =
-            mapResolution.drawableLayers[hover!.layerIndex];
-        DrawableFeature drawableFeature =
-            drawableLayer.drawableFeatures[hover!.feature.id]!;
+      // highlighting
+      if (highlight != null && highlight!.layerIndex == layerIndex) {
         MapLayer layer = drawableLayer.layer;
-        if (drawableFeature.visible && layer.hoverTheme != null) {
+        if (layer.highlightTheme != null) {
           canvas.save();
           canvasMatrix.applyOn(canvas);
-          MapTheme hoverTheme = layer.hoverTheme!;
-          _drawHoverContour(canvas, drawableLayer.layer, hoverTheme,
-              drawableFeature, canvasMatrix);
+
+          if (layer.highlightTheme!.color != null) {
+            var paint = Paint()
+              ..style = PaintingStyle.fill
+              ..color = layer.highlightTheme!.color!
+              ..isAntiAlias = true;
+            if (highlight is MapSingleHighlight) {
+              MapFeature feature = (highlight as MapSingleHighlight).feature;
+              DrawableFeature drawableFeature =
+                  drawableLayer.getDrawableFeature(feature);
+              if (drawableFeature.visible && drawableFeature.hasFill) {
+                drawableFeature.drawOn(canvas, paint, canvasMatrix.scale);
+              }
+            } else {
+              drawableLayer.drawHighlightOn(
+                  canvas: canvas,
+                  paint: paint,
+                  scale: canvasMatrix.scale,
+                  fillOnly: true,
+                  highlight: highlight!);
+            }
+          }
+
+          if (contourThickness > 0 &&
+              layer.highlightTheme!.overlayContour == false) {
+            _drawHighlightContour(canvas, drawableLayer, canvasMatrix);
+          }
+
+          canvas.restore();
+        }
+      }
+    }
+
+    // drawing the overlay highlight contour
+    if (contourThickness > 0 && highlight != null) {
+      DrawableLayer drawableLayer =
+          mapResolution.drawableLayers[highlight!.layerIndex];
+      if (drawableLayer.layer.highlightTheme != null) {
+        MapHighlightTheme highlightTheme = drawableLayer.layer.highlightTheme!;
+        if (highlightTheme.overlayContour) {
+          canvas.save();
+          canvasMatrix.applyOn(canvas);
+          _drawHighlightContour(canvas, drawableLayer, canvasMatrix);
           canvas.restore();
         }
       }
@@ -399,49 +397,37 @@ class _MapPainter extends CustomPainter {
       MapLayer layer = drawableLayer.layer;
       MapDataSource dataSource = layer.dataSource;
       MapTheme theme = layer.theme;
-      MapTheme? hoverTheme = layer.hoverTheme;
+      MapHighlightTheme? highlightTheme = layer.highlightTheme;
       if (theme.labelVisibility != null ||
-          (hoverTheme != null && hoverTheme.labelVisibility != null)) {
+          (highlightTheme != null && highlightTheme.labelVisibility != null)) {
         for (MapFeature feature in dataSource.features.values) {
           DrawableFeature drawableFeature =
               drawableLayer.drawableFeatures[feature.id]!;
           if (drawableFeature.visible && feature.label != null) {
             LabelVisibility? labelVisibility;
-            if (hover != null &&
-                layerIndex == hover!.layerIndex &&
-                hover!.feature == feature &&
-                hoverTheme != null &&
-                hoverTheme.labelVisibility != null) {
-              labelVisibility = hoverTheme.labelVisibility;
+            if (highlight != null &&
+                highlight!.layerIndex == layerIndex &&
+                highlight!.applies(feature) &&
+                highlightTheme != null &&
+                highlightTheme.labelVisibility != null) {
+              labelVisibility = highlightTheme.labelVisibility;
             } else {
               labelVisibility = theme.labelVisibility;
             }
-
             if (labelVisibility != null && labelVisibility(feature)) {
-              Color? featureColor;
               LabelStyleBuilder? labelStyleBuilder;
-
-              if (highlightRule != null) {
-                if (layer.highlightTheme?.color != null &&
-                    highlightRule!.applies(feature)) {
-                  featureColor = layer.highlightTheme!.color!;
+              MapHighlightTheme? highlightTheme;
+              if (highlight != null && highlight!.applies(feature)) {
+                highlightTheme = layer.highlightTheme;
+                if (highlightTheme != null) {
+                  labelStyleBuilder = highlightTheme.labelStyleBuilder;
                 }
-              } else if (hover != null &&
-                  layerIndex == hover!.layerIndex &&
-                  hover!.feature == feature &&
-                  hoverTheme != null) {
-                featureColor = hoverTheme.getColor(dataSource, feature);
-                labelStyleBuilder = hoverTheme.labelStyleBuilder;
               }
-
-              if (featureColor == null) {
-                featureColor =
-                    MapTheme.getThemeOrDefaultColor(dataSource, feature, theme);
-              }
+              Color featureColor = MapTheme.getFeatureColor(
+                  dataSource, feature, theme, highlightTheme);
               if (labelStyleBuilder == null) {
                 labelStyleBuilder = theme.labelStyleBuilder;
               }
-
               _drawLabel(
                   canvas, layerIndex, feature, featureColor, labelStyleBuilder);
             }
@@ -451,21 +437,32 @@ class _MapPainter extends CustomPainter {
     }
   }
 
-  _drawHoverContour(Canvas canvas, MapLayer layer, MapTheme hoverTheme,
-      DrawableFeature drawableFeature, CanvasMatrix canvasMatrix) {
-    Color contourColor = MapTheme.defaultContourColor;
-    if (hoverTheme.contourColor != null) {
-      contourColor = hoverTheme.contourColor!;
-    } else if (layer.theme.contourColor != null) {
-      contourColor = layer.theme.contourColor!;
+  _drawHighlightContour(
+      Canvas canvas, DrawableLayer drawableLayer, CanvasMatrix canvasMatrix) {
+    Color? color = MapTheme.getContourColor(
+        drawableLayer.layer.theme, drawableLayer.layer.highlightTheme);
+    if (color != null) {
+      var paint = Paint()
+        ..style = PaintingStyle.stroke
+        ..color = color
+        ..strokeWidth = contourThickness / canvasMatrix.scale
+        ..isAntiAlias = true;
+      if (highlight is MapSingleHighlight) {
+        MapFeature feature = (highlight as MapSingleHighlight).feature;
+        DrawableFeature drawableFeature =
+            drawableLayer.getDrawableFeature(feature);
+        if (drawableFeature.visible) {
+          drawableFeature.drawOn(canvas, paint, canvasMatrix.scale);
+        }
+      } else {
+        drawableLayer.drawHighlightOn(
+            canvas: canvas,
+            paint: paint,
+            scale: canvasMatrix.scale,
+            fillOnly: false,
+            highlight: highlight!);
+      }
     }
-
-    var paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..color = contourColor
-      ..strokeWidth = contourThickness / canvasMatrix.scale
-      ..isAntiAlias = true;
-    drawableFeature.drawOn(canvas, paint, canvasMatrix.scale);
   }
 
   _drawLabel(Canvas canvas, int layerIndex, MapFeature feature,
@@ -554,24 +551,6 @@ class _VectorMapLayoutDelegate extends MultiChildLayoutDelegate {
   bool shouldRelayout(covariant MultiChildLayoutDelegate oldDelegate) {
     return false;
   }
-}
-
-class _HoverFeature {
-  _HoverFeature(this.layerIndex, this.feature);
-
-  final MapFeature feature;
-  final int layerIndex;
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is _HoverFeature &&
-          runtimeType == other.runtimeType &&
-          feature == other.feature &&
-          layerIndex == other.layerIndex;
-
-  @override
-  int get hashCode => feature.hashCode ^ layerIndex.hashCode;
 }
 
 typedef FeatureClickListener = Function(MapFeature feature);

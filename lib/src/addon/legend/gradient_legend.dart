@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -7,7 +8,7 @@ import 'package:vector_map/src/addon/legend/legend.dart';
 import 'package:vector_map/src/data/map_feature.dart';
 import 'package:vector_map/src/data/map_layer.dart';
 import 'package:vector_map/src/error.dart';
-import 'package:vector_map/src/highlight_rule.dart';
+import 'package:vector_map/src/map_highlight.dart';
 import 'package:vector_map/src/theme/map_gradient_theme.dart';
 import 'package:vector_map/src/vector_map.dart';
 
@@ -96,8 +97,14 @@ class _GradientLegendState extends State<_GradientLegendWidget> {
     if (max != null && min != null) {
       children.add(LayoutId(
           id: _ChildId.bar,
-          child: _GradientBar(gradientTheme.key, min, max, gradientTheme.colors,
-              _updateValuePosition, widget.legend.barBorder)));
+          child: _GradientBar(
+              widget.legend.layer.id,
+              gradientTheme.key,
+              min,
+              max,
+              gradientTheme.colors,
+              _updateValuePosition,
+              widget.legend.barBorder)));
 
       children.add(LayoutId(id: _ChildId.max, child: _text(max.toString())));
 
@@ -149,9 +156,10 @@ class _ValuePosition {
 
 /// Gradient bar widget
 class _GradientBar extends StatelessWidget {
-  const _GradientBar(this.propertyKey, this.min, this.max, this.colors,
-      this.valuePositionUpdater, this.border);
+  const _GradientBar(this.layerId, this.propertyKey, this.min, this.max,
+      this.colors, this.valuePositionUpdater, this.border);
 
+  final int layerId;
   final String propertyKey;
   final double min;
   final double max;
@@ -187,21 +195,23 @@ class _GradientBar extends StatelessWidget {
     if (state != null) {
       double range = max - min;
       double value = min + (((maxHeight - y) * range) / maxHeight);
-      HighlightRule highlightRule = HighlightRule(
+      int layerIndex = state.getLayerIndexById(layerId);
+      MapGradientHighlight highlight = MapGradientHighlight(
+          layerIndex: layerIndex,
           key: propertyKey,
           value: value,
           rangePerPixel: range / maxHeight,
           min: min,
           max: max);
-      state.setHighlightRule(highlightRule);
-      valuePositionUpdater(_ValuePosition(y, highlightRule.formattedValue));
+      state.setHighlight(highlight);
+      valuePositionUpdater(_ValuePosition(y, highlight.formattedValue));
     }
   }
 
   _highlightOff(BuildContext context) {
     VectorMapState? state = VectorMapState.of(context);
     if (state != null) {
-      state.setHighlightRule(null);
+      state.setHighlight(null);
       valuePositionUpdater(null);
     }
   }

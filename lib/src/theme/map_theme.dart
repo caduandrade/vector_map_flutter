@@ -3,6 +3,7 @@ import 'package:vector_map/src/data/map_data_source.dart';
 import 'package:vector_map/src/data/map_feature.dart';
 import 'package:vector_map/src/drawable/circle_marker.dart';
 import 'package:vector_map/src/drawable/marker.dart';
+import 'package:vector_map/src/theme/map_highlight_theme.dart';
 
 /// The [VectorMap] theme.
 class MapTheme {
@@ -18,15 +19,37 @@ class MapTheme {
     return MapTheme.defaultColor;
   }
 
+  /// Gets the feature color.
+  static Color getFeatureColor(MapDataSource dataSource, MapFeature feature,
+      MapTheme theme, MapHighlightTheme? highlightTheme) {
+    Color? color = highlightTheme?.color;
+    if (color == null) {
+      color = theme.getColor(dataSource, feature);
+    }
+    if (color != null) {
+      return color;
+    }
+    return MapTheme.defaultColor;
+  }
+
+  /// Gets the feature contour color.
+  static Color? getContourColor(
+      MapTheme theme, MapHighlightTheme? highlightTheme) {
+    Color? color = highlightTheme?.contourColor;
+    if (color == null) {
+      color = theme.contourColor;
+    }
+    return color;
+  }
+
   /// Builds a [VectorMap]
   MapTheme(
       {Color? color,
       this.contourColor,
       this.labelVisibility,
-      LabelStyleBuilder? labelStyleBuilder,
+      this.labelStyleBuilder,
       MarkerBuilder? markerBuilder})
       : this._color = color,
-        this.labelStyleBuilder = labelStyleBuilder,
         this.markerBuilder =
             markerBuilder != null ? markerBuilder : CircleMakerBuilder.fixed();
 

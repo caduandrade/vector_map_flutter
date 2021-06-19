@@ -1,3 +1,8 @@
+## [0.5.0] - ?
+
+* Gradient legend
+* ```MapLayer.hoverTheme``` refactored to ```MapLayer.highlightTheme``` to be used by addons as well
+
 ## [0.4.0] - June 13, 2021
 
 * Debugger

@@ -141,6 +141,7 @@ class MapResolutionBuilder {
     canvas.restore();
 
     Picture picture = recorder.endRecording();
-    return picture.toImage(canvasMatrix.widgetSize.width.ceil(), canvasMatrix.widgetSize.height.ceil());
+    return picture.toImage(canvasMatrix.widgetSize.width.ceil(),
+        canvasMatrix.widgetSize.height.ceil());
   }
 }

@@ -335,7 +335,8 @@ If the `max` value is set, all higher values will be displayed using the last gr
 
 ```dart
     MapLayer layer = MapLayer(
-        dataSource: polygons, hoverTheme: MapTheme(color: Colors.green));
+        dataSource: polygons,
+        highlightTheme: MapHighlightTheme(color: Colors.green));
 
     VectorMap map = VectorMap(layers: [layer]);
 ```
@@ -346,7 +347,8 @@ If the `max` value is set, all higher values will be displayed using the last gr
 
 ```dart
     MapLayer layer = MapLayer(
-        dataSource: polygons, hoverTheme: MapTheme(contourColor: Colors.red));
+        dataSource: polygons,
+        highlightTheme: MapHighlightTheme(contourColor: Colors.red));
 
     VectorMap map = VectorMap(layers: [layer]);
 ```
@@ -363,7 +365,7 @@ If the `max` value is set, all higher values will be displayed using the last gr
 ```dart
     MapLayer layer = MapLayer(
         dataSource: polygons,
-        hoverTheme: MapTheme(labelVisibility: (feature) => true));
+        highlightTheme: MapHighlightTheme(labelVisibility: (feature) => true));
 
     VectorMap map = VectorMap(layers: [layer]);
 ```
@@ -384,7 +386,7 @@ If the `max` value is set, all higher values will be displayed using the last gr
     MapLayer layer = MapLayer(
         dataSource: polygons,
         theme: MapValueTheme(key: 'Seq', colors: {4: Colors.green}),
-        hoverTheme: MapTheme(color: Colors.green[900]!));
+        highlightTheme: MapHighlightTheme(color: Colors.green[900]!));
 
     // enabling hover only for the 'Darwin' feature
     VectorMap map = VectorMap(
@@ -400,7 +402,8 @@ If the `max` value is set, all higher values will be displayed using the last gr
 
 ```dart
     MapLayer layer = MapLayer(
-        dataSource: polygons, hoverTheme: MapTheme(color: Colors.grey[700]));
+        dataSource: polygons,
+        highlightTheme: MapHighlightTheme(color: Colors.grey[700]));
 
     VectorMap map = VectorMap(
         layers: [layer],
@@ -425,14 +428,14 @@ Loading multiple data sources:
 Creating a map with multiple layers:
 
 ```dart
-    MapTheme hoverTheme = MapTheme(color: Colors.green);
+    MapHighlightTheme highlightTheme = MapHighlightTheme(color: Colors.green);
 
     MapLayer polygonsLayer =
-        MapLayer(dataSource: polygons, hoverTheme: hoverTheme);
+        MapLayer(dataSource: polygons, highlightTheme: highlightTheme);
     MapLayer pointsLayer = MapLayer(
         dataSource: points,
         theme: MapTheme(color: Colors.black),
-        hoverTheme: hoverTheme);
+        highlightTheme: highlightTheme);
 
     VectorMap map = VectorMap(layers: [polygonsLayer, pointsLayer]);
 ```
@@ -440,6 +443,8 @@ Creating a map with multiple layers:
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/multiple_layers_v1.gif)
 
 #### Overlay hover contour
+
+Allows you to draw the contour over all layers
 
 ```dart
     MapDataSource dataSource1 = MapDataSource.geometries([
@@ -449,23 +454,23 @@ Creating a map with multiple layers:
       MapPolygon.coordinates([0, 2, 2, 4, 4, 2, 2, 0, 0, 2]),
       MapPolygon.coordinates([4, 2, 6, 4, 8, 2, 6, 0, 4, 2])
     ]);
-
-    MapTheme hoverTheme =
-        MapTheme(color: Colors.black, contourColor: Colors.black);
-
-    MapLayer layer1 = MapLayer(
-        dataSource: dataSource1,
-        theme: MapTheme(color: Colors.yellow, contourColor: Colors.black),
-        hoverTheme: hoverTheme);
-    MapLayer layer2 = MapLayer(
-        dataSource: dataSource2,
-        theme: MapTheme(color: Colors.green, contourColor: Colors.black),
-        hoverTheme: hoverTheme);
 ```
 
 Overlay disabled:
 
 ```dart
+    MapHighlightTheme highlightTheme =
+        MapHighlightTheme(color: Colors.black, contourColor: Colors.black);
+
+    MapLayer layer1 = MapLayer(
+        dataSource: dataSource1,
+        theme: MapTheme(color: Colors.yellow, contourColor: Colors.black),
+        highlightTheme: highlightTheme);
+    MapLayer layer2 = MapLayer(
+        dataSource: dataSource2,
+        theme: MapTheme(color: Colors.green, contourColor: Colors.black),
+        highlightTheme: highlightTheme);
+
     VectorMap map = VectorMap(layers: [layer1, layer2]);
 ```
 
@@ -474,8 +479,20 @@ Overlay disabled:
 Overlay enabled:
 
 ```dart
-    VectorMap map =
-        VectorMap(layers: [layer1, layer2], overlayHoverContour: true);
+    MapLayer layer1 = MapLayer(
+        dataSource: dataSource1,
+        theme: MapTheme(color: Colors.yellow, contourColor: Colors.black),
+        highlightTheme: MapHighlightTheme(
+            color: Colors.black,
+            contourColor: Colors.black,
+            overlayContour: true));
+    MapLayer layer2 = MapLayer(
+        dataSource: dataSource2,
+        theme: MapTheme(color: Colors.green, contourColor: Colors.black),
+        highlightTheme:
+            MapHighlightTheme(color: Colors.black, contourColor: Colors.black));
+
+    VectorMap map = VectorMap(layers: [layer1, layer2]);
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/overlay_contour_on_v1.gif)
@@ -595,7 +612,8 @@ Uses the property values as radius values.
 
 ```dart
     MapLayer layer = MapLayer(
-        dataSource: polygons, hoverTheme: MapTheme(color: Colors.grey[800]!));
+        dataSource: polygons,
+        highlightTheme: MapHighlightTheme(color: Colors.grey[800]!));
 
     VectorMap map = VectorMap(
         layers: [layer],
@@ -631,5 +649,6 @@ Building the debugger widget
 * More theming features
 * Zoom / Pan
 * More legends
+  * More gradient legend customizations
 * More addons
 * Release the final version (1.0.0). The API may have some small changes.

@@ -37,7 +37,7 @@ class ExampleState extends State<ExampleWidget> {
       content = VectorMap(layers: [
         MapLayer(
             dataSource: _dataSource!,
-            hoverTheme: MapTheme(color: Colors.green[900]))
+            highlightTheme: MapHighlightTheme(color: Colors.green[900]))
       ]);
     } else {
       content = Text('Loading...');

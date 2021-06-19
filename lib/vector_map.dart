@@ -23,7 +23,7 @@ export 'src/addon/map_addon.dart';
 export 'src/addon/legend/legend.dart';
 export 'src/addon/legend/gradient_legend.dart';
 export 'src/simplifier.dart';
-export 'src/highlight_rule.dart';
+export 'src/map_highlight.dart';
 export 'src/theme/map_theme.dart';
 export 'src/theme/map_value_theme.dart';
 export 'src/theme/map_rule_theme.dart';
