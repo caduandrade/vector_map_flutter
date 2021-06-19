@@ -29,7 +29,7 @@ class VectorMap extends StatefulWidget {
       this.borderColor = Colors.black54,
       this.borderThickness = 1,
       this.contourThickness = 1,
-      this.padding = const EdgeInsets.all(8),
+      this.layersPadding = const EdgeInsets.all(8),
       this.hoverRule,
       this.hoverListener,
       this.clickListener,
@@ -49,7 +49,7 @@ class VectorMap extends StatefulWidget {
   final Color? color;
   final Color? borderColor;
   final double? borderThickness;
-  final EdgeInsetsGeometry? padding;
+  final EdgeInsetsGeometry? layersPadding;
   final HoverRule? hoverRule;
   final HoverListener? hoverListener;
   final FeatureClickListener? clickListener;
@@ -210,7 +210,7 @@ class VectorMapState extends State<VectorMap> {
           child: GestureDetector(child: mouseRegion, onTap: () => _onClick()));
     });
 
-    return Container(child: layoutBuilder, padding: widget.padding);
+    return Container(child: layoutBuilder, padding: widget.layersPadding);
   }
 
   _onClick() {
@@ -306,7 +306,7 @@ class _MapPainter extends CustomPainter {
       DrawableLayer drawableLayer = mapResolution.drawableLayers[layerIndex];
 
       if (canvasMatrix.widgetSize == mapResolution.widgetSize) {
-        canvas.drawPicture(mapResolution.layerBuffers[layerIndex]);
+        canvas.drawImage(mapResolution.layerBuffers[layerIndex], Offset.zero, Paint());
         if (highlightRule != null) {
           canvas.save();
           canvasMatrix.applyOn(canvas);

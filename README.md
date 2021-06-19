@@ -13,6 +13,7 @@
 
 ## Usage
 
+* [About the examples](#about-the-examples)
 * [Reading GeoJSON from String](#reading-geojson-from-string)
 * [Reading GeoJSON properties](#reading-geojson-properties)
 * [Creating the Widget](#creating-the-widget)
@@ -37,6 +38,8 @@
     * [Radius in proportion to property values](#radius-in-proportion-to-property-values)
 * [Click listener](#click-listener)
 * [Debugger](#debugger)
+
+## About the examples
 
 Simplified GeoJSONs will be used in the examples to demonstrate package usage.
 The following examples will assume that GeoJSONs have already been loaded into Strings.
