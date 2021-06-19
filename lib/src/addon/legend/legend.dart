@@ -3,6 +3,8 @@ import 'package:vector_map/src/addon/map_addon.dart';
 import 'package:vector_map/src/data/map_layer.dart';
 
 /// Abstract legend
+///
+/// Allows customize [padding], [margin] and [decoration]
 abstract class Legend extends MapAddon {
   /// Builds a legend
   Legend(

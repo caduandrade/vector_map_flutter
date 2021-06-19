@@ -23,8 +23,6 @@
   * [Color by property value](#color-by-property-value)
   * [Color by rule](#color-by-rule)
   * [Gradient](#gradient)
-    * [Legend](#gradient-legend)
-      * [Highlight](#gradient-legend---highlight)
 * [Highlight theme](#highlight-theme)
 * [Contour thickness](#contour-thickness)
 * Cursor hover
@@ -38,6 +36,12 @@
     * [Radius by mapping values](#radius-by-mapping-values)
     * [Radius by property values](#radius-by-property-values)
     * [Radius in proportion to property values](#radius-in-proportion-to-property-values)
+* [Addons](#addons)
+  * [Legend](#legend)
+    * [Gradient legend](#gradient-legend)
+      * [Setting min and max values](#gradient-legend---setting-min-and-max-values)
+      * [Highlight](#gradient-legend---highlight)
+      * [Customization](#gradient-legend---customization)
 * [Click listener](#click-listener)
 * [Debugger](#debugger)
 
@@ -295,78 +299,6 @@ If the `max` value is set, all higher values will be displayed using the last gr
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/gradient_min_max_v2.png)
-
-#### Gradient legend
-
-```dart
-    MapDataSource polygons = await MapDataSource.geoJSON(
-        geojson: polygonsGeoJSON, keys: ['Seq'], labelKey: 'Seq');
-```
-
-```dart
-    MapLayer layer = MapLayer(
-        dataSource: polygons,
-        theme: MapGradientTheme(
-            contourColor: Colors.white,
-            labelVisibility: (feature) => true,
-            key: 'Gts',
-            colors: [Colors.blue, Colors.yellow, Colors.red]));
-
-    VectorMap map = VectorMap(
-        layersPadding: EdgeInsets.fromLTRB(8, 8, 56, 8),
-        layers: [layer],
-        addons: [GradientLegend(layer: layer)]);
-```
-
-![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/gradient_legend_v2.png)
-
-Setting min and max values
-
-```dart
-    MapLayer layer = MapLayer(
-        dataSource: polygons,
-        theme: MapGradientTheme(
-            contourColor: Colors.white,
-            labelVisibility: (feature) => true,
-            key: 'Gts',
-            min: 7500,
-            max: 25000,
-            colors: [Colors.blue, Colors.yellow, Colors.red]));
-
-    VectorMap map = VectorMap(
-        layersPadding: EdgeInsets.fromLTRB(8, 8, 56, 8),
-        layers: [layer],
-        addons: [GradientLegend(layer: layer)]);
-```
-
-![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/gradient_legend_min_max_v1.png)
-
-#### Gradient legend - highlight
-
-```dart
-    MapDataSource polygons = await MapDataSource.geoJSON(
-        geojson: polygonsGeoJSON, keys: ['Seq'], labelKey: 'Seq');
-```
-
-```dart
-    MapLayer layer = MapLayer(
-        dataSource: polygons,
-        theme: MapGradientTheme(
-            contourColor: Colors.white,
-            labelVisibility: (feature) => true,
-            key: 'Gts',
-            min: 7500,
-            max: 25000,
-            colors: [Colors.blue, Colors.yellow, Colors.red]),
-        highlightTheme: MapHighlightTheme(color: Colors.brown[900]));
-
-    VectorMap map = VectorMap(
-        layersPadding: EdgeInsets.fromLTRB(8, 8, 56, 8),
-        layers: [layer],
-        addons: [GradientLegend(layer: layer)]);
-```
-
-![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/gradient_legend_highlight_fill_v1.png)
 
 ## Highlight theme
 
@@ -657,6 +589,131 @@ Uses the property values as radius values.
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/circle_marker_proportion_v2.png)
+
+## Addons
+
+Allows to add components on the map.
+
+### Legend
+
+Available customizations:
+
+* padding
+* margin
+* decoration
+
+#### Gradient legend
+
+Legend for gradient themes.
+
+```dart
+    MapDataSource polygons = await MapDataSource.geoJSON(
+        geojson: polygonsGeoJSON, keys: ['Seq'], labelKey: 'Seq');
+```
+
+```dart
+    MapLayer layer = MapLayer(
+        dataSource: polygons,
+        theme: MapGradientTheme(
+            contourColor: Colors.white,
+            labelVisibility: (feature) => true,
+            key: 'Gts',
+            colors: [Colors.blue, Colors.yellow, Colors.red]));
+
+    VectorMap map = VectorMap(
+        layersPadding: EdgeInsets.fromLTRB(8, 8, 56, 8),
+        layers: [layer],
+        addons: [GradientLegend(layer: layer)]);
+```
+
+![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/gradient_legend_v2.png)
+
+##### Gradient legend - Setting min and max values
+
+```dart
+    MapLayer layer = MapLayer(
+        dataSource: polygons,
+        theme: MapGradientTheme(
+            contourColor: Colors.white,
+            labelVisibility: (feature) => true,
+            key: 'Gts',
+            min: 7500,
+            max: 25000,
+            colors: [Colors.blue, Colors.yellow, Colors.red]));
+
+    VectorMap map = VectorMap(
+        layersPadding: EdgeInsets.fromLTRB(8, 8, 56, 8),
+        layers: [layer],
+        addons: [GradientLegend(layer: layer)]);
+```
+
+![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/gradient_legend_min_max_v1.png)
+
+##### Gradient legend - Highlight
+
+```dart
+    MapDataSource polygons = await MapDataSource.geoJSON(
+        geojson: polygonsGeoJSON, keys: ['Seq'], labelKey: 'Seq');
+```
+
+```dart
+    MapLayer layer = MapLayer(
+        dataSource: polygons,
+        theme: MapGradientTheme(
+            contourColor: Colors.white,
+            labelVisibility: (feature) => true,
+            key: 'Gts',
+            min: 7500,
+            max: 25000,
+            colors: [Colors.blue, Colors.yellow, Colors.red]),
+        highlightTheme: MapHighlightTheme(color: Colors.brown[900]));
+
+    VectorMap map = VectorMap(
+        layersPadding: EdgeInsets.fromLTRB(8, 8, 56, 8),
+        layers: [layer],
+        addons: [GradientLegend(layer: layer)]);
+```
+
+![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/gradient_legend_highlight_fill_v1.png)
+
+##### Gradient legend - Customization
+
+Available customizations:
+
+* gradient bar width
+* gradient bar height
+* gradient bar border
+* values font size
+* gap between bar and values
+
+```dart
+    MapDataSource polygons = await MapDataSource.geoJSON(
+        geojson: polygonsGeoJSON, keys: ['Seq'], labelKey: 'Seq');
+```
+
+```dart
+    MapLayer layer = MapLayer(
+        dataSource: polygons,
+        theme: MapGradientTheme(
+            contourColor: Colors.white,
+            labelVisibility: (feature) => true,
+            key: 'Gts',
+            colors: [Colors.blue, Colors.yellow, Colors.red]));
+
+    VectorMap map =
+        VectorMap(layersPadding: EdgeInsets.fromLTRB(8, 8, 56, 8), layers: [
+      layer
+    ], addons: [
+      GradientLegend(
+          layer: layer,
+          barBorder: Border.all(width: 2),
+          barHeight: 50,
+          barWidth: 30)
+    ]);
+```
+
+![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/gradient_legend_custom_v1.png)
+
 
 ## Click listener
 
