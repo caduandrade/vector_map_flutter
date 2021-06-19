@@ -25,9 +25,9 @@
   * [Gradient](#gradient)
 * [Highlight theme](#highlight-theme)
 * [Contour thickness](#contour-thickness)
-* Hover
-  * [Rule](#hover-rule)
-  * [Listener](#hover-listener)
+* Cursor hover
+  * [Rule](#cursor-hover-rule)
+  * [Listener](#cursor-hover-listener)
 * [Layers](#layers)
   * [Overlay hover contour](#overlay-hover-contour)
 * [Marker](#marker)
@@ -372,7 +372,7 @@ Used by addons and cursor hover to highlight layer features on the map.
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/contour_thickness_v1.png)
 
-## Hover rule
+## Cursor hover rule
 
 ##### Enabling hover by property value
 
@@ -398,7 +398,7 @@ Used by addons and cursor hover to highlight layer features on the map.
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/enable_hover_by_value_v1.gif)
 
-## Hover listener
+## Cursor hover listener
 
 ```dart
     MapLayer layer = MapLayer(
