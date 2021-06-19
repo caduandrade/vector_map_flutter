@@ -70,8 +70,7 @@ class HighlightRule {
     return comparator == -1;
   }
 
-  @override
-  String toString() {
+  String get formattedValue {
     if (greater()) {
       return '> ' + value.roundToDouble().toString();
     } else if (smaller()) {

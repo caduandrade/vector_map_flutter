@@ -104,8 +104,8 @@ class _GradientLegendState extends State<_GradientLegendWidget> {
       children.add(LayoutId(id: _ChildId.min, child: _text(min.toString())));
 
       if (valuePosition != null) {
-        children.add(
-            LayoutId(id: _ChildId.value, child: _text(valuePosition!.value)));
+        children.add(LayoutId(
+            id: _ChildId.value, child: _text(valuePosition!.formattedValue)));
       }
     }
 
@@ -139,12 +139,12 @@ class _GradientLegendState extends State<_GradientLegendWidget> {
 
 typedef _ValuePositionUpdater = Function(_ValuePosition? position);
 
-/// Holds the value and location in gradient bar
+/// Holds the formatted value and location in gradient bar
 class _ValuePosition {
-  _ValuePosition(this.y, this.value);
+  _ValuePosition(this.y, this.formattedValue);
 
   final double y;
-  final String value;
+  final String formattedValue;
 }
 
 /// Gradient bar widget
@@ -194,7 +194,7 @@ class _GradientBar extends StatelessWidget {
           min: min,
           max: max);
       state.setHighlightRule(highlightRule);
-      valuePositionUpdater(_ValuePosition(y, highlightRule.toString()));
+      valuePositionUpdater(_ValuePosition(y, highlightRule.formattedValue));
     }
   }
 
