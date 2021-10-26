@@ -6,7 +6,7 @@ abstract class DrawableFeature {
   Rect getBounds();
 
   /// Draws this drawable on the canvas.
-  drawOn(Canvas canvas, Paint paint, double scale);
+  void drawOn(Canvas canvas, Paint paint, double scale);
 
   /// Gets the count of points for this drawable.
   int get pointsCount;

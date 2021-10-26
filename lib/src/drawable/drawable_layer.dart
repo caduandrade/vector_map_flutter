@@ -28,7 +28,7 @@ class DrawableLayer {
   /// Draws the features on a given canvas.
   ///
   /// Only features that match [highlightRule] will be drawn.
-  drawOn(
+  void drawOn(
       {required Canvas canvas,
       required double contourThickness,
       required double scale,
@@ -76,7 +76,7 @@ class DrawableLayer {
   /// Draws the contour of the features on a given canvas.
   ///
   /// Only features that match [highlightRule] will be drawn.
-  drawContourOn(
+  void drawContourOn(
       {required Canvas canvas,
       required double contourThickness,
       required double scale,
@@ -114,7 +114,7 @@ class DrawableLayer {
   }
 
   /// Draws the features that match [MapMultiHighlight] on a given canvas.
-  drawHighlightOn(
+  void drawHighlightOn(
       {required Canvas canvas,
       required Paint paint,
       required double scale,

@@ -142,7 +142,7 @@ class _GradientLegendState extends State<_GradientLegendWidget> {
         color: Colors.white.withOpacity(.7));
   }
 
-  _updateValuePosition(_ValuePosition? newValuePosition) {
+  void _updateValuePosition(_ValuePosition? newValuePosition) {
     setState(() {
       valuePosition = newValuePosition;
     });

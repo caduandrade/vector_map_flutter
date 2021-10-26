@@ -27,7 +27,7 @@ class CircleMaker extends Marker {
   }
 
   @override
-  drawMarkerOn(Canvas canvas, Paint paint, Offset offset, double scale) {
+  void drawMarkerOn(Canvas canvas, Paint paint, Offset offset, double scale) {
     canvas.drawCircle(offset, _radius / scale, paint);
   }
 

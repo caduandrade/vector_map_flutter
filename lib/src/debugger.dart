@@ -9,17 +9,17 @@ class DurationDebugger {
   int _nextDuration = 0;
   DateTime? _lastStartTime;
 
-  clear() {
+  void clear() {
     _nextDuration = 0;
     _lastStartTime = null;
   }
 
-  update() {
+  void update() {
     _lastDuration = _nextDuration;
     _lastStartTime = null;
   }
 
-  openDuration() {
+  void openDuration() {
     _lastStartTime = DateTime.now();
   }
 
@@ -44,7 +44,7 @@ class MapDebugger extends ChangeNotifier {
   DateTime? _initialMultiResolutionTime;
   Duration _multiResolutionDuration = Duration.zero;
 
-  initialize(List<MapLayer> layers) {
+  void initialize(List<MapLayer> layers) {
     _layersCount = layers.length;
     for (MapLayer layer in layers) {
       _featuresCount += layer.dataSource.features.length;
@@ -53,51 +53,51 @@ class MapDebugger extends ChangeNotifier {
     notifyListeners();
   }
 
-  updateMapResolution(MapResolution mapResolution) {
+  void updateMapResolution(MapResolution mapResolution) {
     _simplifiedPointsCount = mapResolution.pointsCount;
     notifyListeners();
   }
 
-  clearDrawableBuildDuration() {
+  void clearDrawableBuildDuration() {
     _drawableBuildDuration.clear();
   }
 
-  updateDrawableBuildDuration() {
+  void updateDrawableBuildDuration() {
     _drawableBuildDuration.update();
     notifyListeners();
   }
 
-  openDrawableBuildDuration() {
+  void openDrawableBuildDuration() {
     _drawableBuildDuration.openDuration();
   }
 
-  closeDrawableBuildDuration() {
+  void closeDrawableBuildDuration() {
     _drawableBuildDuration.closeDuration();
   }
 
-  clearBufferBuildDuration() {
+  void clearBufferBuildDuration() {
     _bufferBuildDuration.clear();
   }
 
-  updateBufferBuildDuration() {
+  void updateBufferBuildDuration() {
     _bufferBuildDuration.update();
     notifyListeners();
   }
 
-  openBufferBuildDuration() {
+  void openBufferBuildDuration() {
     _bufferBuildDuration.openDuration();
   }
 
-  closeBufferBuildDuration() {
+  void closeBufferBuildDuration() {
     _bufferBuildDuration.closeDuration();
   }
 
-  openMultiResolutionTime() {
+  void openMultiResolutionTime() {
     _initialMultiResolutionTime = DateTime.now();
     _multiResolutionDuration = Duration.zero;
   }
 
-  closeMultiResolutionTime() {
+  void closeMultiResolutionTime() {
     if (_initialMultiResolutionTime != null) {
       DateTime end = DateTime.now();
       _multiResolutionDuration = end.difference(_initialMultiResolutionTime!);
@@ -209,7 +209,7 @@ class MapDebuggerState extends State<MapDebuggerWidget> {
     super.dispose();
   }
 
-  _refresh() {
+  void _refresh() {
     Future.delayed(Duration.zero, () async {
       if (mounted) {
         setState(() {

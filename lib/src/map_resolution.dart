@@ -65,11 +65,11 @@ class MapResolutionBuilder {
 
   _State _state = _State.waiting;
 
-  stop() {
+  void stop() {
     _state = _State.stopped;
   }
 
-  start() async {
+  void start() async {
     if (_state == _State.waiting) {
       debugger?.openMultiResolutionTime();
       debugger?.clearDrawableBuildDuration();

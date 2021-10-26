@@ -23,7 +23,7 @@ abstract class Marker extends DrawableFeature {
   final Offset offset;
 
   @override
-  drawOn(Canvas canvas, Paint paint, double scale) {
+  void drawOn(Canvas canvas, Paint paint, double scale) {
     drawMarkerOn(canvas, paint, offset, scale);
   }
 
@@ -31,5 +31,5 @@ abstract class Marker extends DrawableFeature {
   int get pointsCount => 1;
 
   /// Draw this marker on [Canvas]
-  drawMarkerOn(Canvas canvas, Paint paint, Offset offset, double scale);
+  void drawMarkerOn(Canvas canvas, Paint paint, Offset offset, double scale);
 }

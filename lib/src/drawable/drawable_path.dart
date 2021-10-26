@@ -12,7 +12,7 @@ abstract class DrawablePath extends DrawableFeature {
   final int _pointsCount;
 
   @override
-  drawOn(Canvas canvas, Paint paint, double scale) {
+  void drawOn(Canvas canvas, Paint paint, double scale) {
     canvas.drawPath(_path, paint);
   }
 

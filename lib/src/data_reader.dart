@@ -6,7 +6,7 @@ import 'package:vector_map/src/error.dart';
 
 /// Generic GeoJSON reader.
 class _GeoJSONReaderBase {
-  _checkKeyOn(Map<String, dynamic> map, String key) {
+  void _checkKeyOn(Map<String, dynamic> map, String key) {
     if (map.containsKey(key) == false) {
       throw VectorMapError.keyNotFound(key);
     }
@@ -167,7 +167,7 @@ class MapFeatureReader extends _GeoJSONReaderBase {
     return _list;
   }
 
-  _readMap(Map<String, dynamic> map) async {
+  Future<void> _readMap(Map<String, dynamic> map) async {
     _checkKeyOn(map, 'type');
 
     final type = map['type'];
@@ -187,7 +187,7 @@ class MapFeatureReader extends _GeoJSONReaderBase {
     }
   }
 
-  _readFeature(Map<String, dynamic> map) {
+  void _readFeature(Map<String, dynamic> map) {
     _checkKeyOn(map, 'geometry');
     Map<String, dynamic> geometryMap = map['geometry'];
     MapGeometry geometry = _readGeometry(true, geometryMap);
@@ -229,7 +229,7 @@ class MapFeatureReader extends _GeoJSONReaderBase {
     return _Properties(label: label, values: values);
   }
 
-  _addFeature({required MapGeometry geometry, _Properties? properties}) {
+  void _addFeature({required MapGeometry geometry, _Properties? properties}) {
     _list.add(MapFeature(
         id: _list.length + 1,
         geometry: geometry,
@@ -248,7 +248,7 @@ class MapGeometryReader extends _GeoJSONReaderBase {
     return _list;
   }
 
-  _readMap(Map<String, dynamic> map) async {
+  Future<void> _readMap(Map<String, dynamic> map) async {
     _checkKeyOn(map, 'type');
 
     final type = map['type'];
@@ -268,7 +268,7 @@ class MapGeometryReader extends _GeoJSONReaderBase {
     }
   }
 
-  _readFeature(Map<String, dynamic> map) {
+  void _readFeature(Map<String, dynamic> map) {
     _checkKeyOn(map, 'geometry');
     Map<String, dynamic> geometryMap = map['geometry'];
     MapGeometry geometry = _readGeometry(true, geometryMap);

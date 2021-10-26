@@ -152,7 +152,7 @@ class MapPainter extends CustomPainter {
     }
   }
 
-  _drawHighlightContour(
+  void _drawHighlightContour(
       Canvas canvas, DrawableLayer drawableLayer, CanvasMatrix canvasMatrix) {
     Color? color = MapTheme.getContourColor(
         drawableLayer.layer.theme, drawableLayer.layer.highlightTheme);
@@ -180,7 +180,7 @@ class MapPainter extends CustomPainter {
     }
   }
 
-  _drawLabel(Canvas canvas, int layerIndex, MapFeature feature,
+  void _drawLabel(Canvas canvas, int layerIndex, MapFeature feature,
       Color featureColor, LabelStyleBuilder? labelStyleBuilder) {
     Color labelColor = _labelColorFrom(featureColor);
 
