@@ -10,7 +10,7 @@ import 'package:vector_map/src/data/map_layer.dart';
 import 'package:vector_map/src/error.dart';
 import 'package:vector_map/src/map_highlight.dart';
 import 'package:vector_map/src/theme/map_gradient_theme.dart';
-import 'package:vector_map/src/vector_map.dart';
+import 'package:vector_map/src/vector_map_api.dart';
 
 /// Legend for [MapGradientTheme]
 class GradientLegend extends Legend {
@@ -45,8 +45,11 @@ class GradientLegend extends Legend {
   final BoxBorder? barBorder;
 
   @override
-  Widget buildWidget(BuildContext context, MapFeature? hover) {
-    return _GradientLegendWidget(this);
+  Widget buildWidget(
+      {required BuildContext context,
+      required VectorMapApi mapApi,
+      MapFeature? hover}) {
+    return _GradientLegendWidget(legend: this, mapApi: mapApi);
   }
 
   double get _totalBarWidth {
@@ -72,9 +75,10 @@ class GradientLegend extends Legend {
 }
 
 class _GradientLegendWidget extends StatefulWidget {
-  const _GradientLegendWidget(this.legend);
+  const _GradientLegendWidget({required this.legend, required this.mapApi});
 
   final GradientLegend legend;
+  final VectorMapApi mapApi;
 
   @override
   State<StatefulWidget> createState() => _GradientLegendState();
@@ -98,13 +102,14 @@ class _GradientLegendState extends State<_GradientLegendWidget> {
       children.add(LayoutId(
           id: _ChildId.bar,
           child: _GradientBar(
-              widget.legend.layer.id,
-              gradientTheme.key,
-              min,
-              max,
-              gradientTheme.colors,
-              _updateValuePosition,
-              widget.legend.barBorder)));
+              layerId: widget.legend.layer.id,
+              propertyKey: gradientTheme.key,
+              min: min,
+              max: max,
+              colors: gradientTheme.colors,
+              valuePositionUpdater: _updateValuePosition,
+              border: widget.legend.barBorder,
+              mapApi: widget.mapApi)));
 
       children.add(LayoutId(id: _ChildId.max, child: _text(max.toString())));
 
@@ -156,8 +161,15 @@ class _ValuePosition {
 
 /// Gradient bar widget
 class _GradientBar extends StatelessWidget {
-  const _GradientBar(this.layerId, this.propertyKey, this.min, this.max,
-      this.colors, this.valuePositionUpdater, this.border);
+  const _GradientBar(
+      {required this.layerId,
+      required this.propertyKey,
+      required this.min,
+      required this.max,
+      required this.colors,
+      required this.valuePositionUpdater,
+      this.border,
+      required this.mapApi});
 
   final int layerId;
   final String propertyKey;
@@ -166,6 +178,7 @@ class _GradientBar extends StatelessWidget {
   final List<Color> colors;
   final _ValuePositionUpdater valuePositionUpdater;
   final BoxBorder? border;
+  final VectorMapApi mapApi;
 
   @override
   Widget build(BuildContext context) {
@@ -190,30 +203,24 @@ class _GradientBar extends StatelessWidget {
     });
   }
 
-  _highlightOn(BuildContext context, double maxHeight, double y) {
-    VectorMapState? state = VectorMapState.of(context);
-    if (state != null) {
-      double range = max - min;
-      double value = min + (((maxHeight - y) * range) / maxHeight);
-      int layerIndex = state.getLayerIndexById(layerId);
-      MapGradientHighlight highlight = MapGradientHighlight(
-          layerIndex: layerIndex,
-          key: propertyKey,
-          value: value,
-          rangePerPixel: range / maxHeight,
-          min: min,
-          max: max);
-      state.setHighlight(highlight);
-      valuePositionUpdater(_ValuePosition(y, highlight.formattedValue));
-    }
+  void _highlightOn(BuildContext context, double maxHeight, double y) {
+    double range = max - min;
+    double value = min + (((maxHeight - y) * range) / maxHeight);
+    int layerIndex = mapApi.getLayerIndexById(layerId);
+    MapGradientHighlight highlight = MapGradientHighlight(
+        layerIndex: layerIndex,
+        key: propertyKey,
+        value: value,
+        rangePerPixel: range / maxHeight,
+        min: min,
+        max: max);
+    mapApi.setHighlight(highlight);
+    valuePositionUpdater(_ValuePosition(y, highlight.formattedValue));
   }
 
-  _highlightOff(BuildContext context) {
-    VectorMapState? state = VectorMapState.of(context);
-    if (state != null) {
-      state.setHighlight(null);
-      valuePositionUpdater(null);
-    }
+  void _highlightOff(BuildContext context) {
+    mapApi.clearHighlight();
+    valuePositionUpdater(null);
   }
 }
 
@@ -405,7 +412,7 @@ class _GradientLegendLayoutRenderBox extends RenderBox
     }
   }
 
-  _layoutTextChild(RenderBox child) {
+  void _layoutTextChild(RenderBox child) {
     child.layout(
         BoxConstraints.loose(Size(
             constraints.maxWidth - legend._totalBarWidth - legend.textGap,

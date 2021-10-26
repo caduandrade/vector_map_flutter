@@ -29,4 +29,5 @@ export 'src/theme/map_value_theme.dart';
 export 'src/theme/map_rule_theme.dart';
 export 'src/theme/map_gradient_theme.dart';
 export 'src/theme/map_highlight_theme.dart';
+export 'src/vector_map_api.dart';
 export 'src/vector_map.dart';

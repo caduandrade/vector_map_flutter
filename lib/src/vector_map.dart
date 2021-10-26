@@ -11,6 +11,7 @@ import 'package:vector_map/src/debugger.dart';
 import 'package:vector_map/src/drawable/drawable_feature.dart';
 import 'package:vector_map/src/drawable/drawable_layer.dart';
 import 'package:vector_map/src/error.dart';
+import 'package:vector_map/src/vector_map_api.dart';
 import 'package:vector_map/src/map_highlight.dart';
 import 'package:vector_map/src/map_painter.dart';
 import 'package:vector_map/src/map_resolution.dart';
@@ -63,7 +64,7 @@ class VectorMap extends StatefulWidget {
   final List<MapAddon>? addons;
 
   @override
-  State<StatefulWidget> createState() => VectorMapState();
+  State<StatefulWidget> createState() => _VectorMapState();
 
   bool get hoverDrawable {
     for (MapLayer layer in layers) {
@@ -76,19 +77,14 @@ class VectorMap extends StatefulWidget {
 }
 
 /// [VectorMap] state.
-class VectorMapState extends State<VectorMap> {
+class _VectorMapState extends State<VectorMap> implements VectorMapApi {
   MapHighlight? _highlight;
 
   Size? _lastBuildSize;
   MapResolution? _mapResolution;
   MapResolutionBuilder? _mapResolutionBuilder;
 
-  /// Gets the instance of the [VectorMapState]
-  static VectorMapState? of(BuildContext context) {
-    return context.findAncestorStateOfType();
-  }
-
-  /// Gets a layer index given a layer id.
+  @override
   int getLayerIndexById(int id) {
     int? index = widget._idAndIndexLayers[id];
     if (index == null) {
@@ -97,13 +93,21 @@ class VectorMapState extends State<VectorMap> {
     return index;
   }
 
-  setHighlight(MapHighlight? newHighlight) {
+  @override
+  void clearHighlight() {
+    setState(() {
+      _highlight = null;
+    });
+  }
+
+  @override
+  void setHighlight(MapHighlight newHighlight) {
     setState(() {
       _highlight = newHighlight;
     });
   }
 
-  _updateMapResolution(CanvasMatrix canvasMatrix) {
+  void _updateMapResolution(CanvasMatrix canvasMatrix) {
     if (mounted && _lastBuildSize == canvasMatrix.widgetSize) {
       if (_mapResolutionBuilder != null) {
         _mapResolutionBuilder!.stop();
@@ -119,7 +123,7 @@ class VectorMapState extends State<VectorMap> {
     }
   }
 
-  _onFinish(MapResolution newMapResolution) {
+  void _onFinish(MapResolution newMapResolution) {
     if (mounted) {
       setState(() {
         _mapResolution = newMapResolution;
@@ -142,8 +146,10 @@ class VectorMapState extends State<VectorMap> {
           if (_highlight != null && _highlight is MapSingleHighlight) {
             hover = (_highlight as MapSingleHighlight).feature;
           }
-          children.add(
-              LayoutId(id: count, child: addon.buildWidget(context, hover)));
+          children.add(LayoutId(
+              id: count,
+              child: addon.buildWidget(
+                  context: context, mapApi: this, hover: hover)));
           count++;
         }
         content = CustomMultiChildLayout(
@@ -227,7 +233,7 @@ class VectorMapState extends State<VectorMap> {
     return Container(child: layoutBuilder, padding: widget.layersPadding);
   }
 
-  _onClick() {
+  void _onClick() {
     if (_highlight != null &&
         _highlight is MapSingleHighlight &&
         widget.clickListener != null) {
@@ -236,7 +242,7 @@ class VectorMapState extends State<VectorMap> {
   }
 
   /// Triggered when a pointer moves over the map.
-  _onHover(PointerHoverEvent event, CanvasMatrix canvasMatrix) {
+  void _onHover(PointerHoverEvent event, CanvasMatrix canvasMatrix) {
     if (_mapResolution != null) {
       Offset worldCoordinate = MatrixUtils.transformPoint(
           canvasMatrix.screenToWorld, event.localPosition);
@@ -281,7 +287,7 @@ class VectorMapState extends State<VectorMap> {
     }
   }
 
-  _updateHover(MapSingleHighlight? hoverHighlightRule) {
+  void _updateHover(MapSingleHighlight? hoverHighlightRule) {
     if (widget.hoverDrawable) {
       // repaint
       setState(() {

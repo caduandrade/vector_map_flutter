@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:vector_map/src/data/map_feature.dart';
+import 'package:vector_map/src/vector_map_api.dart';
 
 /// Allows to add components on the [VectorMap]
 abstract class MapAddon {
@@ -19,5 +20,8 @@ abstract class MapAddon {
   final EdgeInsetsGeometry? margin;
 
   /// Builds the [Widget] for this addon
-  Widget buildWidget(BuildContext context, MapFeature? hover);
+  Widget buildWidget(
+      {required BuildContext context,
+      required VectorMapApi mapApi,
+      MapFeature? hover});
 }
