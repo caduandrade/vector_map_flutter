@@ -37,6 +37,8 @@ class MapDebugger extends ChangeNotifier {
   int _featuresCount = 0;
   int _originalPointsCount = 0;
   int _simplifiedPointsCount = 0;
+  Offset? _mouseHoverWorldCoordinate;
+  Offset? _mouseHoverCanvasLocation;
 
   DurationDebugger _drawableBuildDuration = DurationDebugger();
   DurationDebugger _bufferBuildDuration = DurationDebugger();
@@ -50,6 +52,12 @@ class MapDebugger extends ChangeNotifier {
       _featuresCount += layer.dataSource.features.length;
       _originalPointsCount += layer.dataSource.pointsCount;
     }
+    notifyListeners();
+  }
+
+  void updateMouseHover({Offset? worldCoordinate, Offset? canvasLocation}) {
+    this._mouseHoverWorldCoordinate = worldCoordinate;
+    this._mouseHoverCanvasLocation = canvasLocation;
     notifyListeners();
   }
 
@@ -162,26 +170,42 @@ class MapDebuggerState extends State<MapDebuggerWidget> {
       _buildDuration(
           'Multi resolution: ', widget.debugger._multiResolutionDuration),
       _buildDuration('-- Drawable build: ', drawableDuration),
-      _buildDuration('-- Buffer build: ', bufferDuration)
+      _buildDuration('-- Buffer build: ', bufferDuration),
+      Padding(
+          padding: EdgeInsets.fromLTRB(0, 12, 0, 12),
+          child: Text('Mouse hover',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+      _buildOffset(
+          'canvas location: ', widget.debugger._mouseHoverCanvasLocation),
+      _buildOffset(
+          'world coordinate: ', widget.debugger._mouseHoverWorldCoordinate)
     ], crossAxisAlignment: CrossAxisAlignment.start));
   }
 
-  Widget _buildFormattedInt(String name, int value) {
-    return _buildItem(name, formatInt(value));
+  Widget _buildFormattedInt(String label, int value) {
+    return _buildItem(label, formatInt(value));
   }
 
-  Widget _buildDuration(String name, Duration value) {
-    return _buildItem(name, value.inMilliseconds.toString() + 'ms');
+  Widget _buildOffset(String label, Offset? offset) {
+    if (offset == null) {
+      return _buildItem(label, '');
+    }
+    return _buildItem(
+        label, offset.dx.toString() + ', ' + offset.dy.toString());
   }
 
-  Widget _buildItem(String name, String value) {
+  Widget _buildDuration(String label, Duration value) {
+    return _buildItem(label, value.inMilliseconds.toString() + 'ms');
+  }
+
+  Widget _buildItem(String label, String value) {
     return Padding(
         padding: EdgeInsets.fromLTRB(0, 4, 0, 0),
         child: RichText(
           text: new TextSpan(
             style: TextStyle(fontSize: 12),
             children: <TextSpan>[
-              new TextSpan(text: name),
+              new TextSpan(text: label),
               new TextSpan(
                   text: value,
                   style: new TextStyle(fontWeight: FontWeight.bold)),

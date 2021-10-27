@@ -223,6 +223,7 @@ class _VectorMapState extends State<VectorMap> implements VectorMapApi {
           if (_highlight != null) {
             _updateHover(null);
           }
+          widget.debugger?.updateMouseHover();
         },
       );
 
@@ -246,6 +247,10 @@ class _VectorMapState extends State<VectorMap> implements VectorMapApi {
     if (_mapResolution != null) {
       Offset worldCoordinate = MatrixUtils.transformPoint(
           canvasMatrix.screenToWorld, event.localPosition);
+
+      widget.debugger?.updateMouseHover(
+          canvasLocation: event.localPosition,
+          worldCoordinate: worldCoordinate);
 
       MapSingleHighlight? hoverHighlightRule;
       for (int layerIndex = _mapResolution!.drawableLayers.length - 1;
