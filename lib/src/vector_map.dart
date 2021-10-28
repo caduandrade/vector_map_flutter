@@ -38,7 +38,6 @@ class VectorMap extends StatefulWidget {
       this.addons,
       this.lowQualityMode})
       : this.layers = layers != null ? layers : [],
-        this.layersBounds = layers != null ? MapLayer.boundsOf(layers) : null,
         super(key: key) {
     debugger?.initialize(this.layers);
     for (int index = 0; index < this.layers.length; index++) {
@@ -52,7 +51,6 @@ class VectorMap extends StatefulWidget {
 
   final List<MapLayer> layers;
   final Map<int, int> _idAndIndexLayers = Map<int, int>();
-  final Rect? layersBounds;
   final double contourThickness;
   final int delayToRefreshResolution;
   final Color? color;
@@ -67,7 +65,9 @@ class VectorMap extends StatefulWidget {
   final LowQualityMode? lowQualityMode;
 
   @override
-  State<StatefulWidget> createState() => _VectorMapState();
+  State<StatefulWidget> createState() {
+    return _VectorMapState(worldBounds: MapLayer.boundsOf(layers));
+  }
 
   bool get hoverDrawable {
     for (MapLayer layer in layers) {
@@ -81,11 +81,14 @@ class VectorMap extends StatefulWidget {
 
 /// [VectorMap] state.
 class _VectorMapState extends State<VectorMap> implements VectorMapApi {
+  CanvasMatrix _canvasMatrix;
   MapHighlight? _highlight;
-
   Size? _lastBuildSize;
   MapResolution? _mapResolution;
   MapResolutionBuilder? _mapResolutionBuilder;
+
+  _VectorMapState({required Rect? worldBounds})
+      : this._canvasMatrix = CanvasMatrix(worldBounds: worldBounds);
 
   @override
   int getLayerIndexById(int id) {
@@ -111,7 +114,7 @@ class _VectorMapState extends State<VectorMap> implements VectorMapApi {
   }
 
   void _updateMapResolution(CanvasMatrix canvasMatrix) {
-    if (mounted && _lastBuildSize == canvasMatrix.widgetSize) {
+    if (mounted && _lastBuildSize == canvasMatrix.canvasSize) {
       if (_mapResolutionBuilder != null) {
         _mapResolutionBuilder!.stop();
       }
@@ -186,17 +189,18 @@ class _VectorMapState extends State<VectorMap> implements VectorMapApi {
       if (constraints.maxWidth == 0 || constraints.maxHeight == 0) {
         return Container();
       }
-      CanvasMatrix canvasMatrix = CanvasMatrix(
-          widgetWidth: constraints.maxWidth,
-          widgetHeight: constraints.maxHeight,
-          worldBounds: widget.layersBounds!);
 
-      if (_lastBuildSize != canvasMatrix.widgetSize) {
-        _lastBuildSize = canvasMatrix.widgetSize;
+      _canvasMatrix.canvasSize =
+          Size(constraints.maxWidth, constraints.maxHeight);
+
+      _canvasMatrix.fit();
+
+      if (_lastBuildSize != _canvasMatrix.canvasSize) {
+        _lastBuildSize = _canvasMatrix.canvasSize;
         if (_mapResolution == null) {
           if (_mapResolutionBuilder == null) {
             // first build without delay
-            Future.microtask(() => _updateMapResolution(canvasMatrix));
+            Future.microtask(() => _updateMapResolution(_canvasMatrix));
           }
           return Center(
             child: Text('Updating...'),
@@ -205,7 +209,7 @@ class _VectorMapState extends State<VectorMap> implements VectorMapApi {
           // updating map resolution
           Future.delayed(
               Duration(milliseconds: widget.delayToRefreshResolution), () {
-            _updateMapResolution(canvasMatrix);
+            _updateMapResolution(_canvasMatrix);
           });
         }
       }
@@ -213,7 +217,7 @@ class _VectorMapState extends State<VectorMap> implements VectorMapApi {
       MapPainter mapPainter = MapPainter(
           mapResolution: _mapResolution!,
           highlight: _highlight,
-          canvasMatrix: canvasMatrix,
+          canvasMatrix: _canvasMatrix,
           contourThickness: widget.contourThickness);
 
       CustomPaint customPaint =
@@ -221,7 +225,7 @@ class _VectorMapState extends State<VectorMap> implements VectorMapApi {
 
       MouseRegion mouseRegion = MouseRegion(
         child: customPaint,
-        onHover: (event) => _onHover(event, canvasMatrix),
+        onHover: (event) => _onHover(event, _canvasMatrix),
         onExit: (event) {
           if (_highlight != null) {
             _updateHover(null);

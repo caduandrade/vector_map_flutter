@@ -34,7 +34,7 @@ class MapPainter extends CustomPainter {
         layerIndex++) {
       DrawableLayer drawableLayer = mapResolution.drawableLayers[layerIndex];
 
-      if (canvasMatrix.widgetSize == mapResolution.widgetSize) {
+      if (canvasMatrix.canvasSize == mapResolution.widgetSize) {
         canvas.drawImage(
             mapResolution.layerBuffers[layerIndex], Offset.zero, Paint());
       } else {

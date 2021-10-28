@@ -4,29 +4,61 @@ import 'package:flutter/rendering.dart';
 
 /// Matrix to convert world coordinates to screen coordinates.
 class CanvasMatrix {
-  CanvasMatrix._(
-      {required this.scale,
-      required this.translateX,
-      required this.translateY,
-      required this.widgetSize,
-      required this.worldToScreen,
-      required this.screenToWorld});
-
   /// Builds a [CanvasMatrix]
   ///
   /// The [worldBounds] represents the bounds from the data source.
-  factory CanvasMatrix(
-      {required double widgetWidth,
-      required double widgetHeight,
-      required Rect worldBounds}) {
-    double scaleX = widgetWidth / worldBounds.width;
-    double scaleY = widgetHeight / worldBounds.height;
-    double scale = math.min(scaleX, scaleY);
+  CanvasMatrix({required Rect? worldBounds}) : this._worldBounds = worldBounds;
 
-    double translateX = (widgetWidth / 2.0) - (scale * worldBounds.center.dx);
-    double translateY = (widgetHeight / 2.0) + (scale * worldBounds.center.dy);
+  void fit() {
+    _scale = 1;
+    _translateX = 0;
+    _translateY = 0;
 
-    Matrix4 worldToScreen = Matrix4(
+    if (worldBounds != null && canvasSize.isEmpty == false) {
+      double scaleX = canvasSize.width / worldBounds!.width;
+      double scaleY = canvasSize.height / worldBounds!.height;
+      _scale = math.min(scaleX, scaleY);
+
+      _translateX = (canvasSize.width / 2.0) - (scale * worldBounds!.center.dx);
+      _translateY =
+          (canvasSize.height / 2.0) + (scale * worldBounds!.center.dy);
+    }
+
+    _worldToScreen = CanvasMatrix._buildMatrix4();
+    _worldToScreen.translate(_translateX, _translateY, 0);
+    _worldToScreen.scale(_scale, -_scale, 1);
+
+    _screenToWorld = Matrix4.inverted(_worldToScreen);
+  }
+
+  Rect? _worldBounds;
+  Rect? get worldBounds => _worldBounds;
+
+  double _scale = 1;
+  double get scale => _scale;
+
+  double _translateX = 0;
+
+  double _translateY = 0;
+
+  Size canvasSize = Size(0, 0);
+
+  /// Matrix to be used to convert world coordinates to screen coordinates.
+  Matrix4 _worldToScreen = CanvasMatrix._buildMatrix4();
+  Matrix4 get worldToScreen => _worldToScreen;
+
+  /// Matrix to be used to convert screen coordinates to world coordinates.
+  Matrix4 _screenToWorld = CanvasMatrix._buildMatrix4();
+  Matrix4 get screenToWorld => _screenToWorld;
+
+  /// Applies a matrix on the canvas.
+  void applyOn(Canvas canvas) {
+    canvas.translate(_translateX, _translateY);
+    canvas.scale(_scale, -_scale);
+  }
+
+  static Matrix4 _buildMatrix4() {
+    return Matrix4(
       1,
       0,
       0,
@@ -44,35 +76,5 @@ class CanvasMatrix {
       0,
       1,
     );
-
-    worldToScreen.translate(translateX, translateY, 0);
-    worldToScreen.scale(scale, -scale, 1);
-
-    Matrix4 screenToWorld = Matrix4.inverted(worldToScreen);
-
-    return CanvasMatrix._(
-        scale: scale,
-        translateX: translateX,
-        translateY: translateY,
-        widgetSize: Size(widgetWidth, widgetHeight),
-        worldToScreen: worldToScreen,
-        screenToWorld: screenToWorld);
-  }
-
-  final double scale;
-  final double translateX;
-  final double translateY;
-  final Size widgetSize;
-
-  /// Matrix to be used to convert world coordinates to screen coordinates.
-  final Matrix4 worldToScreen;
-
-  /// Matrix to be used to convert screen coordinates to world coordinates.
-  final Matrix4 screenToWorld;
-
-  /// Applies a matrix on the canvas.
-  void applyOn(Canvas canvas) {
-    canvas.translate(translateX, translateY);
-    canvas.scale(scale, -scale);
   }
 }

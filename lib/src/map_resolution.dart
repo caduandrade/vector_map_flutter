@@ -111,7 +111,7 @@ class MapResolutionBuilder {
         debugger?.closeMultiResolutionTime();
 
         onFinish(MapResolution._(
-            widgetSize: canvasMatrix.widgetSize,
+            widgetSize: canvasMatrix.canvasSize,
             drawableLayers: UnmodifiableListView(_drawableLayers),
             layerBuffers: UnmodifiableListView(_layerBuffers),
             pointsCount: pointsCount));
@@ -126,8 +126,8 @@ class MapResolutionBuilder {
         recorder,
         Rect.fromPoints(
             Offset.zero,
-            Offset(canvasMatrix.widgetSize.width,
-                canvasMatrix.widgetSize.height)));
+            Offset(canvasMatrix.canvasSize.width,
+                canvasMatrix.canvasSize.height)));
 
     canvas.save();
     canvasMatrix.applyOn(canvas);
@@ -141,7 +141,7 @@ class MapResolutionBuilder {
     canvas.restore();
 
     Picture picture = recorder.endRecording();
-    return picture.toImage(canvasMatrix.widgetSize.width.ceil(),
-        canvasMatrix.widgetSize.height.ceil());
+    return picture.toImage(canvasMatrix.canvasSize.width.ceil(),
+        canvasMatrix.canvasSize.height.ceil());
   }
 }
