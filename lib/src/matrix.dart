@@ -71,7 +71,7 @@ class CanvasMatrix {
   final Matrix4 screenToWorld;
 
   /// Applies a matrix on the canvas.
-  applyOn(Canvas canvas) {
+  void applyOn(Canvas canvas) {
     canvas.translate(translateX, translateY);
     canvas.scale(scale, -scale);
   }

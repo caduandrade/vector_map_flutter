@@ -11,6 +11,7 @@ import 'package:vector_map/src/debugger.dart';
 import 'package:vector_map/src/drawable/drawable_feature.dart';
 import 'package:vector_map/src/drawable/drawable_layer.dart';
 import 'package:vector_map/src/error.dart';
+import 'package:vector_map/src/low_quality_mode.dart';
 import 'package:vector_map/src/vector_map_api.dart';
 import 'package:vector_map/src/map_highlight.dart';
 import 'package:vector_map/src/map_painter.dart';
@@ -34,7 +35,8 @@ class VectorMap extends StatefulWidget {
       this.hoverListener,
       this.clickListener,
       this.debugger,
-      this.addons})
+      this.addons,
+      this.lowQualityMode})
       : this.layers = layers != null ? layers : [],
         this.layersBounds = layers != null ? MapLayer.boundsOf(layers) : null,
         super(key: key) {
@@ -62,6 +64,7 @@ class VectorMap extends StatefulWidget {
   final FeatureClickListener? clickListener;
   final MapDebugger? debugger;
   final List<MapAddon>? addons;
+  final LowQualityMode? lowQualityMode;
 
   @override
   State<StatefulWidget> createState() => _VectorMapState();
