@@ -2,7 +2,6 @@ import 'dart:typed_data';
 
 import 'package:flutter/rendering.dart';
 import 'package:vector_map/src/data/geometries.dart';
-import 'package:vector_map/src/matrix.dart';
 
 /// Simplifies geometry by ignoring unnecessary points for viewing
 /// on the screen.
@@ -11,7 +10,7 @@ abstract class GeometrySimplifier {
 
   final double tolerance;
 
-  List<MapPoint> simplify(CanvasMatrix canvasMatrix, List<MapPoint> points);
+  List<MapPoint> simplify(Matrix4 worldToCanvas, List<MapPoint> points);
 
   MapPoint transformPoint(Matrix4 transform, MapPoint point) {
     final Float64List storage = transform.storage;
@@ -38,12 +37,11 @@ class IntegerSimplifier extends GeometrySimplifier {
   IntegerSimplifier({double tolerance = 1}) : super(tolerance);
 
   @override
-  List<MapPoint> simplify(CanvasMatrix canvasMatrix, List<MapPoint> points) {
+  List<MapPoint> simplify(Matrix4 worldToCanvas, List<MapPoint> points) {
     List<MapPoint> simplifiedPoints = [];
     MapPoint? lastMapPoint;
     for (MapPoint point in points) {
-      MapPoint transformedPoint =
-          transformPoint(canvasMatrix.worldToScreen, point);
+      MapPoint transformedPoint = transformPoint(worldToCanvas, point);
 
       transformedPoint = MapPoint(transformedPoint.x.truncateToDouble(),
           transformedPoint.y.truncateToDouble());
@@ -71,7 +69,7 @@ class NoSimplifier extends GeometrySimplifier {
   NoSimplifier() : super(0);
 
   @override
-  List<MapPoint> simplify(CanvasMatrix canvasMatrix, List<MapPoint> points) {
+  List<MapPoint> simplify(Matrix4 worldToCanvas, List<MapPoint> points) {
     return points;
   }
 }

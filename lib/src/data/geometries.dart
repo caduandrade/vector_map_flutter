@@ -2,8 +2,8 @@ import 'dart:collection';
 import 'dart:math' as math;
 import 'dart:ui';
 
+import 'package:flutter/rendering.dart';
 import 'package:vector_map/src/data/simplified_path.dart';
-import 'package:vector_map/src/matrix.dart';
 import 'package:vector_map/src/simplifier.dart';
 
 /// Abstract map geometry.
@@ -75,9 +75,10 @@ class MapLineString with MapGeometry {
   int get pointsCount => points.length;
 
   SimplifiedPath toSimplifiedPath(
-      CanvasMatrix canvasMatrix, GeometrySimplifier simplifier) {
+      Matrix4 worldToCanvas, GeometrySimplifier simplifier) {
     Path path = Path();
-    List<MapPoint> simplifiedPoints = simplifier.simplify(canvasMatrix, points);
+    List<MapPoint> simplifiedPoints =
+        simplifier.simplify(worldToCanvas, points);
     for (int i = 0; i < simplifiedPoints.length; i++) {
       MapPoint point = simplifiedPoints[i];
       if (i == 0) {
@@ -132,9 +133,10 @@ class MapLinearRing with MapGeometry {
   int get pointsCount => points.length;
 
   SimplifiedPath toSimplifiedPath(
-      CanvasMatrix canvasMatrix, GeometrySimplifier simplifier) {
+      Matrix4 worldToCanvas, GeometrySimplifier simplifier) {
     Path path = Path();
-    List<MapPoint> simplifiedPoints = simplifier.simplify(canvasMatrix, points);
+    List<MapPoint> simplifiedPoints =
+        simplifier.simplify(worldToCanvas, points);
     for (int i = 0; i < simplifiedPoints.length; i++) {
       MapPoint point = simplifiedPoints[i];
       if (i == 0) {
@@ -205,15 +207,15 @@ class MapPolygon with MapGeometry {
   }
 
   SimplifiedPath toSimplifiedPath(
-      CanvasMatrix canvasMatrix, GeometrySimplifier simplifier) {
+      Matrix4 worldToCanvas, GeometrySimplifier simplifier) {
     Path path = Path()..fillType = PathFillType.evenOdd;
 
     SimplifiedPath simplifiedPath =
-        externalRing.toSimplifiedPath(canvasMatrix, simplifier);
+        externalRing.toSimplifiedPath(worldToCanvas, simplifier);
     int pointsCount = simplifiedPath.pointsCount;
     path.addPath(simplifiedPath.path, Offset.zero);
     for (MapLinearRing ring in internalRings) {
-      simplifiedPath = ring.toSimplifiedPath(canvasMatrix, simplifier);
+      simplifiedPath = ring.toSimplifiedPath(worldToCanvas, simplifier);
       pointsCount += simplifiedPath.pointsCount;
       path.addPath(simplifiedPath.path, Offset.zero);
     }

@@ -2,7 +2,7 @@ import 'dart:ui';
 
 import 'package:vector_map/src/data/map_data_source.dart';
 import 'package:vector_map/src/data/map_feature.dart';
-import 'package:vector_map/src/drawable/drawable_feature.dart';
+import 'package:vector_map/src/drawable/drawable.dart';
 
 /// [Marker] builder.
 abstract class MarkerBuilder {
@@ -17,7 +17,7 @@ abstract class MarkerBuilder {
 }
 
 /// Defines a marker to be painted on the map.
-abstract class Marker extends DrawableFeature {
+abstract class Marker extends Drawable {
   Marker({required this.offset});
 
   final Offset offset;

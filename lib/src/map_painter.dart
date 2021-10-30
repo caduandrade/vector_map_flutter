@@ -5,49 +5,52 @@ import 'package:flutter/widgets.dart';
 import 'package:vector_map/src/data/map_data_source.dart';
 import 'package:vector_map/src/data/map_feature.dart';
 import 'package:vector_map/src/data/map_layer.dart';
+import 'package:vector_map/src/draw_utils.dart';
+import 'package:vector_map/src/drawable/drawable.dart';
 import 'package:vector_map/src/drawable/drawable_feature.dart';
 import 'package:vector_map/src/drawable/drawable_layer.dart';
+import 'package:vector_map/src/drawable/drawable_layer_chunk.dart';
 import 'package:vector_map/src/map_highlight.dart';
-import 'package:vector_map/src/map_resolution.dart';
-import 'package:vector_map/src/matrix.dart';
 import 'package:vector_map/src/theme/map_highlight_theme.dart';
 import 'package:vector_map/src/theme/map_theme.dart';
+import 'package:vector_map/src/vector_map_controller.dart';
 
 /// Painter for [VectorMap].
 class MapPainter extends CustomPainter {
   MapPainter(
-      {required this.mapResolution,
-      required this.canvasMatrix,
+      {required this.controller,
       required this.contourThickness,
+      required this.drawBuffers,
       this.highlight});
-
-  final CanvasMatrix canvasMatrix;
   final MapHighlight? highlight;
   final double contourThickness;
-  final MapResolution mapResolution;
+  final VectorMapController controller;
+  final bool drawBuffers;
 
   @override
   void paint(Canvas canvas, Size size) {
     // drawing layers
     for (int layerIndex = 0;
-        layerIndex < mapResolution.drawableLayers.length;
+        layerIndex < controller.drawableLayersLength;
         layerIndex++) {
-      DrawableLayer drawableLayer = mapResolution.drawableLayers[layerIndex];
-
-      if (canvasMatrix.canvasSize == mapResolution.widgetSize) {
-        canvas.drawImage(
-            mapResolution.layerBuffers[layerIndex], Offset.zero, Paint());
-      } else {
-        // resizing, panning or zooming
-        canvas.save();
-        canvasMatrix.applyOn(canvas);
-        // drawing contour only to be faster
-        drawableLayer.drawContourOn(
-            canvas: canvas,
-            contourThickness: contourThickness,
-            scale: canvasMatrix.scale,
-            antiAlias: false);
-        canvas.restore();
+      DrawableLayer drawableLayer = controller.getDrawableLayer(layerIndex);
+      for (DrawableLayerChunk chunk in drawableLayer.chunks) {
+        if (drawBuffers && chunk.buffer != null) {
+          canvas.drawImage(chunk.buffer!, Offset.zero, Paint());
+        } else {
+          // resizing, panning or zooming
+          canvas.save();
+          controller.applyMatrixOn(canvas);
+          // drawing contour only to be faster
+          DrawUtils.drawContour(
+              canvas: canvas,
+              chunk: chunk,
+              layer: drawableLayer.layer,
+              contourThickness: contourThickness,
+              scale: controller.scale,
+              antiAlias: false);
+          canvas.restore();
+        }
       }
 
       // highlighting
@@ -55,7 +58,7 @@ class MapPainter extends CustomPainter {
         MapLayer layer = drawableLayer.layer;
         if (layer.highlightTheme != null) {
           canvas.save();
-          canvasMatrix.applyOn(canvas);
+          controller.applyMatrixOn(canvas);
 
           if (layer.highlightTheme!.color != null) {
             var paint = Paint()
@@ -63,17 +66,18 @@ class MapPainter extends CustomPainter {
               ..color = layer.highlightTheme!.color!
               ..isAntiAlias = true;
             if (highlight is MapSingleHighlight) {
-              MapFeature feature = (highlight as MapSingleHighlight).feature;
-              DrawableFeature drawableFeature =
-                  drawableLayer.getDrawableFeature(feature);
-              if (drawableFeature.visible && drawableFeature.hasFill) {
-                drawableFeature.drawOn(canvas, paint, canvasMatrix.scale);
+              DrawableFeature? drawableFeature =
+                  (highlight as MapSingleHighlight).drawableFeature;
+              Drawable? drawable = drawableFeature?.drawable;
+              if (drawable != null && drawable.visible && drawable.hasFill) {
+                drawable.drawOn(canvas, paint, controller.scale);
               }
             } else {
-              drawableLayer.drawHighlightOn(
+              DrawUtils.drawHighlight(
                   canvas: canvas,
+                  drawableLayer: drawableLayer,
                   paint: paint,
-                  scale: canvasMatrix.scale,
+                  scale: controller.scale,
                   fillOnly: true,
                   highlight: highlight!);
             }
@@ -81,7 +85,7 @@ class MapPainter extends CustomPainter {
 
           if (contourThickness > 0 &&
               layer.highlightTheme!.overlayContour == false) {
-            _drawHighlightContour(canvas, drawableLayer, canvasMatrix);
+            _drawHighlightContour(canvas, drawableLayer, controller);
           }
 
           canvas.restore();
@@ -92,13 +96,13 @@ class MapPainter extends CustomPainter {
     // drawing the overlay highlight contour
     if (contourThickness > 0 && highlight != null) {
       DrawableLayer drawableLayer =
-          mapResolution.drawableLayers[highlight!.layerIndex];
+          controller.getDrawableLayer(highlight!.layerIndex);
       if (drawableLayer.layer.highlightTheme != null) {
         MapHighlightTheme highlightTheme = drawableLayer.layer.highlightTheme!;
         if (highlightTheme.overlayContour) {
           canvas.save();
-          canvasMatrix.applyOn(canvas);
-          _drawHighlightContour(canvas, drawableLayer, canvasMatrix);
+          controller.applyMatrixOn(canvas);
+          _drawHighlightContour(canvas, drawableLayer, controller);
           canvas.restore();
         }
       }
@@ -106,45 +110,48 @@ class MapPainter extends CustomPainter {
 
     // drawing labels
     for (int layerIndex = 0;
-        layerIndex < mapResolution.drawableLayers.length;
+        layerIndex < controller.drawableLayersLength;
         layerIndex++) {
-      DrawableLayer drawableLayer = mapResolution.drawableLayers[layerIndex];
+      DrawableLayer drawableLayer = controller.getDrawableLayer(layerIndex);
       MapLayer layer = drawableLayer.layer;
       MapDataSource dataSource = layer.dataSource;
       MapTheme theme = layer.theme;
       MapHighlightTheme? highlightTheme = layer.highlightTheme;
       if (theme.labelVisibility != null ||
           (highlightTheme != null && highlightTheme.labelVisibility != null)) {
-        for (MapFeature feature in dataSource.features.values) {
-          DrawableFeature drawableFeature =
-              drawableLayer.drawableFeatures[feature.id]!;
-          if (drawableFeature.visible && feature.label != null) {
-            LabelVisibility? labelVisibility;
-            if (highlight != null &&
-                highlight!.layerIndex == layerIndex &&
-                highlight!.applies(feature) &&
-                highlightTheme != null &&
-                highlightTheme.labelVisibility != null) {
-              labelVisibility = highlightTheme.labelVisibility;
-            } else {
-              labelVisibility = theme.labelVisibility;
-            }
-            if (labelVisibility != null && labelVisibility(feature)) {
-              LabelStyleBuilder? labelStyleBuilder;
-              MapHighlightTheme? highlightTheme;
-              if (highlight != null && highlight!.applies(feature)) {
-                highlightTheme = layer.highlightTheme;
-                if (highlightTheme != null) {
-                  labelStyleBuilder = highlightTheme.labelStyleBuilder;
+        for (DrawableLayerChunk chunk in drawableLayer.chunks) {
+          for (int index = 0; index < chunk.length; index++) {
+            DrawableFeature drawableFeature = chunk.getDrawableFeature(index);
+            MapFeature feature = drawableFeature.feature;
+            Drawable? drawable = drawableFeature.drawable;
+            if (drawable != null && drawable.visible && feature.label != null) {
+              LabelVisibility? labelVisibility;
+              if (highlight != null &&
+                  highlight!.layerIndex == layerIndex &&
+                  highlight!.applies(feature) &&
+                  highlightTheme != null &&
+                  highlightTheme.labelVisibility != null) {
+                labelVisibility = highlightTheme.labelVisibility;
+              } else {
+                labelVisibility = theme.labelVisibility;
+              }
+              if (labelVisibility != null && labelVisibility(feature)) {
+                LabelStyleBuilder? labelStyleBuilder;
+                MapHighlightTheme? highlightTheme;
+                if (highlight != null && highlight!.applies(feature)) {
+                  highlightTheme = layer.highlightTheme;
+                  if (highlightTheme != null) {
+                    labelStyleBuilder = highlightTheme.labelStyleBuilder;
+                  }
                 }
+                Color featureColor = MapTheme.getFeatureColor(
+                    dataSource, feature, theme, highlightTheme);
+                if (labelStyleBuilder == null) {
+                  labelStyleBuilder = theme.labelStyleBuilder;
+                }
+                _drawLabel(
+                    canvas, feature, drawable, featureColor, labelStyleBuilder);
               }
-              Color featureColor = MapTheme.getFeatureColor(
-                  dataSource, feature, theme, highlightTheme);
-              if (labelStyleBuilder == null) {
-                labelStyleBuilder = theme.labelStyleBuilder;
-              }
-              _drawLabel(
-                  canvas, layerIndex, feature, featureColor, labelStyleBuilder);
             }
           }
         }
@@ -152,35 +159,36 @@ class MapPainter extends CustomPainter {
     }
   }
 
-  void _drawHighlightContour(
-      Canvas canvas, DrawableLayer drawableLayer, CanvasMatrix canvasMatrix) {
+  void _drawHighlightContour(Canvas canvas, DrawableLayer drawableLayer,
+      VectorMapController controller) {
     Color? color = MapTheme.getContourColor(
         drawableLayer.layer.theme, drawableLayer.layer.highlightTheme);
     if (color != null) {
       var paint = Paint()
         ..style = PaintingStyle.stroke
         ..color = color
-        ..strokeWidth = contourThickness / canvasMatrix.scale
+        ..strokeWidth = contourThickness / controller.scale
         ..isAntiAlias = true;
       if (highlight is MapSingleHighlight) {
-        MapFeature feature = (highlight as MapSingleHighlight).feature;
-        DrawableFeature drawableFeature =
-            drawableLayer.getDrawableFeature(feature);
-        if (drawableFeature.visible) {
-          drawableFeature.drawOn(canvas, paint, canvasMatrix.scale);
+        DrawableFeature? drawableFeature =
+            (highlight as MapSingleHighlight).drawableFeature;
+        Drawable? drawable = drawableFeature?.drawable;
+        if (drawable != null && drawable.visible) {
+          drawable.drawOn(canvas, paint, controller.scale);
         }
       } else {
-        drawableLayer.drawHighlightOn(
+        DrawUtils.drawHighlight(
             canvas: canvas,
+            drawableLayer: drawableLayer,
             paint: paint,
-            scale: canvasMatrix.scale,
+            scale: controller.scale,
             fillOnly: false,
             highlight: highlight!);
       }
     }
   }
 
-  void _drawLabel(Canvas canvas, int layerIndex, MapFeature feature,
+  void _drawLabel(Canvas canvas, MapFeature feature, Drawable drawable,
       Color featureColor, LabelStyleBuilder? labelStyleBuilder) {
     Color labelColor = _labelColorFrom(featureColor);
 
@@ -195,11 +203,8 @@ class MapPainter extends CustomPainter {
       );
     }
 
-    DrawableLayer drawableLayer = mapResolution.drawableLayers[layerIndex];
-    DrawableFeature drawableFeature =
-        drawableLayer.drawableFeatures[feature.id]!;
     Rect bounds = MatrixUtils.transformRect(
-        canvasMatrix.worldToScreen, drawableFeature.getBounds());
+        controller.worldToCanvas, drawable.getBounds());
     _drawText(canvas, bounds.center, feature.label!, labelStyle);
   }
 
@@ -233,6 +238,6 @@ class MapPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return false;
+    return true;
   }
 }

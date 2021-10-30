@@ -8,16 +8,16 @@ import 'package:vector_map/src/addon/map_addon.dart';
 import 'package:vector_map/src/data/map_feature.dart';
 import 'package:vector_map/src/data/map_layer.dart';
 import 'package:vector_map/src/debugger.dart';
+import 'package:vector_map/src/drawable/drawable.dart';
 import 'package:vector_map/src/drawable/drawable_feature.dart';
 import 'package:vector_map/src/drawable/drawable_layer.dart';
+import 'package:vector_map/src/drawable/drawable_layer_chunk.dart';
 import 'package:vector_map/src/error.dart';
 import 'package:vector_map/src/low_quality_mode.dart';
+import 'package:vector_map/src/vector_map_controller.dart';
 import 'package:vector_map/src/vector_map_api.dart';
 import 'package:vector_map/src/map_highlight.dart';
 import 'package:vector_map/src/map_painter.dart';
-import 'package:vector_map/src/map_resolution.dart';
-import 'package:vector_map/src/matrix.dart';
-import 'package:vector_map/src/simplifier.dart';
 
 /// Vector map widget.
 class VectorMap extends StatefulWidget {
@@ -65,9 +65,7 @@ class VectorMap extends StatefulWidget {
   final LowQualityMode? lowQualityMode;
 
   @override
-  State<StatefulWidget> createState() {
-    return _VectorMapState(worldBounds: MapLayer.boundsOf(layers));
-  }
+  State<StatefulWidget> createState() => _VectorMapState();
 
   bool get hoverDrawable {
     for (MapLayer layer in layers) {
@@ -81,14 +79,29 @@ class VectorMap extends StatefulWidget {
 
 /// [VectorMap] state.
 class _VectorMapState extends State<VectorMap> implements VectorMapApi {
-  CanvasMatrix _canvasMatrix;
   MapHighlight? _highlight;
-  Size? _lastBuildSize;
-  MapResolution? _mapResolution;
-  MapResolutionBuilder? _mapResolutionBuilder;
+  VectorMapController? _controller;
+  Size? _canvasSize;
+  bool _drawBuffers = false;
 
-  _VectorMapState({required Rect? worldBounds})
-      : this._canvasMatrix = CanvasMatrix(worldBounds: worldBounds);
+  @override
+  void initState() {
+    super.initState();
+    _controller = VectorMapController(layers: widget.layers);
+    _controller!.addListener(_rebuild);
+  }
+
+  @override
+  void dispose() {
+    _controller!.removeListener(_rebuild);
+    super.dispose();
+  }
+
+  void _rebuild() {
+    setState(() {
+      // rebuild
+    });
+  }
 
   @override
   int getLayerIndexById(int id) {
@@ -113,29 +126,13 @@ class _VectorMapState extends State<VectorMap> implements VectorMapApi {
     });
   }
 
-  void _updateMapResolution(CanvasMatrix canvasMatrix) {
-    if (mounted && _lastBuildSize == canvasMatrix.canvasSize) {
-      if (_mapResolutionBuilder != null) {
-        _mapResolutionBuilder!.stop();
-      }
-      _mapResolutionBuilder = MapResolutionBuilder(
-          layers: widget.layers,
-          contourThickness: widget.contourThickness,
-          canvasMatrix: canvasMatrix,
-          simplifier: IntegerSimplifier(),
-          onFinish: _onFinish,
-          debugger: widget.debugger);
-      _mapResolutionBuilder!.start();
-    }
-  }
-
-  void _onFinish(MapResolution newMapResolution) {
-    if (mounted) {
-      setState(() {
-        _mapResolution = newMapResolution;
-        _mapResolutionBuilder = null;
-      });
-      widget.debugger?.updateMapResolution(newMapResolution);
+  void _startUpdate({required Size canvasSize}) {
+    if (mounted && canvasSize == _canvasSize) {
+      _controller!.clearBuffers();
+      _drawBuffers = true;
+      // The size remains the same as when this method was scheduled
+      _controller!.updateDrawableFeatures(
+          canvasSize: canvasSize, contourThickness: widget.contourThickness);
     }
   }
 
@@ -148,14 +145,14 @@ class _VectorMapState extends State<VectorMap> implements VectorMapApi {
         List<LayoutId> children = [LayoutId(id: 0, child: mapCanvas)];
         int count = 1;
         for (MapAddon addon in widget.addons!) {
-          MapFeature? hover;
+          DrawableFeature? hover;
           if (_highlight != null && _highlight is MapSingleHighlight) {
-            hover = (_highlight as MapSingleHighlight).feature;
+            hover = (_highlight as MapSingleHighlight).drawableFeature;
           }
           children.add(LayoutId(
               id: count,
               child: addon.buildWidget(
-                  context: context, mapApi: this, hover: hover)));
+                  context: context, mapApi: this, hover: hover?.feature)));
           count++;
         }
         content = CustomMultiChildLayout(
@@ -190,34 +187,28 @@ class _VectorMapState extends State<VectorMap> implements VectorMapApi {
         return Container();
       }
 
-      _canvasMatrix.canvasSize =
-          Size(constraints.maxWidth, constraints.maxHeight);
+      Size canvasSize = Size(constraints.maxWidth, constraints.maxHeight);
 
-      _canvasMatrix.fit();
-
-      if (_lastBuildSize != _canvasMatrix.canvasSize) {
-        _lastBuildSize = _canvasMatrix.canvasSize;
-        if (_mapResolution == null) {
-          if (_mapResolutionBuilder == null) {
-            // first build without delay
-            Future.microtask(() => _updateMapResolution(_canvasMatrix));
-          }
-          return Center(
-            child: Text('Updating...'),
-          );
+      if (_canvasSize != canvasSize) {
+        _canvasSize = canvasSize;
+        _drawBuffers = false;
+        _controller!.cancelUpdate();
+        _controller!.fit(canvasSize);
+        if (_controller!.initialized == false) {
+          // first build without delay
+          Future.microtask(() => _startUpdate(canvasSize: canvasSize));
         } else {
-          // updating map resolution
+          // schedule the drawables build
           Future.delayed(
-              Duration(milliseconds: widget.delayToRefreshResolution), () {
-            _updateMapResolution(_canvasMatrix);
-          });
+              Duration(milliseconds: widget.delayToRefreshResolution),
+              () => _startUpdate(canvasSize: canvasSize));
         }
       }
 
       MapPainter mapPainter = MapPainter(
-          mapResolution: _mapResolution!,
+          controller: _controller!,
           highlight: _highlight,
-          canvasMatrix: _canvasMatrix,
+          drawBuffers: _drawBuffers,
           contourThickness: widget.contourThickness);
 
       CustomPaint customPaint =
@@ -225,7 +216,8 @@ class _VectorMapState extends State<VectorMap> implements VectorMapApi {
 
       MouseRegion mouseRegion = MouseRegion(
         child: customPaint,
-        onHover: (event) => _onHover(event, _canvasMatrix),
+        onHover: (event) =>
+            _onHover(event: event, canvasToWorld: _controller!.canvasToWorld),
         onExit: (event) {
           if (_highlight != null) {
             _updateHover(null);
@@ -245,56 +237,54 @@ class _VectorMapState extends State<VectorMap> implements VectorMapApi {
     if (_highlight != null &&
         _highlight is MapSingleHighlight &&
         widget.clickListener != null) {
-      widget.clickListener!((_highlight as MapSingleHighlight).feature);
+      MapSingleHighlight singleHighlight = _highlight as MapSingleHighlight;
+      if (singleHighlight.drawableFeature != null) {
+        widget.clickListener!(singleHighlight.drawableFeature!.feature);
+      }
     }
   }
 
   /// Triggered when a pointer moves over the map.
-  void _onHover(PointerHoverEvent event, CanvasMatrix canvasMatrix) {
-    if (_mapResolution != null) {
-      Offset worldCoordinate = MatrixUtils.transformPoint(
-          canvasMatrix.screenToWorld, event.localPosition);
+  void _onHover(
+      {required PointerHoverEvent event, required Matrix4 canvasToWorld}) {
+    Offset worldCoordinate =
+        MatrixUtils.transformPoint(canvasToWorld, event.localPosition);
 
-      widget.debugger?.updateMouseHover(
-          canvasLocation: event.localPosition,
-          worldCoordinate: worldCoordinate);
+    widget.debugger?.updateMouseHover(
+        canvasLocation: event.localPosition, worldCoordinate: worldCoordinate);
 
-      MapSingleHighlight? hoverHighlightRule;
-      for (int layerIndex = _mapResolution!.drawableLayers.length - 1;
-          layerIndex >= 0;
-          layerIndex--) {
-        DrawableLayer drawableLayer =
-            _mapResolution!.drawableLayers[layerIndex];
-        MapFeature? feature = _hoverFindFeature(drawableLayer, worldCoordinate);
-        if (feature != null) {
-          hoverHighlightRule = MapSingleHighlight(layerIndex, feature);
-          break;
-        }
+    MapSingleHighlight? hoverHighlightRule;
+    for (int layerIndex = _controller!.drawableLayersLength - 1;
+        layerIndex >= 0;
+        layerIndex--) {
+      DrawableLayer drawableLayer = _controller!.getDrawableLayer(layerIndex);
+      DrawableFeature? drawableFeature =
+          _hoverFindDrawableFeature(drawableLayer, worldCoordinate);
+      if (drawableFeature != null) {
+        hoverHighlightRule = MapSingleHighlight(layerIndex, drawableFeature);
+        break;
       }
+    }
 
-      if (_highlight != hoverHighlightRule) {
-        _updateHover(hoverHighlightRule);
-      }
+    if (_highlight != hoverHighlightRule) {
+      _updateHover(hoverHighlightRule);
     }
   }
 
   /// Finds the first feature that contains a coordinate.
-  MapFeature? _hoverFindFeature(
+  DrawableFeature? _hoverFindDrawableFeature(
       DrawableLayer drawableLayer, Offset worldCoordinate) {
-    MapLayer layer = drawableLayer.layer;
-    for (MapFeature feature in layer.dataSource.features.values) {
-      if (widget.hoverRule != null && widget.hoverRule!(feature) == false) {
-        continue;
-      }
-
-      if (drawableLayer.drawableFeatures.containsKey(feature.id) == false) {
-        throw VectorMapError(
-            'No drawable geometry for id: ' + feature.id.toString());
-      }
-      DrawableFeature drawableFeature =
-          drawableLayer.drawableFeatures[feature.id]!;
-      if (drawableFeature.contains(worldCoordinate)) {
-        return feature;
+    for (DrawableLayerChunk chunk in drawableLayer.chunks) {
+      for (int index = 0; index < chunk.length; index++) {
+        DrawableFeature drawableFeature = chunk.getDrawableFeature(index);
+        MapFeature feature = drawableFeature.feature;
+        if (widget.hoverRule != null && widget.hoverRule!(feature) == false) {
+          continue;
+        }
+        Drawable? drawable = drawableFeature.drawable;
+        if (drawable != null && drawable.contains(worldCoordinate)) {
+          return drawableFeature;
+        }
       }
     }
   }
@@ -309,7 +299,7 @@ class _VectorMapState extends State<VectorMap> implements VectorMapApi {
       _highlight = hoverHighlightRule;
     }
     if (widget.hoverListener != null) {
-      widget.hoverListener!(hoverHighlightRule?.feature);
+      widget.hoverListener!(hoverHighlightRule?.drawableFeature?.feature);
     }
   }
 }

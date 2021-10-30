@@ -2,7 +2,6 @@ import 'dart:ui';
 
 import 'package:flutter/cupertino.dart';
 import 'package:vector_map/src/data/map_layer.dart';
-import 'package:vector_map/src/map_resolution.dart';
 
 class DurationDebugger {
   int _lastDuration = 0;
@@ -61,8 +60,8 @@ class MapDebugger extends ChangeNotifier {
     notifyListeners();
   }
 
-  void updateMapResolution(MapResolution mapResolution) {
-    _simplifiedPointsCount = mapResolution.pointsCount;
+  void updateMapResolution(int simplifiedPointsCount) {
+    _simplifiedPointsCount = simplifiedPointsCount;
     notifyListeners();
   }
 

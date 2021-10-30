@@ -1,4 +1,5 @@
 import 'package:vector_map/src/data/map_feature.dart';
+import 'package:vector_map/src/drawable/drawable_feature.dart';
 
 /// Base class to define which [MapFeature] should be highlighted.
 abstract class MapHighlight {
@@ -23,13 +24,13 @@ abstract class MapHighlight {
 
 /// Defines a single [MapFeature] to be highlighted.
 class MapSingleHighlight extends MapHighlight {
-  MapSingleHighlight(int layerIndex, this.feature) : super(layerIndex);
+  MapSingleHighlight(int layerIndex, this.drawableFeature) : super(layerIndex);
 
-  final MapFeature feature;
+  final DrawableFeature? drawableFeature;
 
   @override
   bool applies(MapFeature feature) {
-    return this.feature == feature;
+    return this.drawableFeature?.feature == feature;
   }
 
   @override
@@ -38,10 +39,10 @@ class MapSingleHighlight extends MapHighlight {
       super == other &&
           other is MapSingleHighlight &&
           runtimeType == other.runtimeType &&
-          feature == other.feature;
+          drawableFeature == other.drawableFeature;
 
   @override
-  int get hashCode => super.hashCode ^ feature.hashCode;
+  int get hashCode => super.hashCode ^ drawableFeature.hashCode;
 }
 
 /// Rule to find out which [MapFeature] should be highlighted.
