@@ -6,6 +6,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:vector_map/src/data/map_data_source.dart';
 import 'package:vector_map/src/data/map_layer.dart';
+import 'package:vector_map/src/debugger.dart';
 import 'package:vector_map/src/draw_utils.dart';
 import 'package:vector_map/src/drawable/drawable_builder.dart';
 import 'package:vector_map/src/drawable/drawable_feature.dart';
@@ -15,14 +16,6 @@ import 'package:vector_map/src/simplifier.dart';
 import 'package:vector_map/src/theme/map_theme.dart';
 
 class VectorMapController extends ChangeNotifier {
-  /// Builds a [VectorMapController]
-  VectorMapController({required List<MapLayer> layers}) {
-    this._worldBounds = MapLayer.boundsOf(layers);
-    for (MapLayer layer in layers) {
-      _drawableLayers.add(DrawableLayer(layer));
-    }
-  }
-
   final List<DrawableLayer> _drawableLayers = [];
 
   int get drawableLayersLength => _drawableLayers.length;
@@ -51,6 +44,23 @@ class VectorMapController extends ChangeNotifier {
   /// Matrix to be used to convert canvas coordinates to world coordinates.
   Matrix4 _canvasToWorld = VectorMapController._buildMatrix4();
   Matrix4 get canvasToWorld => _canvasToWorld;
+
+  MapDebugger? _debugger;
+
+  void setLayers(List<MapLayer> layers) {
+    this._worldBounds = MapLayer.boundsOf(layers);
+    int chunksCount = 0;
+    for (MapLayer layer in layers) {
+      DrawableLayer drawableLayer = DrawableLayer(layer);
+      _drawableLayers.add(drawableLayer);
+      chunksCount += drawableLayer.chunks.length;
+    }
+    _debugger?.initialize(layers, chunksCount);
+  }
+
+  void setDebugger(MapDebugger? debugger) {
+    _debugger = debugger;
+  }
 
   void fit(Size canvasSize) {
     _scale = 1;
@@ -110,8 +120,9 @@ class VectorMapController extends ChangeNotifier {
 
   Future<void> _updateDrawableFeatures(_UpdateRequest updateRequest) async {
     int pointsCount = 0;
-    DateTime start = DateTime.now();
-    int count = 0;
+    _debugger?.bufferBuildDuration.clear();
+    _debugger?.drawableBuildDuration.clear();
+    _debugger?.updateSimplifiedPointsCount(pointsCount);
     for (DrawableLayer drawableLayer in _drawableLayers) {
       if (updateRequest.ignore) {
         break;
@@ -121,16 +132,15 @@ class VectorMapController extends ChangeNotifier {
       MapDataSource dataSource = layer.dataSource;
 
       for (DrawableLayerChunk chunk in drawableLayer.chunks) {
-        count++;
         if (updateRequest.ignore) {
           break;
         }
-        DateTime s = DateTime.now();
         for (int index = 0; index < chunk.length; index++) {
           if (updateRequest.ignore) {
             break;
           }
           DrawableFeature drawableFeature = chunk.getDrawableFeature(index);
+          _debugger?.drawableBuildDuration.open();
           drawableFeature.drawable = DrawableBuilder.build(
               dataSource: dataSource,
               feature: drawableFeature.feature,
@@ -138,14 +148,17 @@ class VectorMapController extends ChangeNotifier {
               worldToCanvas: updateRequest.worldToCanvas,
               scale: updateRequest.scale,
               simplifier: IntegerSimplifier());
+          _debugger?.drawableBuildDuration.closeAndInc();
           pointsCount += drawableFeature.drawable!.pointsCount;
+          _debugger?.updateSimplifiedPointsCount(pointsCount);
         }
+        _debugger?.bufferBuildDuration.open();
         chunk.buffer = await _createBuffer(
             chunk: chunk,
             layer: drawableLayer.layer,
             canvasSize: updateRequest.canvasSize,
             contourThickness: updateRequest.contourThickness);
-        DateTime e = DateTime.now();
+        _debugger?.bufferBuildDuration.closeAndInc();
         notifyListeners();
         await Future.delayed(Duration.zero);
       }

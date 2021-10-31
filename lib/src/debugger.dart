@@ -1,56 +1,62 @@
-import 'dart:ui';
-
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/widgets.dart';
 import 'package:vector_map/src/data/map_layer.dart';
 
-class DurationDebugger {
-  int _lastDuration = 0;
-  int _nextDuration = 0;
+class DurationDebugger extends ChangeNotifier {
+  DurationDebugger(VoidCallback listener) {
+    addListener(listener);
+  }
+
+  int _milliseconds = 0;
+  int get milliseconds => _milliseconds;
+
   DateTime? _lastStartTime;
 
   void clear() {
-    _nextDuration = 0;
+    _milliseconds = 0;
     _lastStartTime = null;
   }
 
-  void update() {
-    _lastDuration = _nextDuration;
-    _lastStartTime = null;
-  }
-
-  void openDuration() {
+  void open() {
     _lastStartTime = DateTime.now();
   }
 
-  closeDuration() {
+  closeAndInc() {
     if (_lastStartTime != null) {
       DateTime end = DateTime.now();
       Duration duration = end.difference(_lastStartTime!);
-      _nextDuration += duration.inMilliseconds;
+      _milliseconds += duration.inMilliseconds;
+      _lastStartTime = null;
+      notifyListeners();
     }
   }
 }
 
 class MapDebugger extends ChangeNotifier {
+  MapDebugger() {
+    drawableBuildDuration = DurationDebugger(notifyListeners);
+    bufferBuildDuration = DurationDebugger(notifyListeners);
+  }
+
   int _layersCount = 0;
+  int _chunksCount = 0;
   int _featuresCount = 0;
   int _originalPointsCount = 0;
   int _simplifiedPointsCount = 0;
   Offset? _mouseHoverWorldCoordinate;
   Offset? _mouseHoverCanvasLocation;
 
-  DurationDebugger _drawableBuildDuration = DurationDebugger();
-  DurationDebugger _bufferBuildDuration = DurationDebugger();
+  late DurationDebugger drawableBuildDuration;
+  late DurationDebugger bufferBuildDuration;
 
-  DateTime? _initialMultiResolutionTime;
-  Duration _multiResolutionDuration = Duration.zero;
-
-  void initialize(List<MapLayer> layers) {
+  void initialize(List<MapLayer> layers, int chunksCount) {
     _layersCount = layers.length;
+    _chunksCount = chunksCount;
     for (MapLayer layer in layers) {
       _featuresCount += layer.dataSource.features.length;
       _originalPointsCount += layer.dataSource.pointsCount;
     }
+
+    _simplifiedPointsCount = 0;
     notifyListeners();
   }
 
@@ -60,56 +66,9 @@ class MapDebugger extends ChangeNotifier {
     notifyListeners();
   }
 
-  void updateMapResolution(int simplifiedPointsCount) {
+  void updateSimplifiedPointsCount(int simplifiedPointsCount) {
     _simplifiedPointsCount = simplifiedPointsCount;
     notifyListeners();
-  }
-
-  void clearDrawableBuildDuration() {
-    _drawableBuildDuration.clear();
-  }
-
-  void updateDrawableBuildDuration() {
-    _drawableBuildDuration.update();
-    notifyListeners();
-  }
-
-  void openDrawableBuildDuration() {
-    _drawableBuildDuration.openDuration();
-  }
-
-  void closeDrawableBuildDuration() {
-    _drawableBuildDuration.closeDuration();
-  }
-
-  void clearBufferBuildDuration() {
-    _bufferBuildDuration.clear();
-  }
-
-  void updateBufferBuildDuration() {
-    _bufferBuildDuration.update();
-    notifyListeners();
-  }
-
-  void openBufferBuildDuration() {
-    _bufferBuildDuration.openDuration();
-  }
-
-  void closeBufferBuildDuration() {
-    _bufferBuildDuration.closeDuration();
-  }
-
-  void openMultiResolutionTime() {
-    _initialMultiResolutionTime = DateTime.now();
-    _multiResolutionDuration = Duration.zero;
-  }
-
-  void closeMultiResolutionTime() {
-    if (_initialMultiResolutionTime != null) {
-      DateTime end = DateTime.now();
-      _multiResolutionDuration = end.difference(_initialMultiResolutionTime!);
-      notifyListeners();
-    }
   }
 }
 
@@ -125,6 +84,8 @@ class MapDebuggerWidget extends StatefulWidget {
 }
 
 class MapDebuggerState extends State<MapDebuggerWidget> {
+  ScrollController _controller = ScrollController();
+
   String formatInt(int value) {
     String str = value.toString();
     String fmt = '';
@@ -145,59 +106,50 @@ class MapDebuggerState extends State<MapDebuggerWidget> {
 
   @override
   Widget build(BuildContext context) {
-    Duration drawableDuration = Duration(
-        milliseconds: widget.debugger._drawableBuildDuration._lastDuration);
-    Duration bufferDuration = Duration(
-        milliseconds: widget.debugger._bufferBuildDuration._lastDuration);
+    MapDebugger d = widget.debugger;
+
+    int drawableBuildDuration = d.drawableBuildDuration.milliseconds;
+    int bufferBuildDuration = d.bufferBuildDuration.milliseconds;
+    int multiResolutionDuration = drawableBuildDuration + bufferBuildDuration;
 
     return SingleChildScrollView(
+        controller: _controller,
         child: Column(children: [
-      Padding(
-          padding: EdgeInsets.fromLTRB(0, 12, 0, 12),
-          child: Text('Quantities',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
-      _buildFormattedInt('Layers: ', widget.debugger._layersCount),
-      _buildFormattedInt('Features: ', widget.debugger._featuresCount),
-      _buildFormattedInt(
-          'Original points: ', widget.debugger._originalPointsCount),
-      _buildFormattedInt(
-          'Simplified points: ', widget.debugger._simplifiedPointsCount),
-      Padding(
-          padding: EdgeInsets.fromLTRB(0, 12, 0, 12),
-          child: Text('Last durations',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
-      _buildDuration(
-          'Multi resolution: ', widget.debugger._multiResolutionDuration),
-      _buildDuration('-- Drawable build: ', drawableDuration),
-      _buildDuration('-- Buffer build: ', bufferDuration),
-      Padding(
-          padding: EdgeInsets.fromLTRB(0, 12, 0, 12),
-          child: Text('Mouse hover',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
-      _buildOffset(
-          'canvas location: ', widget.debugger._mouseHoverCanvasLocation),
-      _buildOffset(
-          'world coordinate: ', widget.debugger._mouseHoverWorldCoordinate)
-    ], crossAxisAlignment: CrossAxisAlignment.start));
+          _title('Quantities'),
+          _int('Layers: ', d._layersCount),
+          _int(' • Chunks: ', d._chunksCount),
+          _int('Features: ', d._featuresCount),
+          _int('Original points: ', d._originalPointsCount),
+          _int('Simplified points: ', d._simplifiedPointsCount),
+          _title('Last durations'),
+          _int('Multi resolution: ', multiResolutionDuration),
+          _int(' • Drawables build: ', drawableBuildDuration),
+          _int(' • Buffers build: ', bufferBuildDuration),
+          _title('Mouse hover'),
+          _offset('Canvas location: ', d._mouseHoverCanvasLocation),
+          _offset('World coordinate: ', d._mouseHoverWorldCoordinate)
+        ], crossAxisAlignment: CrossAxisAlignment.start));
   }
 
-  Widget _buildFormattedInt(String label, int value) {
-    return _buildItem(label, formatInt(value));
+  Widget _title(String text) {
+    return Padding(
+        padding: EdgeInsets.fromLTRB(0, 12, 0, 12),
+        child: Text(text,
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)));
   }
 
-  Widget _buildOffset(String label, Offset? offset) {
+  Widget _int(String label, int value) {
+    return _item(label, formatInt(value));
+  }
+
+  Widget _offset(String label, Offset? offset) {
     if (offset == null) {
-      return _buildItem(label, '');
+      return _item(label, '');
     }
-    return _buildItem(
-        label, offset.dx.toString() + ', ' + offset.dy.toString());
+    return _item(label, offset.dx.toString() + ', ' + offset.dy.toString());
   }
 
-  Widget _buildDuration(String label, Duration value) {
-    return _buildItem(label, value.inMilliseconds.toString() + 'ms');
-  }
-
-  Widget _buildItem(String label, String value) {
+  Widget _item(String label, String value) {
     return Padding(
         padding: EdgeInsets.fromLTRB(0, 4, 0, 0),
         child: RichText(

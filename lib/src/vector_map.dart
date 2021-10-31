@@ -39,7 +39,6 @@ class VectorMap extends StatefulWidget {
       this.lowQualityMode})
       : this.layers = layers != null ? layers : [],
         super(key: key) {
-    debugger?.initialize(this.layers);
     for (int index = 0; index < this.layers.length; index++) {
       MapLayer layer = this.layers[index];
       if (_idAndIndexLayers.containsKey(layer.id)) {
@@ -87,13 +86,16 @@ class _VectorMapState extends State<VectorMap> implements VectorMapApi {
   @override
   void initState() {
     super.initState();
-    _controller = VectorMapController(layers: widget.layers);
+    _controller = VectorMapController();
+    _controller!.setDebugger(widget.debugger);
+    _controller!.setLayers(widget.layers);
     _controller!.addListener(_rebuild);
   }
 
   @override
   void dispose() {
     _controller!.removeListener(_rebuild);
+    _controller!.setDebugger(null);
     super.dispose();
   }
 
