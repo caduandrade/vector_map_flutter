@@ -122,9 +122,9 @@ class MapDebuggerState extends State<MapDebuggerWidget> {
           _int('Original points: ', d._originalPointsCount),
           _int('Simplified points: ', d._simplifiedPointsCount),
           _title('Last durations'),
-          _int('Multi resolution: ', multiResolutionDuration),
-          _int(' • Drawables build: ', drawableBuildDuration),
-          _int(' • Buffers build: ', bufferBuildDuration),
+          _milliseconds('Multi resolution: ', multiResolutionDuration),
+          _milliseconds(' • Drawables build: ', drawableBuildDuration),
+          _milliseconds(' • Buffers build: ', bufferBuildDuration),
           _title('Mouse hover'),
           _offset('Canvas location: ', d._mouseHoverCanvasLocation),
           _offset('World coordinate: ', d._mouseHoverWorldCoordinate)
@@ -136,6 +136,10 @@ class MapDebuggerState extends State<MapDebuggerWidget> {
         padding: EdgeInsets.fromLTRB(0, 12, 0, 12),
         child: Text(text,
             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)));
+  }
+
+  Widget _milliseconds(String label, int value) {
+    return _item(label, formatInt(value) + ' ms');
   }
 
   Widget _int(String label, int value) {

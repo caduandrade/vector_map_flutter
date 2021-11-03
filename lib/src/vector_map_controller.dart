@@ -24,8 +24,8 @@ class VectorMapController extends ChangeNotifier {
     return _drawableLayers[index];
   }
 
-  bool _initialized = false;
-  bool get initialized => _initialized;
+  bool _firstUpdate = true;
+  bool get firstUpdate => _firstUpdate;
 
   /// Represents the bounds of all layers.
   Rect? _worldBounds;
@@ -35,7 +35,19 @@ class VectorMapController extends ChangeNotifier {
   double get scale => _scale;
 
   double _translateX = 0;
+  double get translateX => _translateX;
+
   double _translateY = 0;
+  double get translateY => _translateY;
+
+  void setTranslate(double translateX, double translateY) {
+    _translateX = translateX;
+    _translateY = translateY;
+    _buildMatrices4();
+    notifyListeners();
+  }
+
+  _UpdateRequest? _lastUpdateRequest;
 
   /// Matrix to be used to convert world coordinates to canvas coordinates.
   Matrix4 _worldToCanvas = VectorMapController._buildMatrix4();
@@ -78,14 +90,16 @@ class VectorMapController extends ChangeNotifier {
           (canvasSize.height / 2.0) + (scale * _worldBounds!.center.dy);
     }
 
+    _buildMatrices4();
+  }
+
+  void _buildMatrices4() {
     _worldToCanvas = VectorMapController._buildMatrix4();
     _worldToCanvas.translate(_translateX, _translateY, 0);
     _worldToCanvas.scale(_scale, -_scale, 1);
 
     _canvasToWorld = Matrix4.inverted(_worldToCanvas);
   }
-
-  _UpdateRequest? _lastUpdateRequest;
 
   void cancelUpdate() {
     _lastUpdateRequest?.ignore = true;
@@ -101,7 +115,7 @@ class VectorMapController extends ChangeNotifier {
 
   void updateDrawableFeatures(
       {required Size canvasSize, required double contourThickness}) {
-    _initialized = true;
+    _firstUpdate = false;
     _UpdateRequest updateRequest = _UpdateRequest(
         canvasSize: canvasSize,
         worldToCanvas: _worldToCanvas,

@@ -36,6 +36,7 @@ class VectorMap extends StatefulWidget {
       this.clickListener,
       this.debugger,
       this.addons,
+      this.panAndZoomEnabled = true,
       this.lowQualityMode})
       : this.layers = layers != null ? layers : [],
         super(key: key) {
@@ -62,6 +63,7 @@ class VectorMap extends StatefulWidget {
   final MapDebugger? debugger;
   final List<MapAddon>? addons;
   final LowQualityMode? lowQualityMode;
+  final bool panAndZoomEnabled;
 
   @override
   State<StatefulWidget> createState() => _VectorMapState();
@@ -76,12 +78,26 @@ class VectorMap extends StatefulWidget {
   }
 }
 
+/// Holds the initial mouse location and matrix translate from the start of pan.
+class _PanStart {
+  _PanStart(
+      {required this.mouseLocation,
+      required this.translateX,
+      required this.translateY});
+
+  final Offset mouseLocation;
+  final translateX;
+  final translateY;
+}
+
 /// [VectorMap] state.
 class _VectorMapState extends State<VectorMap> implements VectorMapApi {
   MapHighlight? _highlight;
   VectorMapController? _controller;
   Size? _canvasSize;
   bool _drawBuffers = false;
+  bool _initialFit = true;
+  _PanStart? _panStart;
 
   @override
   void initState() {
@@ -127,6 +143,8 @@ class _VectorMapState extends State<VectorMap> implements VectorMapApi {
       _highlight = newHighlight;
     });
   }
+
+  bool get _onPan => _panStart != null;
 
   void _startUpdate({required Size canvasSize}) {
     if (mounted && canvasSize == _canvasSize) {
@@ -195,8 +213,11 @@ class _VectorMapState extends State<VectorMap> implements VectorMapApi {
         _canvasSize = canvasSize;
         _drawBuffers = false;
         _controller!.cancelUpdate();
-        _controller!.fit(canvasSize);
-        if (_controller!.initialized == false) {
+        if (_initialFit) {
+          _controller!.fit(canvasSize);
+          _initialFit = false;
+        }
+        if (_controller!.firstUpdate) {
           // first build without delay
           Future.microtask(() => _startUpdate(canvasSize: canvasSize));
         } else {
@@ -218,8 +239,9 @@ class _VectorMapState extends State<VectorMap> implements VectorMapApi {
 
       MouseRegion mouseRegion = MouseRegion(
         child: customPaint,
-        onHover: (event) =>
-            _onHover(event: event, canvasToWorld: _controller!.canvasToWorld),
+        onHover: (event) => _onHover(
+            localPosition: event.localPosition,
+            canvasToWorld: _controller!.canvasToWorld),
         onExit: (event) {
           if (_highlight != null) {
             _updateHover(null);
@@ -228,8 +250,51 @@ class _VectorMapState extends State<VectorMap> implements VectorMapApi {
         },
       );
 
+      Widget mouseListener = mouseRegion;
+      if (widget.panAndZoomEnabled) {
+        mouseListener = Listener(
+            child: mouseRegion,
+            onPointerUp: (event) {
+              setState(() {
+                _panStart = null;
+                // schedule the drawables build
+                Future.delayed(
+                    Duration.zero, () => _startUpdate(canvasSize: canvasSize));
+              });
+              _onHover(
+                  localPosition: event.localPosition,
+                  canvasToWorld: _controller!.canvasToWorld);
+            },
+            onPointerDown: (event) {
+              _controller?.cancelUpdate();
+              if (_highlight != null) {
+                _updateHover(null);
+              }
+              if (_controller != null) {
+                setState(() {
+                  _panStart = _PanStart(
+                      mouseLocation: event.localPosition,
+                      translateX: _controller!.translateX,
+                      translateY: _controller!.translateY);
+                  _drawBuffers = false;
+                });
+              }
+            },
+            onPointerMove: (event) {
+              if (_panStart != null) {
+                double diffX =
+                    _panStart!.mouseLocation.dx - event.localPosition.dx;
+                double diffY =
+                    _panStart!.mouseLocation.dy - event.localPosition.dy;
+                _controller?.setTranslate(_panStart!.translateX - diffX,
+                    _panStart!.translateY - diffY);
+              }
+            });
+      }
+
       return ClipRect(
-          child: GestureDetector(child: mouseRegion, onTap: () => _onClick()));
+          child:
+              GestureDetector(child: mouseListener, onTap: () => _onClick()));
     });
 
     return Container(child: layoutBuilder, padding: widget.layersPadding);
@@ -248,12 +313,15 @@ class _VectorMapState extends State<VectorMap> implements VectorMapApi {
 
   /// Triggered when a pointer moves over the map.
   void _onHover(
-      {required PointerHoverEvent event, required Matrix4 canvasToWorld}) {
+      {required Offset localPosition, required Matrix4 canvasToWorld}) {
+    if (_onPan) {
+      return;
+    }
     Offset worldCoordinate =
-        MatrixUtils.transformPoint(canvasToWorld, event.localPosition);
+        MatrixUtils.transformPoint(canvasToWorld, localPosition);
 
     widget.debugger?.updateMouseHover(
-        canvasLocation: event.localPosition, worldCoordinate: worldCoordinate);
+        canvasLocation: localPosition, worldCoordinate: worldCoordinate);
 
     MapSingleHighlight? hoverHighlightRule;
     for (int layerIndex = _controller!.drawableLayersLength - 1;
