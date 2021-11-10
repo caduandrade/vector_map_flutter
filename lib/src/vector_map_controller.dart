@@ -21,7 +21,10 @@ import 'package:vector_map/src/vector_map_api.dart';
 
 class VectorMapController extends ChangeNotifier implements VectorMapApi {
   /// The default [contourThickness] value is 1.
-  VectorMapController({List<MapLayer>? layers, this.contourThickness = 1}) {
+  VectorMapController(
+      {List<MapLayer>? layers,
+      this.contourThickness = 1,
+      this.delayToRefreshResolution = 1000}) {
     layers?.forEach((layer) => _addLayer(layer));
     _afterLayersChange();
   }
@@ -67,6 +70,8 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
   double zoomFactor = 0.1;
 
   final double contourThickness;
+
+  final int delayToRefreshResolution;
 
   MapDebugger? _debugger;
 

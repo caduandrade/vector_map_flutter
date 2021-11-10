@@ -21,7 +21,6 @@ class VectorMap extends StatefulWidget {
   VectorMap(
       {Key? key,
       this.controller,
-      this.delayToRefreshResolution = 1000,
       this.color,
       this.borderColor = Colors.black54,
       this.borderThickness = 1,
@@ -36,8 +35,6 @@ class VectorMap extends StatefulWidget {
       : super(key: key);
 
   final VectorMapController? controller;
-
-  final int delayToRefreshResolution;
   final Color? color;
   final Color? borderColor;
   final double? borderThickness;
@@ -186,7 +183,7 @@ class _VectorMapState extends State<VectorMap> {
         } else {
           // schedule the drawables build
           Future.delayed(
-              Duration(milliseconds: widget.delayToRefreshResolution),
+              Duration(milliseconds: _controller.delayToRefreshResolution),
               () => _startUpdate(canvasSize: canvasSize));
         }
       }
