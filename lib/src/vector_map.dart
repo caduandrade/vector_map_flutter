@@ -71,7 +71,6 @@ class _PanStart {
 /// [VectorMap] state.
 class _VectorMapState extends State<VectorMap> {
   VectorMapController _controller = VectorMapController();
-  Size? _canvasSize;
   bool _drawBuffers = false;
   _PanStart? _panStart;
 
@@ -114,7 +113,7 @@ class _VectorMapState extends State<VectorMap> {
   bool get _onPan => _panStart != null;
 
   void _startUpdate({required Size canvasSize}) {
-    if (mounted && canvasSize == _canvasSize) {
+    if (mounted && canvasSize == _controller.lastCanvasSize) {
       _controller.clearBuffers();
       _drawBuffers = true;
       // The size remains the same as when this method was scheduled
@@ -180,8 +179,7 @@ class _VectorMapState extends State<VectorMap> {
 
       Size canvasSize = Size(constraints.maxWidth, constraints.maxHeight);
 
-      if (_canvasSize != canvasSize) {
-        _canvasSize = canvasSize;
+      if (_controller.lastCanvasSize != canvasSize) {
         _controller.setLastCanvasSize(canvasSize);
         _drawBuffers = false;
         _controller.cancelUpdate();
@@ -251,10 +249,8 @@ class _VectorMapState extends State<VectorMap> {
                     _panStart!.mouseLocation.dx - event.localPosition.dx;
                 double diffY =
                     _panStart!.mouseLocation.dy - event.localPosition.dy;
-                setState(() {
-                  _controller.translate(_panStart!.translateX - diffX,
-                      _panStart!.translateY - diffY);
-                });
+                _controller.translate(_panStart!.translateX - diffX,
+                    _panStart!.translateY - diffY);
               }
             },
             onPointerSignal: (event) {

@@ -34,6 +34,8 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
   int get drawableLayersLength => _drawableLayers.length;
 
   Size? _lastCanvasSize;
+  Size? get lastCanvasSize => _lastCanvasSize;
+
   bool _firstUpdate = true;
   bool get firstUpdate => _firstUpdate;
 
@@ -150,6 +152,7 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
     }
   }
 
+  @internal
   void setDebugger(MapDebugger? debugger) {
     _debugger = debugger;
   }
@@ -158,6 +161,7 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
     _translateX = translateX;
     _translateY = translateY;
     _buildMatrices4();
+    notifyListeners();
   }
 
   void fit() {
@@ -216,10 +220,12 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
     _canvasToWorld = Matrix4.inverted(_worldToCanvas);
   }
 
+  @internal
   void cancelUpdate() {
     _lastUpdateRequest?.ignore = true;
   }
 
+  @internal
   void clearBuffers() {
     for (DrawableLayer drawableLayer in _drawableLayers) {
       for (DrawableLayerChunk chunk in drawableLayer.chunks) {
@@ -228,6 +234,7 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
     }
   }
 
+  @internal
   void updateDrawableFeatures(
       {required Size canvasSize, required double contourThickness}) {
     _firstUpdate = false;
