@@ -85,12 +85,28 @@ class VectorMapController extends ChangeNotifier {
       _scale = math.min(scaleX, scaleY);
 
       _translateX =
-          (canvasSize.width / 2.0) - (scale * _worldBounds!.center.dx);
+          (canvasSize.width / 2.0) - (_scale * _worldBounds!.center.dx);
       _translateY =
-          (canvasSize.height / 2.0) + (scale * _worldBounds!.center.dy);
+          (canvasSize.height / 2.0) + (_scale * _worldBounds!.center.dy);
     }
-
     _buildMatrices4();
+  }
+
+  void zoom(Size canvasSize, Offset mouseLocation, bool zoomIn) {
+    double zoom = 1;
+    if (zoomIn) {
+      zoom = 1.05;
+    } else {
+      zoom = 0.95;
+    }
+    double newScale = _scale * zoom;
+    Offset refInWorld =
+        MatrixUtils.transformPoint(_canvasToWorld, mouseLocation);
+    _translateX = mouseLocation.dx - (refInWorld.dx * newScale);
+    _translateY = mouseLocation.dy + (refInWorld.dy * newScale);
+    _scale = _scale * zoom;
+    _buildMatrices4();
+    notifyListeners();
   }
 
   void _buildMatrices4() {

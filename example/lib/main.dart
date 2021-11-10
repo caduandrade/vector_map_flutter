@@ -18,7 +18,8 @@ class ExampleState extends State<ExampleWidget> {
   @override
   void initState() {
     super.initState();
-    rootBundle.loadString('assets/south_america.json').then((geojson) {
+    String asset = 'assets/south_america.json';
+    rootBundle.loadString(asset).then((geojson) {
       _loadDataSource(geojson);
     });
   }

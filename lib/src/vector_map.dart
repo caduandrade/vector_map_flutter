@@ -289,6 +289,17 @@ class _VectorMapState extends State<VectorMap> implements VectorMapApi {
                 _controller?.setTranslate(_panStart!.translateX - diffX,
                     _panStart!.translateY - diffY);
               }
+            },
+            onPointerSignal: (event) {
+              if (event is PointerScrollEvent) {
+                _drawBuffers = false;
+                bool zoomIn = event.scrollDelta.dy < 0;
+                _controller?.zoom(canvasSize, event.localPosition, zoomIn);
+                //TODO cada zoom anula anterior?
+                // schedule the drawables build
+                Future.delayed(
+                    Duration.zero, () => _startUpdate(canvasSize: canvasSize));
+              }
             });
       }
 
