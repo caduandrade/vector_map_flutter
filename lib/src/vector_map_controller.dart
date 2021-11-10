@@ -65,6 +65,8 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
   MapHighlight? _highlight;
   MapHighlight? get highlight => _highlight;
 
+  double zoomFactor = 0.1;
+
   MapDebugger? _debugger;
 
   void addLayer(MapLayer layer) {
@@ -199,9 +201,9 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
   void _zoom(Size canvasSize, Offset canvasLocation, bool zoomIn) {
     double zoom = 1;
     if (zoomIn) {
-      zoom = 1.05;
+      zoom += zoomFactor;
     } else {
-      zoom = 0.95;
+      zoom -= zoomFactor;
     }
     double newScale = _scale * zoom;
     Offset refInWorld =
