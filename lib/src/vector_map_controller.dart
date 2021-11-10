@@ -175,6 +175,7 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
   void fit() {
     if (_lastCanvasSize != null) {
       _fit(_lastCanvasSize!);
+      updateDrawableFeatures();
       notifyListeners();
     }
   }
@@ -233,8 +234,7 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
     _lastUpdateRequest?.ignore = true;
   }
 
-  @internal
-  void clearBuffers() {
+  void _clearBuffers() {
     for (DrawableLayer drawableLayer in _drawableLayers) {
       for (DrawableLayerChunk chunk in drawableLayer.chunks) {
         chunk.buffer = null;
@@ -243,20 +243,23 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
   }
 
   @internal
-  void updateDrawableFeatures({required Size canvasSize}) {
-    _firstUpdate = false;
-    _UpdateRequest updateRequest = _UpdateRequest(
-        canvasSize: canvasSize,
-        worldToCanvas: _worldToCanvas,
-        scale: _scale,
-        translateX: _translateX,
-        translateY: _translateY);
-    if (_lastUpdateRequest != null) {
-      _lastUpdateRequest!.ignore = true;
-      _lastUpdateRequest!.next = updateRequest;
-    } else {
-      _lastUpdateRequest = updateRequest;
-      _updateDrawableFeatures(updateRequest);
+  void updateDrawableFeatures() {
+    if (_lastCanvasSize != null) {
+      _clearBuffers();
+      _firstUpdate = false;
+      _UpdateRequest updateRequest = _UpdateRequest(
+          canvasSize: _lastCanvasSize!,
+          worldToCanvas: _worldToCanvas,
+          scale: _scale,
+          translateX: _translateX,
+          translateY: _translateY);
+      if (_lastUpdateRequest != null) {
+        _lastUpdateRequest!.ignore = true;
+        _lastUpdateRequest!.next = updateRequest;
+      } else {
+        _lastUpdateRequest = updateRequest;
+        _updateDrawableFeatures(updateRequest);
+      }
     }
   }
 
@@ -305,7 +308,7 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
       }
     }
     if (updateRequest.ignore) {
-      clearBuffers();
+      _clearBuffers();
     }
     if (updateRequest.next != null) {
       _lastUpdateRequest = updateRequest.next;

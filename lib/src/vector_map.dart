@@ -109,10 +109,9 @@ class _VectorMapState extends State<VectorMap> {
 
   void _startUpdate({required Size canvasSize}) {
     if (mounted && canvasSize == _controller.lastCanvasSize) {
-      _controller.clearBuffers();
-      _drawBuffers = true;
       // The size remains the same as when this method was scheduled
-      _controller.updateDrawableFeatures(canvasSize: canvasSize);
+      _controller.updateDrawableFeatures();
+      _drawBuffers = true;
     }
   }
 
