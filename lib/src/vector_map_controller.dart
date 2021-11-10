@@ -13,19 +13,27 @@ import 'package:vector_map/src/drawable/drawable_builder.dart';
 import 'package:vector_map/src/drawable/drawable_feature.dart';
 import 'package:vector_map/src/drawable/drawable_layer.dart';
 import 'package:vector_map/src/drawable/drawable_layer_chunk.dart';
+import 'package:vector_map/src/error.dart';
+import 'package:vector_map/src/map_highlight.dart';
 import 'package:vector_map/src/simplifier.dart';
 import 'package:vector_map/src/theme/map_theme.dart';
+import 'package:vector_map/src/vector_map_api.dart';
 
-class VectorMapController extends ChangeNotifier {
+class VectorMapController extends ChangeNotifier implements VectorMapApi {
+  VectorMapController({
+    List<MapLayer>? layers,
+  }) {
+    layers?.forEach((layer) => _addLayer(layer));
+    _afterLayersChange();
+  }
+
+  final List<MapLayer> _layers = [];
+  final Map<int, int> _idAndIndexLayers = Map<int, int>();
   final List<DrawableLayer> _drawableLayers = [];
 
   int get drawableLayersLength => _drawableLayers.length;
 
-  DrawableLayer getDrawableLayer(int index) {
-    return _drawableLayers[index];
-  }
-
-  Size? canvasSize;
+  Size? _lastCanvasSize;
   bool _firstUpdate = true;
   bool get firstUpdate => _firstUpdate;
 
@@ -52,22 +60,94 @@ class VectorMapController extends ChangeNotifier {
   Matrix4 _canvasToWorld = VectorMapController._buildMatrix4();
   Matrix4 get canvasToWorld => _canvasToWorld;
 
+  MapHighlight? _highlight;
+  MapHighlight? get highlight => _highlight;
+
   MapDebugger? _debugger;
+
+  void addLayer(MapLayer layer) {
+    _addLayer(layer);
+    _afterLayersChange();
+    //TODO notify?
+  }
+
+  void _addLayer(MapLayer layer) {
+    if (_idAndIndexLayers.containsKey(layer.id)) {
+      throw VectorMapError('Duplicate layer id: ' + layer.id.toString());
+    }
+    _layers.add(layer);
+    _idAndIndexLayers[layer.id] = _layers.length - 1;
+    _drawableLayers.add(DrawableLayer(layer));
+  }
+
+  void _afterLayersChange() {
+    this._worldBounds = MapLayer.boundsOf(_layers);
+    int chunksCount = 0;
+    _drawableLayers
+        .forEach((drawableLayer) => chunksCount += drawableLayer.chunks.length);
+    _debugger?.updateLayers(_layers, chunksCount);
+  }
+
+  int get layersCount {
+    return _layers.length;
+  }
+
+  bool get hasLayer {
+    return _layers.isNotEmpty;
+  }
+
+  MapLayer getLayer(int index) {
+    if (index > 0 && _layers.length < index) {
+      return _layers[index];
+    }
+    throw VectorMapError('Invalid layer index: $index');
+  }
+
+  bool get hoverDrawable {
+    for (MapLayer layer in _layers) {
+      if (layer.hoverDrawable) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  DrawableLayer getDrawableLayer(int index) {
+    return _drawableLayers[index];
+  }
+
+  @override
+  int getLayerIndexById(int id) {
+    int? index = _idAndIndexLayers[id];
+    if (index == null) {
+      throw VectorMapError('Invalid layer id: $id');
+    }
+    return index;
+  }
+
+  @override
+  void clearHighlight() {
+    _highlight = null;
+    if (hoverDrawable) {
+      notifyListeners();
+    }
+  }
+
+  @override
+  void setHighlight(MapHighlight newHighlight) {
+    _highlight = newHighlight;
+    if (hoverDrawable) {
+      notifyListeners();
+    }
+  }
 
   @internal
   void setLastCanvasSize(Size canvasSize) {
-    this.canvasSize = canvasSize;
-  }
-
-  void setLayers(List<MapLayer> layers) {
-    this._worldBounds = MapLayer.boundsOf(layers);
-    int chunksCount = 0;
-    for (MapLayer layer in layers) {
-      DrawableLayer drawableLayer = DrawableLayer(layer);
-      _drawableLayers.add(drawableLayer);
-      chunksCount += drawableLayer.chunks.length;
+    bool needFit = _lastCanvasSize == null;
+    _lastCanvasSize = canvasSize;
+    if (needFit) {
+      _fit(canvasSize);
     }
-    _debugger?.initialize(layers, chunksCount);
   }
 
   void setDebugger(MapDebugger? debugger) {
@@ -81,8 +161,9 @@ class VectorMapController extends ChangeNotifier {
   }
 
   void fit() {
-    if (canvasSize != null) {
-      _fit(canvasSize!);
+    if (_lastCanvasSize != null) {
+      _fit(_lastCanvasSize!);
+      notifyListeners();
     }
   }
 
@@ -105,8 +186,9 @@ class VectorMapController extends ChangeNotifier {
   }
 
   void zoom(Offset canvasLocation, bool zoomIn) {
-    if (canvasSize != null) {
-      _zoom(canvasSize!, canvasLocation, zoomIn);
+    if (_lastCanvasSize != null) {
+      _zoom(_lastCanvasSize!, canvasLocation, zoomIn);
+      notifyListeners();
     }
   }
 

@@ -48,7 +48,7 @@ class MapDebugger extends ChangeNotifier {
   late DurationDebugger drawableBuildDuration;
   late DurationDebugger bufferBuildDuration;
 
-  void initialize(List<MapLayer> layers, int chunksCount) {
+  void updateLayers(List<MapLayer> layers, int chunksCount) {
     _layersCount = layers.length;
     _chunksCount = chunksCount;
     for (MapLayer layer in layers) {

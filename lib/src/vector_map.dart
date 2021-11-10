@@ -6,16 +6,13 @@ import 'package:flutter/painting.dart';
 import 'package:flutter/widgets.dart';
 import 'package:vector_map/src/addon/map_addon.dart';
 import 'package:vector_map/src/data/map_feature.dart';
-import 'package:vector_map/src/data/map_layer.dart';
 import 'package:vector_map/src/debugger.dart';
 import 'package:vector_map/src/drawable/drawable.dart';
 import 'package:vector_map/src/drawable/drawable_feature.dart';
 import 'package:vector_map/src/drawable/drawable_layer.dart';
 import 'package:vector_map/src/drawable/drawable_layer_chunk.dart';
-import 'package:vector_map/src/error.dart';
 import 'package:vector_map/src/low_quality_mode.dart';
 import 'package:vector_map/src/vector_map_controller.dart';
-import 'package:vector_map/src/vector_map_api.dart';
 import 'package:vector_map/src/map_highlight.dart';
 import 'package:vector_map/src/map_painter.dart';
 
@@ -24,7 +21,7 @@ class VectorMap extends StatefulWidget {
   /// The default [contourThickness] value is 1.
   VectorMap(
       {Key? key,
-      List<MapLayer>? layers,
+      this.controller,
       this.delayToRefreshResolution = 1000,
       this.color,
       this.borderColor = Colors.black54,
@@ -38,19 +35,9 @@ class VectorMap extends StatefulWidget {
       this.addons,
       this.panAndZoomEnabled = true,
       this.lowQualityMode})
-      : this.layers = layers != null ? layers : [],
-        super(key: key) {
-    for (int index = 0; index < this.layers.length; index++) {
-      MapLayer layer = this.layers[index];
-      if (_idAndIndexLayers.containsKey(layer.id)) {
-        throw VectorMapError('Duplicate layer id: ' + layer.id.toString());
-      }
-      _idAndIndexLayers[layer.id] = index;
-    }
-  }
+      : super(key: key);
 
-  final List<MapLayer> layers;
-  final Map<int, int> _idAndIndexLayers = Map<int, int>();
+  final VectorMapController? controller;
   final double contourThickness;
   final int delayToRefreshResolution;
   final Color? color;
@@ -67,15 +54,6 @@ class VectorMap extends StatefulWidget {
 
   @override
   State<StatefulWidget> createState() => _VectorMapState();
-
-  bool get hoverDrawable {
-    for (MapLayer layer in layers) {
-      if (layer.hoverDrawable) {
-        return true;
-      }
-    }
-    return false;
-  }
 }
 
 /// Holds the initial mouse location and matrix translate from the start of pan.
@@ -91,27 +69,39 @@ class _PanStart {
 }
 
 /// [VectorMap] state.
-class _VectorMapState extends State<VectorMap> implements VectorMapApi {
-  MapHighlight? _highlight;
-  VectorMapController? _controller;
+class _VectorMapState extends State<VectorMap> {
+  VectorMapController _controller = VectorMapController();
   Size? _canvasSize;
   bool _drawBuffers = false;
-  bool _initialFit = true;
   _PanStart? _panStart;
 
   @override
   void initState() {
     super.initState();
-    _controller = VectorMapController();
-    _controller!.setDebugger(widget.debugger);
-    _controller!.setLayers(widget.layers);
-    _controller!.addListener(_rebuild);
+    if (widget.controller != null) {
+      _controller = widget.controller!;
+    }
+    _controller.setDebugger(widget.debugger);
+    _controller.addListener(_rebuild);
+  }
+
+  @override
+  void didUpdateWidget(covariant VectorMap oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.controller != null &&
+        widget.controller != oldWidget.controller) {
+      _controller.removeListener(_rebuild);
+      _controller.setDebugger(null);
+      _controller = widget.controller!;
+      _controller.setDebugger(widget.debugger);
+      _controller.addListener(_rebuild);
+    }
   }
 
   @override
   void dispose() {
-    _controller!.removeListener(_rebuild);
-    _controller!.setDebugger(null);
+    _controller.removeListener(_rebuild);
+    _controller.setDebugger(null);
     super.dispose();
   }
 
@@ -121,37 +111,14 @@ class _VectorMapState extends State<VectorMap> implements VectorMapApi {
     });
   }
 
-  @override
-  int getLayerIndexById(int id) {
-    int? index = widget._idAndIndexLayers[id];
-    if (index == null) {
-      throw VectorMapError('Invalid layer id: $id');
-    }
-    return index;
-  }
-
-  @override
-  void clearHighlight() {
-    setState(() {
-      _highlight = null;
-    });
-  }
-
-  @override
-  void setHighlight(MapHighlight newHighlight) {
-    setState(() {
-      _highlight = newHighlight;
-    });
-  }
-
   bool get _onPan => _panStart != null;
 
   void _startUpdate({required Size canvasSize}) {
     if (mounted && canvasSize == _canvasSize) {
-      _controller!.clearBuffers();
+      _controller.clearBuffers();
       _drawBuffers = true;
       // The size remains the same as when this method was scheduled
-      _controller!.updateDrawableFeatures(
+      _controller.updateDrawableFeatures(
           canvasSize: canvasSize, contourThickness: widget.contourThickness);
     }
   }
@@ -159,20 +126,24 @@ class _VectorMapState extends State<VectorMap> implements VectorMapApi {
   @override
   Widget build(BuildContext context) {
     Widget? content;
-    if (widget.layers.isNotEmpty) {
+    if (_controller.hasLayer) {
       Widget mapCanvas = _buildMapCanvas();
       if (widget.addons != null) {
         List<LayoutId> children = [LayoutId(id: 0, child: mapCanvas)];
         int count = 1;
         for (MapAddon addon in widget.addons!) {
           DrawableFeature? hover;
-          if (_highlight != null && _highlight is MapSingleHighlight) {
-            hover = (_highlight as MapSingleHighlight).drawableFeature;
+          if (_controller.highlight != null &&
+              _controller.highlight is MapSingleHighlight) {
+            hover =
+                (_controller.highlight as MapSingleHighlight).drawableFeature;
           }
           children.add(LayoutId(
               id: count,
               child: addon.buildWidget(
-                  context: context, mapApi: this, hover: hover?.feature)));
+                  context: context,
+                  mapApi: _controller,
+                  hover: hover?.feature)));
           count++;
         }
         content = CustomMultiChildLayout(
@@ -211,14 +182,10 @@ class _VectorMapState extends State<VectorMap> implements VectorMapApi {
 
       if (_canvasSize != canvasSize) {
         _canvasSize = canvasSize;
-        _controller!.setLastCanvasSize(canvasSize);
+        _controller.setLastCanvasSize(canvasSize);
         _drawBuffers = false;
-        _controller!.cancelUpdate();
-        if (_initialFit) {
-          _controller!.fit();
-          _initialFit = false;
-        }
-        if (_controller!.firstUpdate) {
+        _controller.cancelUpdate();
+        if (_controller.firstUpdate) {
           // first build without delay
           Future.microtask(() => _startUpdate(canvasSize: canvasSize));
         } else {
@@ -230,8 +197,7 @@ class _VectorMapState extends State<VectorMap> implements VectorMapApi {
       }
 
       MapPainter mapPainter = MapPainter(
-          controller: _controller!,
-          highlight: _highlight,
+          controller: _controller,
           drawBuffers: _drawBuffers,
           contourThickness: widget.contourThickness);
 
@@ -242,9 +208,9 @@ class _VectorMapState extends State<VectorMap> implements VectorMapApi {
         child: customPaint,
         onHover: (event) => _onHover(
             localPosition: event.localPosition,
-            canvasToWorld: _controller!.canvasToWorld),
+            canvasToWorld: _controller.canvasToWorld),
         onExit: (event) {
-          if (_highlight != null) {
+          if (_controller.highlight != null) {
             _updateHover(null);
           }
           widget.debugger?.updateMouseHover();
@@ -264,22 +230,20 @@ class _VectorMapState extends State<VectorMap> implements VectorMapApi {
               });
               _onHover(
                   localPosition: event.localPosition,
-                  canvasToWorld: _controller!.canvasToWorld);
+                  canvasToWorld: _controller.canvasToWorld);
             },
             onPointerDown: (event) {
-              _controller?.cancelUpdate();
-              if (_highlight != null) {
+              _controller.cancelUpdate();
+              if (_controller.highlight != null) {
                 _updateHover(null);
               }
-              if (_controller != null) {
-                setState(() {
-                  _panStart = _PanStart(
-                      mouseLocation: event.localPosition,
-                      translateX: _controller!.translateX,
-                      translateY: _controller!.translateY);
-                  _drawBuffers = false;
-                });
-              }
+              setState(() {
+                _panStart = _PanStart(
+                    mouseLocation: event.localPosition,
+                    translateX: _controller.translateX,
+                    translateY: _controller.translateY);
+                _drawBuffers = false;
+              });
             },
             onPointerMove: (event) {
               if (_panStart != null) {
@@ -288,7 +252,7 @@ class _VectorMapState extends State<VectorMap> implements VectorMapApi {
                 double diffY =
                     _panStart!.mouseLocation.dy - event.localPosition.dy;
                 setState(() {
-                  _controller?.translate(_panStart!.translateX - diffX,
+                  _controller.translate(_panStart!.translateX - diffX,
                       _panStart!.translateY - diffY);
                 });
               }
@@ -297,9 +261,7 @@ class _VectorMapState extends State<VectorMap> implements VectorMapApi {
               if (event is PointerScrollEvent) {
                 _drawBuffers = false;
                 bool zoomIn = event.scrollDelta.dy < 0;
-                setState(() {
-                  _controller?.zoom(event.localPosition, zoomIn);
-                });
+                _controller.zoom(event.localPosition, zoomIn);
                 //TODO cada zoom anula anterior?
                 // schedule the drawables build
                 Future.delayed(
@@ -317,12 +279,12 @@ class _VectorMapState extends State<VectorMap> implements VectorMapApi {
   }
 
   void _onClick() {
-    if (_highlight != null &&
-        _highlight is MapSingleHighlight &&
+    MapHighlight? highlight = _controller.highlight;
+    if (highlight != null &&
+        highlight is MapSingleHighlight &&
         widget.clickListener != null) {
-      MapSingleHighlight singleHighlight = _highlight as MapSingleHighlight;
-      if (singleHighlight.drawableFeature != null) {
-        widget.clickListener!(singleHighlight.drawableFeature!.feature);
+      if (highlight.drawableFeature != null) {
+        widget.clickListener!(highlight.drawableFeature!.feature);
       }
     }
   }
@@ -340,10 +302,10 @@ class _VectorMapState extends State<VectorMap> implements VectorMapApi {
         canvasLocation: localPosition, worldCoordinate: worldCoordinate);
 
     MapSingleHighlight? hoverHighlightRule;
-    for (int layerIndex = _controller!.drawableLayersLength - 1;
+    for (int layerIndex = _controller.drawableLayersLength - 1;
         layerIndex >= 0;
         layerIndex--) {
-      DrawableLayer drawableLayer = _controller!.getDrawableLayer(layerIndex);
+      DrawableLayer drawableLayer = _controller.getDrawableLayer(layerIndex);
       DrawableFeature? drawableFeature =
           _hoverFindDrawableFeature(drawableLayer, worldCoordinate);
       if (drawableFeature != null) {
@@ -352,7 +314,7 @@ class _VectorMapState extends State<VectorMap> implements VectorMapApi {
       }
     }
 
-    if (_highlight != hoverHighlightRule) {
+    if (_controller.highlight != hoverHighlightRule) {
       _updateHover(hoverHighlightRule);
     }
   }
@@ -376,13 +338,10 @@ class _VectorMapState extends State<VectorMap> implements VectorMapApi {
   }
 
   void _updateHover(MapSingleHighlight? hoverHighlightRule) {
-    if (widget.hoverDrawable) {
-      // repaint
-      setState(() {
-        _highlight = hoverHighlightRule;
-      });
+    if (hoverHighlightRule != null) {
+      _controller.setHighlight(hoverHighlightRule);
     } else {
-      _highlight = hoverHighlightRule;
+      _controller.clearHighlight();
     }
     if (widget.hoverListener != null) {
       widget.hoverListener!(hoverHighlightRule?.drawableFeature?.feature);

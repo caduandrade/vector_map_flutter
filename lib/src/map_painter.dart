@@ -20,15 +20,15 @@ class MapPainter extends CustomPainter {
   MapPainter(
       {required this.controller,
       required this.contourThickness,
-      required this.drawBuffers,
-      this.highlight});
-  final MapHighlight? highlight;
+      required this.drawBuffers});
   final double contourThickness;
   final VectorMapController controller;
   final bool drawBuffers;
 
   @override
   void paint(Canvas canvas, Size size) {
+    MapHighlight? highlight = controller.highlight;
+
     // drawing layers
     for (int layerIndex = 0;
         layerIndex < controller.drawableLayersLength;
@@ -54,7 +54,7 @@ class MapPainter extends CustomPainter {
       }
 
       // highlighting
-      if (highlight != null && highlight!.layerIndex == layerIndex) {
+      if (highlight != null && highlight.layerIndex == layerIndex) {
         MapLayer layer = drawableLayer.layer;
         if (layer.highlightTheme != null) {
           canvas.save();
@@ -66,8 +66,7 @@ class MapPainter extends CustomPainter {
               ..color = layer.highlightTheme!.color!
               ..isAntiAlias = true;
             if (highlight is MapSingleHighlight) {
-              DrawableFeature? drawableFeature =
-                  (highlight as MapSingleHighlight).drawableFeature;
+              DrawableFeature? drawableFeature = highlight.drawableFeature;
               Drawable? drawable = drawableFeature?.drawable;
               if (drawable != null && drawable.visible && drawable.hasFill) {
                 drawable.drawOn(canvas, paint, controller.scale);
@@ -79,7 +78,7 @@ class MapPainter extends CustomPainter {
                   paint: paint,
                   scale: controller.scale,
                   fillOnly: true,
-                  highlight: highlight!);
+                  highlight: highlight);
             }
           }
 
@@ -96,7 +95,7 @@ class MapPainter extends CustomPainter {
     // drawing the overlay highlight contour
     if (contourThickness > 0 && highlight != null) {
       DrawableLayer drawableLayer =
-          controller.getDrawableLayer(highlight!.layerIndex);
+          controller.getDrawableLayer(highlight.layerIndex);
       if (drawableLayer.layer.highlightTheme != null) {
         MapHighlightTheme highlightTheme = drawableLayer.layer.highlightTheme!;
         if (highlightTheme.overlayContour) {
@@ -127,8 +126,8 @@ class MapPainter extends CustomPainter {
             if (drawable != null && drawable.visible && feature.label != null) {
               LabelVisibility? labelVisibility;
               if (highlight != null &&
-                  highlight!.layerIndex == layerIndex &&
-                  highlight!.applies(feature) &&
+                  highlight.layerIndex == layerIndex &&
+                  highlight.applies(feature) &&
                   highlightTheme != null &&
                   highlightTheme.labelVisibility != null) {
                 labelVisibility = highlightTheme.labelVisibility;
@@ -138,7 +137,7 @@ class MapPainter extends CustomPainter {
               if (labelVisibility != null && labelVisibility(feature)) {
                 LabelStyleBuilder? labelStyleBuilder;
                 MapHighlightTheme? highlightTheme;
-                if (highlight != null && highlight!.applies(feature)) {
+                if (highlight != null && highlight.applies(feature)) {
                   highlightTheme = layer.highlightTheme;
                   if (highlightTheme != null) {
                     labelStyleBuilder = highlightTheme.labelStyleBuilder;
@@ -161,6 +160,7 @@ class MapPainter extends CustomPainter {
 
   void _drawHighlightContour(Canvas canvas, DrawableLayer drawableLayer,
       VectorMapController controller) {
+    MapHighlight? highlight = controller.highlight;
     Color? color = MapTheme.getContourColor(
         drawableLayer.layer.theme, drawableLayer.layer.highlightTheme);
     if (color != null) {
@@ -170,8 +170,7 @@ class MapPainter extends CustomPainter {
         ..strokeWidth = contourThickness / controller.scale
         ..isAntiAlias = true;
       if (highlight is MapSingleHighlight) {
-        DrawableFeature? drawableFeature =
-            (highlight as MapSingleHighlight).drawableFeature;
+        DrawableFeature? drawableFeature = highlight.drawableFeature;
         Drawable? drawable = drawableFeature?.drawable;
         if (drawable != null && drawable.visible) {
           drawable.drawOn(canvas, paint, controller.scale);

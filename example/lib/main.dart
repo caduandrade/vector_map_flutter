@@ -13,7 +13,7 @@ class ExampleWidget extends StatefulWidget {
 }
 
 class ExampleState extends State<ExampleWidget> {
-  MapDataSource? _dataSource;
+  VectorMapController? _controller;
 
   @override
   void initState() {
@@ -27,19 +27,19 @@ class ExampleState extends State<ExampleWidget> {
   _loadDataSource(String geojson) async {
     MapDataSource dataSource = await MapDataSource.geoJSON(geojson: geojson);
     setState(() {
-      _dataSource = dataSource;
+      _controller = VectorMapController(layers: [
+        MapLayer(
+            dataSource: dataSource,
+            highlightTheme: MapHighlightTheme(color: Colors.green[900]))
+      ]);
     });
   }
 
   @override
   Widget build(BuildContext context) {
     Widget? map;
-    if (_dataSource != null) {
-      map = VectorMap(layers: [
-        MapLayer(
-            dataSource: _dataSource!,
-            highlightTheme: MapHighlightTheme(color: Colors.green[900]))
-      ]);
+    if (_controller != null) {
+      map = VectorMap(controller: _controller);
     } else {
       map = Center(child: Text('Loading...'));
     }
@@ -60,7 +60,7 @@ class ExampleState extends State<ExampleWidget> {
   }
 
   bool _isButtonsEnabled() {
-    return _dataSource != null;
+    return _controller != null;
   }
 
   Widget _buildFitButton() {
@@ -68,5 +68,7 @@ class ExampleState extends State<ExampleWidget> {
         child: Text('Fit'), onPressed: _isButtonsEnabled() ? _onFit : null);
   }
 
-  void _onFit() {}
+  void _onFit() {
+    _controller?.fit();
+  }
 }
