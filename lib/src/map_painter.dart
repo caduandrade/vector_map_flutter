@@ -17,11 +17,7 @@ import 'package:vector_map/src/vector_map_controller.dart';
 
 /// Painter for [VectorMap].
 class MapPainter extends CustomPainter {
-  MapPainter(
-      {required this.controller,
-      required this.contourThickness,
-      required this.drawBuffers});
-  final double contourThickness;
+  MapPainter({required this.controller, required this.drawBuffers});
   final VectorMapController controller;
   final bool drawBuffers;
 
@@ -46,7 +42,7 @@ class MapPainter extends CustomPainter {
               canvas: canvas,
               chunk: chunk,
               layer: drawableLayer.layer,
-              contourThickness: contourThickness,
+              contourThickness: controller.contourThickness,
               scale: controller.scale,
               antiAlias: false);
           canvas.restore();
@@ -82,7 +78,7 @@ class MapPainter extends CustomPainter {
             }
           }
 
-          if (contourThickness > 0 &&
+          if (controller.contourThickness > 0 &&
               layer.highlightTheme!.overlayContour == false) {
             _drawHighlightContour(canvas, drawableLayer, controller);
           }
@@ -93,7 +89,7 @@ class MapPainter extends CustomPainter {
     }
 
     // drawing the overlay highlight contour
-    if (contourThickness > 0 && highlight != null) {
+    if (controller.contourThickness > 0 && highlight != null) {
       DrawableLayer drawableLayer =
           controller.getDrawableLayer(highlight.layerIndex);
       if (drawableLayer.layer.highlightTheme != null) {
@@ -167,7 +163,7 @@ class MapPainter extends CustomPainter {
       var paint = Paint()
         ..style = PaintingStyle.stroke
         ..color = color
-        ..strokeWidth = contourThickness / controller.scale
+        ..strokeWidth = controller.contourThickness / controller.scale
         ..isAntiAlias = true;
       if (highlight is MapSingleHighlight) {
         DrawableFeature? drawableFeature = highlight.drawableFeature;

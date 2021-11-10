@@ -20,9 +20,8 @@ import 'package:vector_map/src/theme/map_theme.dart';
 import 'package:vector_map/src/vector_map_api.dart';
 
 class VectorMapController extends ChangeNotifier implements VectorMapApi {
-  VectorMapController({
-    List<MapLayer>? layers,
-  }) {
+  /// The default [contourThickness] value is 1.
+  VectorMapController({List<MapLayer>? layers, this.contourThickness = 1}) {
     layers?.forEach((layer) => _addLayer(layer));
     _afterLayersChange();
   }
@@ -66,6 +65,8 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
   MapHighlight? get highlight => _highlight;
 
   double zoomFactor = 0.1;
+
+  final double contourThickness;
 
   MapDebugger? _debugger;
 
@@ -237,16 +238,14 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
   }
 
   @internal
-  void updateDrawableFeatures(
-      {required Size canvasSize, required double contourThickness}) {
+  void updateDrawableFeatures({required Size canvasSize}) {
     _firstUpdate = false;
     _UpdateRequest updateRequest = _UpdateRequest(
         canvasSize: canvasSize,
         worldToCanvas: _worldToCanvas,
         scale: _scale,
         translateX: _translateX,
-        translateY: _translateY,
-        contourThickness: contourThickness);
+        translateY: _translateY);
     if (_lastUpdateRequest != null) {
       _lastUpdateRequest!.ignore = true;
       _lastUpdateRequest!.next = updateRequest;
@@ -294,8 +293,7 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
         chunk.buffer = await _createBuffer(
             chunk: chunk,
             layer: drawableLayer.layer,
-            canvasSize: updateRequest.canvasSize,
-            contourThickness: updateRequest.contourThickness);
+            canvasSize: updateRequest.canvasSize);
         _debugger?.bufferBuildDuration.closeAndInc();
         notifyListeners();
         await Future.delayed(Duration.zero);
@@ -315,8 +313,7 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
   Future<ui.Image> _createBuffer(
       {required DrawableLayerChunk chunk,
       required MapLayer layer,
-      required Size canvasSize,
-      required double contourThickness}) async {
+      required Size canvasSize}) async {
     ui.PictureRecorder recorder = ui.PictureRecorder();
     Canvas canvas = Canvas(
         recorder,
@@ -378,14 +375,12 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
 class _UpdateRequest {
   _UpdateRequest(
       {required this.canvasSize,
-      required this.contourThickness,
       required this.scale,
       required this.translateX,
       required this.translateY,
       required this.worldToCanvas});
 
   final Size canvasSize;
-  final double contourThickness;
   final double scale;
   final double translateX;
   final double translateY;

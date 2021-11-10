@@ -18,7 +18,6 @@ import 'package:vector_map/src/map_painter.dart';
 
 /// Vector map widget.
 class VectorMap extends StatefulWidget {
-  /// The default [contourThickness] value is 1.
   VectorMap(
       {Key? key,
       this.controller,
@@ -26,7 +25,6 @@ class VectorMap extends StatefulWidget {
       this.color,
       this.borderColor = Colors.black54,
       this.borderThickness = 1,
-      this.contourThickness = 1,
       this.layersPadding = const EdgeInsets.all(8),
       this.hoverRule,
       this.hoverListener,
@@ -38,7 +36,7 @@ class VectorMap extends StatefulWidget {
       : super(key: key);
 
   final VectorMapController? controller;
-  final double contourThickness;
+
   final int delayToRefreshResolution;
   final Color? color;
   final Color? borderColor;
@@ -117,8 +115,7 @@ class _VectorMapState extends State<VectorMap> {
       _controller.clearBuffers();
       _drawBuffers = true;
       // The size remains the same as when this method was scheduled
-      _controller.updateDrawableFeatures(
-          canvasSize: canvasSize, contourThickness: widget.contourThickness);
+      _controller.updateDrawableFeatures(canvasSize: canvasSize);
     }
   }
 
@@ -194,10 +191,8 @@ class _VectorMapState extends State<VectorMap> {
         }
       }
 
-      MapPainter mapPainter = MapPainter(
-          controller: _controller,
-          drawBuffers: _drawBuffers,
-          contourThickness: widget.contourThickness);
+      MapPainter mapPainter =
+          MapPainter(controller: _controller, drawBuffers: _drawBuffers);
 
       CustomPaint customPaint =
           CustomPaint(painter: mapPainter, child: Container());
