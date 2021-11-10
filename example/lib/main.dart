@@ -33,21 +33,40 @@ class ExampleState extends State<ExampleWidget> {
 
   @override
   Widget build(BuildContext context) {
-    Widget? content;
+    Widget? map;
     if (_dataSource != null) {
-      content = VectorMap(layers: [
+      map = VectorMap(layers: [
         MapLayer(
             dataSource: _dataSource!,
             highlightTheme: MapHighlightTheme(color: Colors.green[900]))
       ]);
     } else {
-      content = Text('Loading...');
+      map = Center(child: Text('Loading...'));
     }
+
+    Widget buttons =
+        SingleChildScrollView(child: Row(children: [_buildFitButton()]));
+
+    Widget content = Column(children: [
+      Padding(child: buttons, padding: EdgeInsets.only(bottom: 8)),
+      Expanded(child: map)
+    ]);
 
     return MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: ThemeData(scaffoldBackgroundColor: Colors.white),
         home: Scaffold(
-            body: Padding(child: content, padding: EdgeInsets.all(32))));
+            body: Padding(child: content, padding: EdgeInsets.all(8))));
   }
+
+  bool _isButtonsEnabled() {
+    return _dataSource != null;
+  }
+
+  Widget _buildFitButton() {
+    return ElevatedButton(
+        child: Text('Fit'), onPressed: _isButtonsEnabled() ? _onFit : null);
+  }
+
+  void _onFit() {}
 }

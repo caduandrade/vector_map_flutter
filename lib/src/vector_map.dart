@@ -211,10 +211,11 @@ class _VectorMapState extends State<VectorMap> implements VectorMapApi {
 
       if (_canvasSize != canvasSize) {
         _canvasSize = canvasSize;
+        _controller!.setLastCanvasSize(canvasSize);
         _drawBuffers = false;
         _controller!.cancelUpdate();
         if (_initialFit) {
-          _controller!.fit(canvasSize);
+          _controller!.fit();
           _initialFit = false;
         }
         if (_controller!.firstUpdate) {
@@ -286,15 +287,19 @@ class _VectorMapState extends State<VectorMap> implements VectorMapApi {
                     _panStart!.mouseLocation.dx - event.localPosition.dx;
                 double diffY =
                     _panStart!.mouseLocation.dy - event.localPosition.dy;
-                _controller?.setTranslate(_panStart!.translateX - diffX,
-                    _panStart!.translateY - diffY);
+                setState(() {
+                  _controller?.translate(_panStart!.translateX - diffX,
+                      _panStart!.translateY - diffY);
+                });
               }
             },
             onPointerSignal: (event) {
               if (event is PointerScrollEvent) {
                 _drawBuffers = false;
                 bool zoomIn = event.scrollDelta.dy < 0;
-                _controller?.zoom(canvasSize, event.localPosition, zoomIn);
+                setState(() {
+                  _controller?.zoom(event.localPosition, zoomIn);
+                });
                 //TODO cada zoom anula anterior?
                 // schedule the drawables build
                 Future.delayed(

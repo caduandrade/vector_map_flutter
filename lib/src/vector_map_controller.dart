@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
+import 'package:meta/meta.dart';
 import 'package:vector_map/src/data/map_data_source.dart';
 import 'package:vector_map/src/data/map_layer.dart';
 import 'package:vector_map/src/debugger.dart';
@@ -24,6 +25,7 @@ class VectorMapController extends ChangeNotifier {
     return _drawableLayers[index];
   }
 
+  Size? canvasSize;
   bool _firstUpdate = true;
   bool get firstUpdate => _firstUpdate;
 
@@ -40,13 +42,6 @@ class VectorMapController extends ChangeNotifier {
   double _translateY = 0;
   double get translateY => _translateY;
 
-  void setTranslate(double translateX, double translateY) {
-    _translateX = translateX;
-    _translateY = translateY;
-    _buildMatrices4();
-    notifyListeners();
-  }
-
   _UpdateRequest? _lastUpdateRequest;
 
   /// Matrix to be used to convert world coordinates to canvas coordinates.
@@ -58,6 +53,11 @@ class VectorMapController extends ChangeNotifier {
   Matrix4 get canvasToWorld => _canvasToWorld;
 
   MapDebugger? _debugger;
+
+  @internal
+  void setLastCanvasSize(Size canvasSize) {
+    this.canvasSize = canvasSize;
+  }
 
   void setLayers(List<MapLayer> layers) {
     this._worldBounds = MapLayer.boundsOf(layers);
@@ -74,7 +74,19 @@ class VectorMapController extends ChangeNotifier {
     _debugger = debugger;
   }
 
-  void fit(Size canvasSize) {
+  void translate(double translateX, double translateY) {
+    _translateX = translateX;
+    _translateY = translateY;
+    _buildMatrices4();
+  }
+
+  void fit() {
+    if (canvasSize != null) {
+      _fit(canvasSize!);
+    }
+  }
+
+  void _fit(Size canvasSize) {
     _scale = 1;
     _translateX = 0;
     _translateY = 0;
@@ -92,7 +104,13 @@ class VectorMapController extends ChangeNotifier {
     _buildMatrices4();
   }
 
-  void zoom(Size canvasSize, Offset mouseLocation, bool zoomIn) {
+  void zoom(Offset canvasLocation, bool zoomIn) {
+    if (canvasSize != null) {
+      _zoom(canvasSize!, canvasLocation, zoomIn);
+    }
+  }
+
+  void _zoom(Size canvasSize, Offset canvasLocation, bool zoomIn) {
     double zoom = 1;
     if (zoomIn) {
       zoom = 1.05;
@@ -101,12 +119,11 @@ class VectorMapController extends ChangeNotifier {
     }
     double newScale = _scale * zoom;
     Offset refInWorld =
-        MatrixUtils.transformPoint(_canvasToWorld, mouseLocation);
-    _translateX = mouseLocation.dx - (refInWorld.dx * newScale);
-    _translateY = mouseLocation.dy + (refInWorld.dy * newScale);
+        MatrixUtils.transformPoint(_canvasToWorld, canvasLocation);
+    _translateX = canvasLocation.dx - (refInWorld.dx * newScale);
+    _translateY = canvasLocation.dy + (refInWorld.dy * newScale);
     _scale = _scale * zoom;
     _buildMatrices4();
-    notifyListeners();
   }
 
   void _buildMatrices4() {
