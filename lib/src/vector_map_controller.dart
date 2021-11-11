@@ -31,6 +31,7 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
 
   _UpdateState _updateState = _UpdateState.stopped;
 
+  //TODO remove?
   final Map<int, int> _idAndIndexLayers = Map<int, int>();
   final List<DrawableLayer> _drawableLayers = [];
 

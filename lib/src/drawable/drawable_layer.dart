@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:ui';
 
 import 'package:vector_map/src/data/map_feature.dart';
@@ -23,11 +24,11 @@ class DrawableLayer {
     if (chunk.pointsCount > 0) {
       chunks.add(chunk);
     }
-    return DrawableLayer._(layer, chunks);
+    return DrawableLayer._(layer, UnmodifiableListView(chunks));
   }
 
   final MapLayer layer;
-  final List<DrawableLayerChunk> chunks;
+  final UnmodifiableListView<DrawableLayerChunk> chunks;
 
   /// Gets the bounds of the layers. Returns [NULL] if the list is empty.
   static Rect? boundsOf(List<DrawableLayer> drawableLayers) {

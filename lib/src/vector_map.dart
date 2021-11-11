@@ -69,6 +69,7 @@ class _VectorMapState extends State<VectorMap> {
   VectorMapController _controller = VectorMapController();
   bool _drawBuffers = false;
   _PanStart? _panStart;
+  int _currentUpdateTicket = 0;
 
   @override
   void initState() {
@@ -135,7 +136,7 @@ class _VectorMapState extends State<VectorMap> {
     }
   }
 
-  int _currentUpdateTicket = 0;
+
 
   @override
   Widget build(BuildContext context) {
