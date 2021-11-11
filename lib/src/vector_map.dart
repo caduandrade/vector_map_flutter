@@ -108,13 +108,34 @@ class _VectorMapState extends State<VectorMap> {
 
   bool get _onPan => _panStart != null;
 
-  void _startUpdate({required Size canvasSize}) {
-    if (mounted && canvasSize == _controller.lastCanvasSize) {
+  void _startUpdate({required int ticket}) {
+    if (mounted && _currentUpdateTicket == ticket) {
       // The size remains the same as when this method was scheduled
       _controller.updateDrawableFeatures();
       _drawBuffers = true;
     }
   }
+
+  void _updateTicket() {
+    _currentUpdateTicket++;
+    if (_currentUpdateTicket == 999999) {
+      _currentUpdateTicket = 0;
+    }
+  }
+
+  void _scheduleUpdate({required bool delayed}) {
+    if (delayed) {
+      _updateTicket();
+      int ticket = _currentUpdateTicket;
+      Future.delayed(
+          Duration(milliseconds: _controller.delayToRefreshResolution),
+          () => _startUpdate(ticket: ticket));
+    } else {
+      Future.microtask(() => _startUpdate(ticket: _currentUpdateTicket));
+    }
+  }
+
+  int _currentUpdateTicket = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -179,12 +200,10 @@ class _VectorMapState extends State<VectorMap> {
         _controller.cancelUpdate();
         if (_controller.firstUpdate) {
           // first build without delay
-          Future.microtask(() => _startUpdate(canvasSize: canvasSize));
+          _scheduleUpdate(delayed: false);
         } else {
           // schedule the drawables build
-          Future.delayed(
-              Duration(milliseconds: _controller.delayToRefreshResolution),
-              () => _startUpdate(canvasSize: canvasSize));
+          _scheduleUpdate(delayed: true);
         }
       }
 
@@ -211,19 +230,11 @@ class _VectorMapState extends State<VectorMap> {
       if (widget.panAndZoomEnabled) {
         mouseListener = Listener(
             child: mouseRegion,
-            onPointerUp: (event) {
-              setState(() {
-                _panStart = null;
-                // schedule the drawables build
-                Future.delayed(
-                    Duration.zero, () => _startUpdate(canvasSize: canvasSize));
-              });
-              _onHover(
-                  localPosition: event.localPosition,
-                  canvasToWorld: _controller.canvasToWorld);
-            },
             onPointerDown: (event) {
+              // cancel running update
               _controller.cancelUpdate();
+              // cancel scheduled update
+              _updateTicket();
               if (_controller.highlight != null) {
                 _updateHover(null);
               }
@@ -237,6 +248,7 @@ class _VectorMapState extends State<VectorMap> {
             },
             onPointerMove: (event) {
               if (_panStart != null) {
+                _drawBuffers = false;
                 double diffX =
                     _panStart!.mouseLocation.dx - event.localPosition.dx;
                 double diffY =
@@ -245,15 +257,24 @@ class _VectorMapState extends State<VectorMap> {
                     _panStart!.translateY - diffY);
               }
             },
+            onPointerUp: (event) {
+              setState(() {
+                _panStart = null;
+                // schedule the drawables build
+                _scheduleUpdate(delayed: true);
+              });
+              _onHover(
+                  localPosition: event.localPosition,
+                  canvasToWorld: _controller.canvasToWorld);
+            },
             onPointerSignal: (event) {
               if (event is PointerScrollEvent) {
                 _drawBuffers = false;
+                _controller.cancelUpdate();
                 bool zoomIn = event.scrollDelta.dy < 0;
                 _controller.zoom(event.localPosition, zoomIn);
-                _controller.cancelUpdate();
                 // schedule the drawables build
-                Future.delayed(
-                    Duration.zero, () => _startUpdate(canvasSize: canvasSize));
+                _scheduleUpdate(delayed: true);
               }
             });
       }
