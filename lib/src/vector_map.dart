@@ -6,6 +6,7 @@ import 'package:flutter/painting.dart';
 import 'package:flutter/widgets.dart';
 import 'package:vector_map/src/addon/map_addon.dart';
 import 'package:vector_map/src/data/map_feature.dart';
+import 'package:vector_map/src/data/map_layer.dart';
 import 'package:vector_map/src/debugger.dart';
 import 'package:vector_map/src/drawable/drawable.dart';
 import 'package:vector_map/src/drawable/drawable_feature.dart';
@@ -296,7 +297,9 @@ class _VectorMapState extends State<VectorMap> {
       DrawableFeature? drawableFeature =
           _hoverFindDrawableFeature(drawableLayer, worldCoordinate);
       if (drawableFeature != null) {
-        hoverHighlightRule = MapSingleHighlight(layerIndex, drawableFeature);
+        MapLayer layer = drawableLayer.layer;
+        hoverHighlightRule = MapSingleHighlight(
+            layerId: layer.id, drawableFeature: drawableFeature);
         break;
       }
     }

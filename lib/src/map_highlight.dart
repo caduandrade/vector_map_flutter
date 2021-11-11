@@ -3,10 +3,10 @@ import 'package:vector_map/src/drawable/drawable_feature.dart';
 
 /// Base class to define which [MapFeature] should be highlighted.
 abstract class MapHighlight {
-  MapHighlight(this.layerIndex);
+  MapHighlight({required this.layerId});
 
-  /// Layer to be highlighted.
-  final int layerIndex;
+  /// Identifier of the layer to be highlighted.
+  final int layerId;
 
   /// Identifies whether the rule applies to a given [MapFeature].
   bool applies(MapFeature feature);
@@ -16,15 +16,16 @@ abstract class MapHighlight {
       identical(this, other) ||
       other is MapHighlight &&
           runtimeType == other.runtimeType &&
-          layerIndex == other.layerIndex;
+          layerId == other.layerId;
 
   @override
-  int get hashCode => layerIndex.hashCode;
+  int get hashCode => layerId.hashCode;
 }
 
 /// Defines a single [MapFeature] to be highlighted.
 class MapSingleHighlight extends MapHighlight {
-  MapSingleHighlight(int layerIndex, this.drawableFeature) : super(layerIndex);
+  MapSingleHighlight({required int layerId, this.drawableFeature})
+      : super(layerId: layerId);
 
   final DrawableFeature? drawableFeature;
 
@@ -53,7 +54,7 @@ class MapGradientHighlight extends MapHighlight {
   /// bar pixel, that is, the range between the min and the max values
   /// divided by the height of the legend bar.
   factory MapGradientHighlight(
-      {required int layerIndex,
+      {required int layerId,
       required String key,
       required double value,
       required double rangePerPixel,
@@ -67,7 +68,7 @@ class MapGradientHighlight extends MapHighlight {
       comparator = -1;
     }
     return MapGradientHighlight._(
-        layerIndex: layerIndex,
+        layerId: layerId,
         key: key,
         value: value,
         rangePerPixel: rangePerPixel,
@@ -76,12 +77,12 @@ class MapGradientHighlight extends MapHighlight {
 
   /// Builds a [MapGradientHighlight]
   MapGradientHighlight._(
-      {required int layerIndex,
+      {required int layerId,
       required this.key,
       required this.value,
       required this.rangePerPixel,
       required this.comparator})
-      : super(layerIndex);
+      : super(layerId: layerId);
 
   final String key;
   final double value;

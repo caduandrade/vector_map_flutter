@@ -206,9 +206,8 @@ class _GradientBar extends StatelessWidget {
   void _highlightOn(BuildContext context, double maxHeight, double y) {
     double range = max - min;
     double value = min + (((maxHeight - y) * range) / maxHeight);
-    int layerIndex = mapApi.getLayerIndexById(layerId);
     MapGradientHighlight highlight = MapGradientHighlight(
-        layerIndex: layerIndex,
+        layerId: layerId,
         key: propertyKey,
         value: value,
         rangePerPixel: range / maxHeight,

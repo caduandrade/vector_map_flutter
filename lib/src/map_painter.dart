@@ -25,6 +25,8 @@ class MapPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     MapHighlight? highlight = controller.highlight;
 
+    DrawableLayer? overlayContourDrawableLayer;
+
     // drawing layers
     for (int layerIndex = 0;
         layerIndex < controller.layersCount;
@@ -49,58 +51,57 @@ class MapPainter extends CustomPainter {
         }
       }
 
+      MapLayer layer = drawableLayer.layer;
+
       // highlighting
-      if (highlight != null && highlight.layerIndex == layerIndex) {
-        MapLayer layer = drawableLayer.layer;
-        if (layer.highlightTheme != null) {
-          canvas.save();
-          controller.applyMatrixOn(canvas);
-
-          if (layer.highlightTheme!.color != null) {
-            var paint = Paint()
-              ..style = PaintingStyle.fill
-              ..color = layer.highlightTheme!.color!
-              ..isAntiAlias = true;
-            if (highlight is MapSingleHighlight) {
-              DrawableFeature? drawableFeature = highlight.drawableFeature;
-              Drawable? drawable = drawableFeature?.drawable;
-              if (drawable != null && drawable.visible && drawable.hasFill) {
-                drawable.drawOn(canvas, paint, controller.scale);
-              }
-            } else {
-              DrawUtils.drawHighlight(
-                  canvas: canvas,
-                  drawableLayer: drawableLayer,
-                  paint: paint,
-                  scale: controller.scale,
-                  fillOnly: true,
-                  highlight: highlight);
-            }
-          }
-
-          if (controller.contourThickness > 0 &&
-              layer.highlightTheme!.overlayContour == false) {
-            _drawHighlightContour(canvas, drawableLayer, controller);
-          }
-
-          canvas.restore();
+      if (highlight != null &&
+          highlight.layerId == layer.id &&
+          layer.highlightTheme != null) {
+        if (controller.contourThickness > 0 &&
+            layer.highlightTheme!.overlayContour) {
+          overlayContourDrawableLayer = drawableLayer;
         }
+
+        canvas.save();
+        controller.applyMatrixOn(canvas);
+
+        if (layer.highlightTheme!.color != null) {
+          var paint = Paint()
+            ..style = PaintingStyle.fill
+            ..color = layer.highlightTheme!.color!
+            ..isAntiAlias = true;
+          if (highlight is MapSingleHighlight) {
+            DrawableFeature? drawableFeature = highlight.drawableFeature;
+            Drawable? drawable = drawableFeature?.drawable;
+            if (drawable != null && drawable.visible && drawable.hasFill) {
+              drawable.drawOn(canvas, paint, controller.scale);
+            }
+          } else {
+            DrawUtils.drawHighlight(
+                canvas: canvas,
+                drawableLayer: drawableLayer,
+                paint: paint,
+                scale: controller.scale,
+                fillOnly: true,
+                highlight: highlight);
+          }
+        }
+
+        if (controller.contourThickness > 0 &&
+            layer.highlightTheme!.overlayContour == false) {
+          _drawHighlightContour(canvas, drawableLayer, controller);
+        }
+
+        canvas.restore();
       }
     }
 
     // drawing the overlay highlight contour
-    if (controller.contourThickness > 0 && highlight != null) {
-      DrawableLayer drawableLayer =
-          controller.getDrawableLayer(highlight.layerIndex);
-      if (drawableLayer.layer.highlightTheme != null) {
-        MapHighlightTheme highlightTheme = drawableLayer.layer.highlightTheme!;
-        if (highlightTheme.overlayContour) {
-          canvas.save();
-          controller.applyMatrixOn(canvas);
-          _drawHighlightContour(canvas, drawableLayer, controller);
-          canvas.restore();
-        }
-      }
+    if (overlayContourDrawableLayer != null) {
+      canvas.save();
+      controller.applyMatrixOn(canvas);
+      _drawHighlightContour(canvas, overlayContourDrawableLayer, controller);
+      canvas.restore();
     }
 
     // drawing labels
@@ -122,7 +123,7 @@ class MapPainter extends CustomPainter {
             if (drawable != null && drawable.visible && feature.label != null) {
               LabelVisibility? labelVisibility;
               if (highlight != null &&
-                  highlight.layerIndex == layerIndex &&
+                  highlight.layerId == layer.id &&
                   highlight.applies(feature) &&
                   highlightTheme != null &&
                   highlightTheme.labelVisibility != null) {

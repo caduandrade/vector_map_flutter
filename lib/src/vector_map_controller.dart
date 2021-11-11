@@ -123,15 +123,6 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
   }
 
   @override
-  int getLayerIndexById(int id) {
-    int? index = _idAndIndexLayers[id];
-    if (index == null) {
-      throw VectorMapError('Invalid layer id: $id');
-    }
-    return index;
-  }
-
-  @override
   void clearHighlight() {
     _highlight = null;
     if (hoverDrawable) {
