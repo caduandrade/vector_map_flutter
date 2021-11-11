@@ -1,6 +1,5 @@
 import 'dart:math';
 
-import 'package:flutter/painting.dart';
 import 'package:vector_map/src/data/map_data_source.dart';
 import 'package:vector_map/src/theme/map_highlight_theme.dart';
 import 'package:vector_map/src/theme/map_theme.dart';

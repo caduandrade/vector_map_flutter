@@ -29,6 +29,8 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
     _afterLayersChange();
   }
 
+  _UpdateState _updateState = _UpdateState.stopped;
+
   final Map<int, int> _idAndIndexLayers = Map<int, int>();
   final List<DrawableLayer> _drawableLayers = [];
 
@@ -50,8 +52,6 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
 
   double _translateY = 0;
   double get translateY => _translateY;
-
-  _UpdateRequest? _lastUpdateRequest;
 
   /// Matrix to be used to convert world coordinates to canvas coordinates.
   Matrix4 _worldToCanvas = VectorMapController._buildMatrix4();
@@ -218,7 +218,9 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
 
   @internal
   void cancelUpdate() {
-    _lastUpdateRequest?.ignore = true;
+    if (_updateState != _UpdateState.stopped) {
+      _updateState = _UpdateState.canceling;
+    }
   }
 
   void _clearBuffers() {
@@ -234,74 +236,76 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
     if (_lastCanvasSize != null) {
       _clearBuffers();
       _firstUpdate = false;
-      _UpdateRequest updateRequest = _UpdateRequest(
-          canvasSize: _lastCanvasSize!,
-          worldToCanvas: _worldToCanvas,
-          scale: _scale,
-          translateX: _translateX,
-          translateY: _translateY);
-      if (_lastUpdateRequest != null) {
-        _lastUpdateRequest!.ignore = true;
-        _lastUpdateRequest!.next = updateRequest;
+      if (_updateState == _UpdateState.stopped) {
+        _updateDrawableFeatures();
       } else {
-        _lastUpdateRequest = updateRequest;
-        _updateDrawableFeatures(updateRequest);
+        _updateState = _UpdateState.restarting;
       }
     }
   }
 
-  Future<void> _updateDrawableFeatures(_UpdateRequest updateRequest) async {
-    int pointsCount = 0;
-    _debugger?.bufferBuildDuration.clear();
-    _debugger?.drawableBuildDuration.clear();
-    _debugger?.updateSimplifiedPointsCount(pointsCount);
-    for (DrawableLayer drawableLayer in _drawableLayers) {
-      if (updateRequest.ignore) {
-        break;
-      }
-      MapLayer layer = drawableLayer.layer;
-      MapTheme theme = layer.theme;
-      MapDataSource dataSource = layer.dataSource;
-
-      for (DrawableLayerChunk chunk in drawableLayer.chunks) {
-        if (updateRequest.ignore) {
+  Future<void> _updateDrawableFeatures() async {
+    _updateState = _UpdateState.running;
+    while (_updateState == _UpdateState.running) {
+      int pointsCount = 0;
+      _debugger?.bufferBuildDuration.clear();
+      _debugger?.drawableBuildDuration.clear();
+      _debugger?.updateSimplifiedPointsCount(pointsCount);
+      for (DrawableLayer drawableLayer in _drawableLayers) {
+        if (_updateState != _UpdateState.running) {
           break;
         }
-        for (int index = 0; index < chunk.length; index++) {
-          if (updateRequest.ignore) {
+        MapLayer layer = drawableLayer.layer;
+        MapTheme theme = layer.theme;
+        MapDataSource dataSource = layer.dataSource;
+
+        for (DrawableLayerChunk chunk in drawableLayer.chunks) {
+          if (_updateState != _UpdateState.running) {
             break;
           }
-          DrawableFeature drawableFeature = chunk.getDrawableFeature(index);
-          _debugger?.drawableBuildDuration.open();
-          drawableFeature.drawable = DrawableBuilder.build(
-              dataSource: dataSource,
-              feature: drawableFeature.feature,
-              theme: theme,
-              worldToCanvas: updateRequest.worldToCanvas,
-              scale: updateRequest.scale,
-              simplifier: IntegerSimplifier());
-          _debugger?.drawableBuildDuration.closeAndInc();
-          pointsCount += drawableFeature.drawable!.pointsCount;
-          _debugger?.updateSimplifiedPointsCount(pointsCount);
+          for (int index = 0; index < chunk.length; index++) {
+            if (_updateState != _UpdateState.running) {
+              break;
+            }
+            DrawableFeature drawableFeature = chunk.getDrawableFeature(index);
+            _debugger?.drawableBuildDuration.open();
+            drawableFeature.drawable = DrawableBuilder.build(
+                dataSource: dataSource,
+                feature: drawableFeature.feature,
+                theme: theme,
+                worldToCanvas: _worldToCanvas,
+                scale: _scale,
+                simplifier: IntegerSimplifier());
+            _debugger?.drawableBuildDuration.closeAndInc();
+            pointsCount += drawableFeature.drawable!.pointsCount;
+            _debugger?.updateSimplifiedPointsCount(pointsCount);
+          }
+          if (_updateState != _UpdateState.running) {
+            break;
+          }
+          if (_lastCanvasSize != null) {
+            _debugger?.bufferBuildDuration.open();
+            chunk.buffer = await _createBuffer(
+                chunk: chunk,
+                layer: drawableLayer.layer,
+                canvasSize: _lastCanvasSize!);
+            _debugger?.bufferBuildDuration.closeAndInc();
+          }
+          if (_updateState == _UpdateState.running) {
+            notifyListeners();
+          }
+          await Future.delayed(Duration.zero);
         }
-        _debugger?.bufferBuildDuration.open();
-        chunk.buffer = await _createBuffer(
-            chunk: chunk,
-            layer: drawableLayer.layer,
-            canvasSize: updateRequest.canvasSize);
-        _debugger?.bufferBuildDuration.closeAndInc();
-        notifyListeners();
-        await Future.delayed(Duration.zero);
       }
-    }
-    if (updateRequest.ignore) {
-      _clearBuffers();
-    }
-    if (updateRequest.next != null) {
-      _lastUpdateRequest = updateRequest.next;
-      _updateDrawableFeatures(_lastUpdateRequest!);
-    } else {
-      _lastUpdateRequest = null;
+      if (_updateState == _UpdateState.running) {
+        _updateState = _UpdateState.stopped;
+      } else if (_updateState == _UpdateState.canceling) {
+        _clearBuffers();
+        _updateState = _UpdateState.stopped;
+      } else if (_updateState == _UpdateState.restarting) {
+        _clearBuffers();
+        _updateState = _UpdateState.running;
+      }
     }
   }
 
@@ -367,19 +371,4 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
   }
 }
 
-class _UpdateRequest {
-  _UpdateRequest(
-      {required this.canvasSize,
-      required this.scale,
-      required this.translateX,
-      required this.translateY,
-      required this.worldToCanvas});
-
-  final Size canvasSize;
-  final double scale;
-  final double translateX;
-  final double translateY;
-  final Matrix4 worldToCanvas;
-  bool ignore = false;
-  _UpdateRequest? next;
-}
+enum _UpdateState { stopped, running, canceling, restarting }
