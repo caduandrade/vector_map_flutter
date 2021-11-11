@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:vector_map/src/data/map_layer.dart';
+import 'package:vector_map/src/drawable/drawable_layer.dart';
 
 class DurationDebugger extends ChangeNotifier {
   DurationDebugger(VoidCallback listener) {
@@ -48,10 +49,11 @@ class MapDebugger extends ChangeNotifier {
   late DurationDebugger drawableBuildDuration;
   late DurationDebugger bufferBuildDuration;
 
-  void updateLayers(List<MapLayer> layers, int chunksCount) {
-    _layersCount = layers.length;
+  void updateLayers(List<DrawableLayer> drawableLayers, int chunksCount) {
+    _layersCount = drawableLayers.length;
     _chunksCount = chunksCount;
-    for (MapLayer layer in layers) {
+    for (DrawableLayer drawableLayer in drawableLayers) {
+      MapLayer layer = drawableLayer.layer;
       _featuresCount += layer.dataSource.features.length;
       _originalPointsCount += layer.dataSource.pointsCount;
     }

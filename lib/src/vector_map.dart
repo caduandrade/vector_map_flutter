@@ -249,7 +249,7 @@ class _VectorMapState extends State<VectorMap> {
                 _drawBuffers = false;
                 bool zoomIn = event.scrollDelta.dy < 0;
                 _controller.zoom(event.localPosition, zoomIn);
-                //TODO cada zoom anula anterior?
+                _controller.cancelUpdate();
                 // schedule the drawables build
                 Future.delayed(
                     Duration.zero, () => _startUpdate(canvasSize: canvasSize));
@@ -289,7 +289,7 @@ class _VectorMapState extends State<VectorMap> {
         canvasLocation: localPosition, worldCoordinate: worldCoordinate);
 
     MapSingleHighlight? hoverHighlightRule;
-    for (int layerIndex = _controller.drawableLayersLength - 1;
+    for (int layerIndex = _controller.layersCount - 1;
         layerIndex >= 0;
         layerIndex--) {
       DrawableLayer drawableLayer = _controller.getDrawableLayer(layerIndex);

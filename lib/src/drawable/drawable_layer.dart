@@ -1,3 +1,5 @@
+import 'dart:ui';
+
 import 'package:vector_map/src/data/map_feature.dart';
 import 'package:vector_map/src/data/map_layer.dart';
 import 'package:vector_map/src/drawable/drawable_layer_chunk.dart';
@@ -26,4 +28,16 @@ class DrawableLayer {
 
   final MapLayer layer;
   final List<DrawableLayerChunk> chunks;
+
+  /// Gets the bounds of the layers. Returns [NULL] if the list is empty.
+  static Rect? boundsOf(List<DrawableLayer> drawableLayers) {
+    Rect? bounds;
+    if (drawableLayers.isNotEmpty) {
+      bounds = drawableLayers.first.layer.dataSource.bounds;
+      for (DrawableLayer drawableLayer in drawableLayers) {
+        bounds = bounds!.expandToInclude(drawableLayer.layer.dataSource.bounds);
+      }
+    }
+    return bounds;
+  }
 }

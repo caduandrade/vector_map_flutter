@@ -36,18 +36,6 @@ class MapLayer {
   @override
   int get hashCode => id.hashCode;
 
-  /// Gets the bounds of the layers. Returns [NULL] if the list is empty.
-  static Rect? boundsOf(List<MapLayer> layers) {
-    Rect? bounds;
-    if (layers.isNotEmpty) {
-      bounds = layers.first.dataSource.bounds;
-      for (MapLayer layer in layers) {
-        bounds = bounds!.expandToInclude(layer.dataSource.bounds);
-      }
-    }
-    return bounds;
-  }
-
   /// Gets a random layer id.
   static int _randomId() {
     Random random = Random();

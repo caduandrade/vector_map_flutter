@@ -27,7 +27,7 @@ class MapPainter extends CustomPainter {
 
     // drawing layers
     for (int layerIndex = 0;
-        layerIndex < controller.drawableLayersLength;
+        layerIndex < controller.layersCount;
         layerIndex++) {
       DrawableLayer drawableLayer = controller.getDrawableLayer(layerIndex);
       for (DrawableLayerChunk chunk in drawableLayer.chunks) {
@@ -105,7 +105,7 @@ class MapPainter extends CustomPainter {
 
     // drawing labels
     for (int layerIndex = 0;
-        layerIndex < controller.drawableLayersLength;
+        layerIndex < controller.layersCount;
         layerIndex++) {
       DrawableLayer drawableLayer = controller.getDrawableLayer(layerIndex);
       MapLayer layer = drawableLayer.layer;

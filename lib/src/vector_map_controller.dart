@@ -29,11 +29,8 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
     _afterLayersChange();
   }
 
-  final List<MapLayer> _layers = [];
   final Map<int, int> _idAndIndexLayers = Map<int, int>();
   final List<DrawableLayer> _drawableLayers = [];
-
-  int get drawableLayersLength => _drawableLayers.length;
 
   Size? _lastCanvasSize;
   Size? get lastCanvasSize => _lastCanvasSize;
@@ -85,37 +82,36 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
     if (_idAndIndexLayers.containsKey(layer.id)) {
       throw VectorMapError('Duplicate layer id: ' + layer.id.toString());
     }
-    _layers.add(layer);
-    _idAndIndexLayers[layer.id] = _layers.length - 1;
     _drawableLayers.add(DrawableLayer(layer));
+    _idAndIndexLayers[layer.id] = _drawableLayers.length - 1;
   }
 
   void _afterLayersChange() {
-    this._worldBounds = MapLayer.boundsOf(_layers);
+    this._worldBounds = DrawableLayer.boundsOf(_drawableLayers);
     int chunksCount = 0;
     _drawableLayers
         .forEach((drawableLayer) => chunksCount += drawableLayer.chunks.length);
-    _debugger?.updateLayers(_layers, chunksCount);
+    _debugger?.updateLayers(_drawableLayers, chunksCount);
   }
 
   int get layersCount {
-    return _layers.length;
+    return _drawableLayers.length;
   }
 
   bool get hasLayer {
-    return _layers.isNotEmpty;
+    return _drawableLayers.isNotEmpty;
   }
 
   MapLayer getLayer(int index) {
-    if (index > 0 && _layers.length < index) {
-      return _layers[index];
+    if (index > 0 && _drawableLayers.length < index) {
+      return _drawableLayers[index].layer;
     }
     throw VectorMapError('Invalid layer index: $index');
   }
 
   bool get hoverDrawable {
-    for (MapLayer layer in _layers) {
-      if (layer.hoverDrawable) {
+    for (DrawableLayer drawableLayer in _drawableLayers) {
+      if (drawableLayer.layer.hoverDrawable) {
         return true;
       }
     }
