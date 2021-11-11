@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:typed_data';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
@@ -31,8 +32,7 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
 
   _UpdateState _updateState = _UpdateState.stopped;
 
-  //TODO remove?
-  final Map<int, int> _idAndIndexLayers = Map<int, int>();
+  final HashSet<int> _drawableLayerIds = HashSet<int>();
   final List<DrawableLayer> _drawableLayers = [];
 
   Size? _lastCanvasSize;
@@ -80,11 +80,10 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
   }
 
   void _addLayer(MapLayer layer) {
-    if (_idAndIndexLayers.containsKey(layer.id)) {
-      throw VectorMapError('Duplicate layer id: ' + layer.id.toString());
+    if (_drawableLayerIds.add(layer.id) == false) {
+      throw VectorMapError('Duplicated layer id: ' + layer.id.toString());
     }
     _drawableLayers.add(DrawableLayer(layer));
-    _idAndIndexLayers[layer.id] = _drawableLayers.length - 1;
   }
 
   void _afterLayersChange() {
