@@ -7,7 +7,6 @@ import 'package:flutter/widgets.dart';
 import 'package:vector_map/src/addon/map_addon.dart';
 import 'package:vector_map/src/data/map_feature.dart';
 import 'package:vector_map/src/data/map_layer.dart';
-import 'package:vector_map/src/debugger.dart';
 import 'package:vector_map/src/drawable/drawable.dart';
 import 'package:vector_map/src/drawable/drawable_feature.dart';
 import 'package:vector_map/src/drawable/drawable_layer.dart';
@@ -29,7 +28,6 @@ class VectorMap extends StatefulWidget {
       this.hoverRule,
       this.hoverListener,
       this.clickListener,
-      this.debugger,
       this.addons,
       this.panAndZoomEnabled = true,
       this.lowQualityMode})
@@ -43,7 +41,6 @@ class VectorMap extends StatefulWidget {
   final HoverRule? hoverRule;
   final HoverListener? hoverListener;
   final FeatureClickListener? clickListener;
-  final MapDebugger? debugger;
   final List<MapAddon>? addons;
   final LowQualityMode? lowQualityMode;
   final bool panAndZoomEnabled;
@@ -77,7 +74,6 @@ class _VectorMapState extends State<VectorMap> {
     if (widget.controller != null) {
       _controller = widget.controller!;
     }
-    _controller.setDebugger(widget.debugger);
     _controller.addListener(_rebuild);
   }
 
@@ -87,9 +83,7 @@ class _VectorMapState extends State<VectorMap> {
     if (widget.controller != null &&
         widget.controller != oldWidget.controller) {
       _controller.removeListener(_rebuild);
-      _controller.setDebugger(null);
       _controller = widget.controller!;
-      _controller.setDebugger(widget.debugger);
       _controller.addListener(_rebuild);
     }
   }
@@ -97,7 +91,6 @@ class _VectorMapState extends State<VectorMap> {
   @override
   void dispose() {
     _controller.removeListener(_rebuild);
-    _controller.setDebugger(null);
     super.dispose();
   }
 
@@ -221,7 +214,7 @@ class _VectorMapState extends State<VectorMap> {
           if (_controller.highlight != null) {
             _updateHover(null);
           }
-          widget.debugger?.updateMouseHover();
+          _controller.debugger?.updateMouseHover();
         },
       );
 
@@ -306,8 +299,8 @@ class _VectorMapState extends State<VectorMap> {
     Offset worldCoordinate =
         MatrixUtils.transformPoint(canvasToWorld, localPosition);
 
-    widget.debugger?.updateMouseHover(
-        canvasLocation: localPosition, worldCoordinate: worldCoordinate);
+    _controller.debugger?.updateMouseHover(
+        locationOnCanvas: localPosition, worldCoordinate: worldCoordinate);
 
     MapSingleHighlight? hoverHighlightRule;
     for (int layerIndex = _controller.layersCount - 1;

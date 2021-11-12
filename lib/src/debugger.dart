@@ -1,6 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:vector_map/src/data/map_layer.dart';
 import 'package:vector_map/src/drawable/drawable_layer.dart';
+import 'package:vector_map/src/vector_map_controller.dart';
 
 class DurationDebugger extends ChangeNotifier {
   DurationDebugger(VoidCallback listener) {
@@ -43,8 +44,8 @@ class MapDebugger extends ChangeNotifier {
   int _featuresCount = 0;
   int _originalPointsCount = 0;
   int _simplifiedPointsCount = 0;
-  Offset? _mouseHoverWorldCoordinate;
-  Offset? _mouseHoverCanvasLocation;
+  Offset? _mouseHoverWorld;
+  Offset? _mouseHoverCanvas;
 
   late DurationDebugger drawableBuildDuration;
   late DurationDebugger bufferBuildDuration;
@@ -57,14 +58,15 @@ class MapDebugger extends ChangeNotifier {
       _featuresCount += layer.dataSource.features.length;
       _originalPointsCount += layer.dataSource.pointsCount;
     }
+    print(_layersCount);
 
     _simplifiedPointsCount = 0;
     notifyListeners();
   }
 
-  void updateMouseHover({Offset? worldCoordinate, Offset? canvasLocation}) {
-    this._mouseHoverWorldCoordinate = worldCoordinate;
-    this._mouseHoverCanvasLocation = canvasLocation;
+  void updateMouseHover({Offset? worldCoordinate, Offset? locationOnCanvas}) {
+    this._mouseHoverWorld = worldCoordinate;
+    this._mouseHoverCanvas = locationOnCanvas;
     notifyListeners();
   }
 
@@ -75,9 +77,10 @@ class MapDebugger extends ChangeNotifier {
 }
 
 class MapDebuggerWidget extends StatefulWidget {
-  MapDebuggerWidget(this.debugger);
+  MapDebuggerWidget(VectorMapController? controller)
+      : this.debugger = controller?.debugger;
 
-  final MapDebugger debugger;
+  final MapDebugger? debugger;
 
   @override
   State<StatefulWidget> createState() {
@@ -108,7 +111,10 @@ class MapDebuggerState extends State<MapDebuggerWidget> {
 
   @override
   Widget build(BuildContext context) {
-    MapDebugger d = widget.debugger;
+    if (widget.debugger == null) {
+      return Container();
+    }
+    MapDebugger d = widget.debugger!;
 
     int drawableBuildDuration = d.drawableBuildDuration.milliseconds;
     int bufferBuildDuration = d.bufferBuildDuration.milliseconds;
@@ -127,9 +133,9 @@ class MapDebuggerState extends State<MapDebuggerWidget> {
           _milliseconds('Multi resolution: ', multiResolutionDuration),
           _milliseconds(' • Drawables build: ', drawableBuildDuration),
           _milliseconds(' • Buffers build: ', bufferBuildDuration),
-          _title('Mouse hover'),
-          _offset('Canvas location: ', d._mouseHoverCanvasLocation),
-          _offset('World coordinate: ', d._mouseHoverWorldCoordinate)
+          _title('Cursor location'),
+          _offset('Canvas: ', d._mouseHoverCanvas),
+          _offset('World: ', d._mouseHoverWorld)
         ], crossAxisAlignment: CrossAxisAlignment.start));
   }
 
@@ -174,23 +180,27 @@ class MapDebuggerState extends State<MapDebuggerWidget> {
   @override
   void initState() {
     super.initState();
-    widget.debugger.addListener(_refresh);
+    widget.debugger?.addListener(_refresh);
   }
 
   @override
   void didUpdateWidget(MapDebuggerWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-    oldWidget.debugger.removeListener(_refresh);
-    widget.debugger.addListener(_refresh);
+    oldWidget.debugger?.removeListener(_refresh);
+    widget.debugger?.addListener(_refresh);
   }
 
   @override
   void dispose() {
-    widget.debugger.removeListener(_refresh);
+    widget.debugger?.removeListener(_refresh);
     super.dispose();
   }
 
   void _refresh() {
+    setState(() {
+      // rebuild
+    });
+    /*
     Future.delayed(Duration.zero, () async {
       if (mounted) {
         setState(() {
@@ -198,5 +208,7 @@ class MapDebuggerState extends State<MapDebuggerWidget> {
         });
       }
     });
+
+     */
   }
 }

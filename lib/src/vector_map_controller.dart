@@ -25,7 +25,9 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
   VectorMapController(
       {List<MapLayer>? layers,
       this.contourThickness = 1,
-      this.delayToRefreshResolution = 1000}) {
+      this.delayToRefreshResolution = 1000,
+      bool debuggerEnabled = false})
+      : this.debugger = debuggerEnabled ? MapDebugger() : null {
     layers?.forEach((layer) => _addLayer(layer));
     _afterLayersChange();
   }
@@ -68,7 +70,7 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
 
   final int delayToRefreshResolution;
 
-  MapDebugger? _debugger;
+  final MapDebugger? debugger;
 
   void addLayer(MapLayer layer) {
     _addLayer(layer);
@@ -88,7 +90,7 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
     int chunksCount = 0;
     _drawableLayers
         .forEach((drawableLayer) => chunksCount += drawableLayer.chunks.length);
-    _debugger?.updateLayers(_drawableLayers, chunksCount);
+    debugger?.updateLayers(_drawableLayers, chunksCount);
   }
 
   int get layersCount {
@@ -143,11 +145,6 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
       _fit(canvasSize);
     }
     return first;
-  }
-
-  @internal
-  void setDebugger(MapDebugger? debugger) {
-    _debugger = debugger;
   }
 
   void translate(double translateX, double translateY) {
@@ -245,9 +242,9 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
     _updateState = _UpdateState.running;
     while (_updateState == _UpdateState.running) {
       int pointsCount = 0;
-      _debugger?.bufferBuildDuration.clear();
-      _debugger?.drawableBuildDuration.clear();
-      _debugger?.updateSimplifiedPointsCount(pointsCount);
+      debugger?.bufferBuildDuration.clear();
+      debugger?.drawableBuildDuration.clear();
+      debugger?.updateSimplifiedPointsCount(pointsCount);
       for (DrawableLayer drawableLayer in _drawableLayers) {
         if (_updateState != _UpdateState.running) {
           break;
@@ -265,7 +262,7 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
               break;
             }
             DrawableFeature drawableFeature = chunk.getDrawableFeature(index);
-            _debugger?.drawableBuildDuration.open();
+            debugger?.drawableBuildDuration.open();
             drawableFeature.drawable = DrawableBuilder.build(
                 dataSource: dataSource,
                 feature: drawableFeature.feature,
@@ -273,20 +270,20 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
                 worldToCanvas: _worldToCanvas,
                 scale: _scale,
                 simplifier: IntegerSimplifier());
-            _debugger?.drawableBuildDuration.closeAndInc();
+            debugger?.drawableBuildDuration.closeAndInc();
             pointsCount += drawableFeature.drawable!.pointsCount;
-            _debugger?.updateSimplifiedPointsCount(pointsCount);
+            debugger?.updateSimplifiedPointsCount(pointsCount);
           }
           if (_updateState != _UpdateState.running) {
             break;
           }
           if (_lastCanvasSize != null) {
-            _debugger?.bufferBuildDuration.open();
+            debugger?.bufferBuildDuration.open();
             chunk.buffer = await _createBuffer(
                 chunk: chunk,
                 layer: drawableLayer.layer,
                 canvasSize: _lastCanvasSize!);
-            _debugger?.bufferBuildDuration.closeAndInc();
+            debugger?.bufferBuildDuration.closeAndInc();
           }
           if (_updateState == _UpdateState.running) {
             notifyListeners();
