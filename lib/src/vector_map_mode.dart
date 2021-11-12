@@ -1,0 +1,1 @@
+enum VectorMapMode { autoFit, panAndZoom }

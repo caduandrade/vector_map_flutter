@@ -2,6 +2,7 @@ import 'package:flutter/widgets.dart';
 import 'package:vector_map/src/data/map_layer.dart';
 import 'package:vector_map/src/drawable/drawable_layer.dart';
 import 'package:vector_map/src/vector_map_controller.dart';
+import 'package:vector_map/src/vector_map_mode.dart';
 
 class DurationDebugger extends ChangeNotifier {
   DurationDebugger(VoidCallback listener) {
@@ -49,6 +50,18 @@ class MapDebugger extends ChangeNotifier {
 
   late DurationDebugger drawableBuildDuration;
   late DurationDebugger bufferBuildDuration;
+
+  String? _mode;
+
+  void updateMode(VectorMapMode mode) {
+    if (mode == VectorMapMode.autoFit) {
+      _mode = "auto fit";
+    } else if (mode == VectorMapMode.panAndZoom) {
+      _mode = "pan and zoom";
+    } else {
+      _mode = null;
+    }
+  }
 
   void updateLayers(List<DrawableLayer> drawableLayers, int chunksCount) {
     _layersCount = drawableLayers.length;
@@ -133,7 +146,9 @@ class MapDebuggerState extends State<MapDebuggerWidget> {
           _milliseconds(' • Buffers: ', bufferBuildDuration),
           _title('Cursor location'),
           _offset('Canvas: ', d._mouseHoverCanvas),
-          _offset('World: ', d._mouseHoverWorld)
+          _offset('World: ', d._mouseHoverWorld),
+          _title('Configurations'),
+          _item('Mode: ', d._mode != null ? d._mode! : '')
         ], crossAxisAlignment: CrossAxisAlignment.start));
   }
 

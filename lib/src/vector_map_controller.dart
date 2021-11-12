@@ -19,6 +19,7 @@ import 'package:vector_map/src/map_highlight.dart';
 import 'package:vector_map/src/simplifier.dart';
 import 'package:vector_map/src/theme/map_theme.dart';
 import 'package:vector_map/src/vector_map_api.dart';
+import 'package:vector_map/src/vector_map_mode.dart';
 
 class VectorMapController extends ChangeNotifier implements VectorMapApi {
   /// The default [contourThickness] value is 1.
@@ -26,10 +27,25 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
       {List<MapLayer>? layers,
       this.contourThickness = 1,
       this.delayToRefreshResolution = 1000,
+      VectorMapMode mode = VectorMapMode.panAndZoom,
       bool debuggerEnabled = false})
-      : this.debugger = debuggerEnabled ? MapDebugger() : null {
+      : this.debugger = debuggerEnabled ? MapDebugger() : null,
+        this._mode = mode {
     layers?.forEach((layer) => _addLayer(layer));
     _afterLayersChange();
+    debugger?.updateMode(mode);
+  }
+
+  VectorMapMode _mode;
+  VectorMapMode get mode => _mode;
+  set mode(VectorMapMode mode) {
+    if (_mode != mode) {
+      _mode = mode;
+      if (mode == VectorMapMode.autoFit) {
+        fit();
+      }
+      debugger?.updateMode(mode);
+    }
   }
 
   _UpdateState _updateState = _UpdateState.stopped;
@@ -143,8 +159,10 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
   bool setCanvasSize(Size canvasSize) {
     _rebuildSimplifiedGeometry = _lastCanvasSize != canvasSize;
     bool first = _lastCanvasSize == null;
+    bool needFit = (first ||
+        (_mode == VectorMapMode.autoFit && _rebuildSimplifiedGeometry));
     _lastCanvasSize = canvasSize;
-    if (first) {
+    if (needFit) {
       _fit(canvasSize);
     }
     return first;

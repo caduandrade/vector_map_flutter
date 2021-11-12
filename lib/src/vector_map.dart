@@ -15,6 +15,7 @@ import 'package:vector_map/src/low_quality_mode.dart';
 import 'package:vector_map/src/vector_map_controller.dart';
 import 'package:vector_map/src/map_highlight.dart';
 import 'package:vector_map/src/map_painter.dart';
+import 'package:vector_map/src/vector_map_mode.dart';
 
 /// Vector map widget.
 class VectorMap extends StatefulWidget {
@@ -29,7 +30,6 @@ class VectorMap extends StatefulWidget {
       this.hoverListener,
       this.clickListener,
       this.addons,
-      this.panAndZoomEnabled = true,
       this.lowQualityMode})
       : super(key: key);
 
@@ -43,7 +43,6 @@ class VectorMap extends StatefulWidget {
   final FeatureClickListener? clickListener;
   final List<MapAddon>? addons;
   final LowQualityMode? lowQualityMode;
-  final bool panAndZoomEnabled;
 
   @override
   State<StatefulWidget> createState() => _VectorMapState();
@@ -201,82 +200,83 @@ class _VectorMapState extends State<VectorMap> {
 
       MapPainter mapPainter =
           MapPainter(controller: _controller, drawBuffers: _drawBuffers);
-
-      CustomPaint customPaint =
-          CustomPaint(painter: mapPainter, child: Container());
-
-      MouseRegion mouseRegion = MouseRegion(
-        child: customPaint,
-        onHover: (event) => _onHover(
-            localPosition: event.localPosition,
-            canvasToWorld: _controller.canvasToWorld),
-        onExit: (event) {
-          if (_controller.highlight != null) {
-            _updateHover(null);
-          }
-          _controller.debugger?.updateMouseHover();
-        },
-      );
-
-      Widget mouseListener = mouseRegion;
-      if (widget.panAndZoomEnabled) {
-        mouseListener = Listener(
-            child: mouseRegion,
-            onPointerDown: (event) {
-              // cancel running update
-              _controller.cancelDrawablesUpdate();
-              // cancel scheduled update
-              _nextDrawablesUpdateTicket();
-              if (_controller.highlight != null) {
-                _updateHover(null);
-              }
-              setState(() {
-                _panStart = _PanStart(
-                    mouseLocation: event.localPosition,
-                    translateX: _controller.translateX,
-                    translateY: _controller.translateY);
-                _drawBuffers = false;
-              });
-            },
-            onPointerMove: (event) {
-              if (_panStart != null) {
-                _drawBuffers = false;
-                double diffX =
-                    _panStart!.mouseLocation.dx - event.localPosition.dx;
-                double diffY =
-                    _panStart!.mouseLocation.dy - event.localPosition.dy;
-                _controller.translate(_panStart!.translateX - diffX,
-                    _panStart!.translateY - diffY);
-              }
-            },
-            onPointerUp: (event) {
-              setState(() {
-                _panStart = null;
-                // schedule the drawables build
-                _scheduleDrawablesUpdate(delayed: true);
-              });
-              _onHover(
-                  localPosition: event.localPosition,
-                  canvasToWorld: _controller.canvasToWorld);
-            },
-            onPointerSignal: (event) {
-              if (event is PointerScrollEvent) {
-                _drawBuffers = false;
-                _controller.cancelDrawablesUpdate();
-                bool zoomIn = event.scrollDelta.dy < 0;
-                _controller.zoom(event.localPosition, zoomIn);
-                // schedule the drawables build
-                _scheduleDrawablesUpdate(delayed: true);
-              }
-            });
+      Widget content = CustomPaint(painter: mapPainter, child: Container());
+      content = _wrapWithHoverListener(content);
+      if (_controller.mode == VectorMapMode.panAndZoom) {
+        content = _wrapWithPanAndZoomListener(content);
       }
-
-      return ClipRect(
-          child:
-              GestureDetector(child: mouseListener, onTap: () => _onClick()));
+      if (widget.clickListener != null) {
+        content = GestureDetector(child: content, onTap: () => _onClick());
+      }
+      return ClipRect(child: content);
     });
 
     return Container(child: layoutBuilder, padding: widget.layersPadding);
+  }
+
+  Widget _wrapWithHoverListener(Widget content) {
+    return MouseRegion(
+      child: content,
+      onHover: (event) => _onHover(
+          localPosition: event.localPosition,
+          canvasToWorld: _controller.canvasToWorld),
+      onExit: (event) {
+        if (_controller.highlight != null) {
+          _updateHover(null);
+        }
+        _controller.debugger?.updateMouseHover();
+      },
+    );
+  }
+
+  Widget _wrapWithPanAndZoomListener(Widget content) {
+    return Listener(
+        child: content,
+        onPointerDown: (event) {
+          // cancel running update
+          _controller.cancelDrawablesUpdate();
+          // cancel scheduled update
+          _nextDrawablesUpdateTicket();
+          if (_controller.highlight != null) {
+            _updateHover(null);
+          }
+          setState(() {
+            _panStart = _PanStart(
+                mouseLocation: event.localPosition,
+                translateX: _controller.translateX,
+                translateY: _controller.translateY);
+            _drawBuffers = false;
+          });
+        },
+        onPointerMove: (event) {
+          if (_panStart != null) {
+            _drawBuffers = false;
+            double diffX = _panStart!.mouseLocation.dx - event.localPosition.dx;
+            double diffY = _panStart!.mouseLocation.dy - event.localPosition.dy;
+            _controller.translate(
+                _panStart!.translateX - diffX, _panStart!.translateY - diffY);
+          }
+        },
+        onPointerUp: (event) {
+          setState(() {
+            _panStart = null;
+            // schedule the drawables build
+            _scheduleDrawablesUpdate(delayed: true);
+          });
+          _onHover(
+              localPosition: event.localPosition,
+              canvasToWorld: _controller.canvasToWorld);
+        },
+        onPointerSignal: (event) {
+          if (event is PointerScrollEvent) {
+            _drawBuffers = false;
+            _controller.cancelDrawablesUpdate();
+            bool zoomIn = event.scrollDelta.dy < 0;
+            _controller.zoom(event.localPosition, zoomIn);
+            // schedule the drawables build
+            _scheduleDrawablesUpdate(delayed: true);
+          }
+        });
   }
 
   void _onClick() {

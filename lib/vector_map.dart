@@ -30,6 +30,7 @@ export 'src/theme/map_rule_theme.dart';
 export 'src/theme/map_gradient_theme.dart';
 export 'src/theme/map_highlight_theme.dart';
 export 'src/vector_map_api.dart';
+export 'src/vector_map_mode.dart';
 export 'src/low_quality_mode.dart';
 export 'src/vector_map_controller.dart';
 export 'src/vector_map.dart';
