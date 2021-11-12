@@ -38,9 +38,6 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
   Size? _lastCanvasSize;
   Size? get lastCanvasSize => _lastCanvasSize;
 
-  bool _firstUpdate = true;
-  bool get firstUpdate => _firstUpdate;
-
   /// Represents the bounds of all layers.
   Rect? _worldBounds;
   Rect? get worldBounds => _worldBounds;
@@ -139,12 +136,13 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
   }
 
   @internal
-  void setLastCanvasSize(Size canvasSize) {
-    bool needFit = _lastCanvasSize == null;
+  bool setCanvasSize(Size canvasSize) {
+    bool first = _lastCanvasSize == null;
     _lastCanvasSize = canvasSize;
-    if (needFit) {
+    if (first) {
       _fit(canvasSize);
     }
+    return first;
   }
 
   @internal
@@ -162,7 +160,7 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
   void fit() {
     if (_lastCanvasSize != null) {
       _fit(_lastCanvasSize!);
-      updateDrawableFeatures();
+      updateDrawables();
       notifyListeners();
     }
   }
@@ -217,7 +215,7 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
   }
 
   @internal
-  void cancelUpdate() {
+  void cancelDrawablesUpdate() {
     if (_updateState != _UpdateState.stopped) {
       _updateState = _UpdateState.canceling;
     }
@@ -232,19 +230,18 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
   }
 
   @internal
-  void updateDrawableFeatures() {
+  void updateDrawables() {
     if (_lastCanvasSize != null) {
       _clearBuffers();
-      _firstUpdate = false;
       if (_updateState == _UpdateState.stopped) {
-        _updateDrawableFeatures();
+        _updateDrawables();
       } else {
         _updateState = _UpdateState.restarting;
       }
     }
   }
 
-  Future<void> _updateDrawableFeatures() async {
+  Future<void> _updateDrawables() async {
     _updateState = _UpdateState.running;
     while (_updateState == _UpdateState.running) {
       int pointsCount = 0;
