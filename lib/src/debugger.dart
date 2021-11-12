@@ -58,8 +58,6 @@ class MapDebugger extends ChangeNotifier {
       _featuresCount += layer.dataSource.features.length;
       _originalPointsCount += layer.dataSource.pointsCount;
     }
-    print(_layersCount);
-
     _simplifiedPointsCount = 0;
     notifyListeners();
   }
@@ -200,15 +198,5 @@ class MapDebuggerState extends State<MapDebuggerWidget> {
     setState(() {
       // rebuild
     });
-    /*
-    Future.delayed(Duration.zero, () async {
-      if (mounted) {
-        setState(() {
-          // rebuild
-        });
-      }
-    });
-
-     */
   }
 }
