@@ -128,9 +128,9 @@ class MapDebuggerState extends State<MapDebuggerWidget> {
           _int('Original points: ', d._originalPointsCount),
           _int('Simplified points: ', d._simplifiedPointsCount),
           _title('Last durations'),
-          _milliseconds('Multi resolution: ', multiResolutionDuration),
-          _milliseconds(' • Drawables build: ', drawableBuildDuration),
-          _milliseconds(' • Buffers build: ', bufferBuildDuration),
+          _milliseconds('Drawables build: ', multiResolutionDuration),
+          _milliseconds(' • Simplified geometries: ', drawableBuildDuration),
+          _milliseconds(' • Buffers: ', bufferBuildDuration),
           _title('Cursor location'),
           _offset('Canvas: ', d._mouseHoverCanvas),
           _offset('World: ', d._mouseHoverWorld)

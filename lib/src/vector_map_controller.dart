@@ -37,6 +37,8 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
   final HashSet<int> _drawableLayerIds = HashSet<int>();
   final List<DrawableLayer> _drawableLayers = [];
 
+  bool _rebuildSimplifiedGeometry = true;
+
   Size? _lastCanvasSize;
   Size? get lastCanvasSize => _lastCanvasSize;
 
@@ -139,6 +141,7 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
 
   @internal
   bool setCanvasSize(Size canvasSize) {
+    _rebuildSimplifiedGeometry = _lastCanvasSize != canvasSize;
     bool first = _lastCanvasSize == null;
     _lastCanvasSize = canvasSize;
     if (first) {
@@ -188,6 +191,7 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
   }
 
   void _zoom(Size canvasSize, Offset canvasLocation, bool zoomIn) {
+    _rebuildSimplifiedGeometry = true;
     double zoom = 1;
     if (zoomIn) {
       zoom += zoomFactor;
@@ -262,16 +266,20 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
               break;
             }
             DrawableFeature drawableFeature = chunk.getDrawableFeature(index);
-            debugger?.drawableBuildDuration.open();
-            drawableFeature.drawable = DrawableBuilder.build(
-                dataSource: dataSource,
-                feature: drawableFeature.feature,
-                theme: theme,
-                worldToCanvas: _worldToCanvas,
-                scale: _scale,
-                simplifier: IntegerSimplifier());
-            debugger?.drawableBuildDuration.closeAndInc();
-            pointsCount += drawableFeature.drawable!.pointsCount;
+            if(_rebuildSimplifiedGeometry) {
+              debugger?.drawableBuildDuration.open();
+              drawableFeature.drawable = DrawableBuilder.build(
+                  dataSource: dataSource,
+                  feature: drawableFeature.feature,
+                  theme: theme,
+                  worldToCanvas: _worldToCanvas,
+                  scale: _scale,
+                  simplifier: IntegerSimplifier());
+              debugger?.drawableBuildDuration.closeAndInc();
+            }
+            if(drawableFeature.drawable!=null) {
+              pointsCount += drawableFeature.drawable!.pointsCount;
+            }
             debugger?.updateSimplifiedPointsCount(pointsCount);
           }
           if (_updateState != _UpdateState.running) {
@@ -293,6 +301,7 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
       }
       if (_updateState == _UpdateState.running) {
         _updateState = _UpdateState.stopped;
+        _rebuildSimplifiedGeometry = false;
       } else if (_updateState == _UpdateState.canceling) {
         _clearBuffers();
         _updateState = _UpdateState.stopped;
