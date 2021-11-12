@@ -266,7 +266,7 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
               break;
             }
             DrawableFeature drawableFeature = chunk.getDrawableFeature(index);
-            if(_rebuildSimplifiedGeometry) {
+            if (_rebuildSimplifiedGeometry) {
               debugger?.drawableBuildDuration.open();
               drawableFeature.drawable = DrawableBuilder.build(
                   dataSource: dataSource,
@@ -277,7 +277,7 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
                   simplifier: IntegerSimplifier());
               debugger?.drawableBuildDuration.closeAndInc();
             }
-            if(drawableFeature.drawable!=null) {
+            if (drawableFeature.drawable != null) {
               pointsCount += drawableFeature.drawable!.pointsCount;
             }
             debugger?.updateSimplifiedPointsCount(pointsCount);
@@ -285,13 +285,20 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
           if (_updateState != _UpdateState.running) {
             break;
           }
+
           if (_lastCanvasSize != null) {
-            debugger?.bufferBuildDuration.open();
-            chunk.buffer = await _createBuffer(
-                chunk: chunk,
-                layer: drawableLayer.layer,
-                canvasSize: _lastCanvasSize!);
-            debugger?.bufferBuildDuration.closeAndInc();
+            Rect canvasInWorld = MatrixUtils.transformRect(
+                _canvasToWorld,
+                Rect.fromLTWH(
+                    0, 0, _lastCanvasSize!.width, _lastCanvasSize!.height));
+            if (chunk.bounds != null && chunk.bounds!.overlaps(canvasInWorld)) {
+              debugger?.bufferBuildDuration.open();
+              chunk.buffer = await _createBuffer(
+                  chunk: chunk,
+                  layer: drawableLayer.layer,
+                  canvasSize: _lastCanvasSize!);
+              debugger?.bufferBuildDuration.closeAndInc();
+            }
           }
           if (_updateState == _UpdateState.running) {
             notifyListeners();

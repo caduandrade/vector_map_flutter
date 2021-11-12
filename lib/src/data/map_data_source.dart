@@ -16,13 +16,13 @@ class MapDataSource {
       : this._limits = limits;
 
   final UnmodifiableMapView<int, MapFeature> features;
-  final Rect bounds;
+  final Rect? bounds;
   final int pointsCount;
   final Map<String, PropertyLimits>? _limits;
 
   /// Create a [MapDataSource] from a list of [MapFeature].
   static MapDataSource fromFeatures(List<MapFeature> features) {
-    Rect boundsFromGeometry = Rect.zero;
+    Rect? boundsFromGeometry;
     int pointsCount = 0;
     if (features.isNotEmpty) {
       boundsFromGeometry = features.first.geometry.bounds;
@@ -32,8 +32,12 @@ class MapDataSource {
     for (MapFeature feature in features) {
       featuresMap[feature.id] = feature;
       pointsCount += feature.geometry.pointsCount;
-      boundsFromGeometry =
-          boundsFromGeometry.expandToInclude(feature.geometry.bounds);
+      if (boundsFromGeometry == null) {
+        boundsFromGeometry = feature.geometry.bounds;
+      } else {
+        boundsFromGeometry =
+            boundsFromGeometry.expandToInclude(feature.geometry.bounds);
+      }
       if (feature.properties != null) {
         feature.properties!.entries.forEach((entry) {
           dynamic value = entry.value;
@@ -90,17 +94,19 @@ class MapDataSource {
   /// Loads a [MapDataSource] from geometries.
   /// [MapDataSource] features will have no properties.
   factory MapDataSource.geometries(List<MapGeometry> geometries) {
-    Rect boundsFromGeometry = Rect.zero;
+    Rect? boundsFromGeometry;
     int pointsCount = 0;
-    if (geometries.isNotEmpty) {
-      boundsFromGeometry = geometries.first.bounds;
-    }
     Map<int, MapFeature> featuresMap = Map<int, MapFeature>();
     int id = 1;
     for (MapGeometry geometry in geometries) {
       featuresMap[id] = MapFeature(id: id, geometry: geometry);
       pointsCount += geometry.pointsCount;
-      boundsFromGeometry = boundsFromGeometry.expandToInclude(geometry.bounds);
+      if (boundsFromGeometry == null) {
+        boundsFromGeometry = geometry.bounds;
+      } else {
+        boundsFromGeometry =
+            boundsFromGeometry.expandToInclude(geometry.bounds);
+      }
       id++;
     }
 
