@@ -201,14 +201,25 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
     _buildMatrices4();
   }
 
-  void zoom(Offset canvasLocation, bool zoomIn) {
+  void zoomOnCenter(bool zoomIn) {
     if (_lastCanvasSize != null) {
-      _zoom(_lastCanvasSize!, canvasLocation, zoomIn);
+      _zoom(
+          _lastCanvasSize!,
+          Offset(_lastCanvasSize!.width / 2, _lastCanvasSize!.height / 2),
+          zoomIn);
+      updateDrawables();
       notifyListeners();
     }
   }
 
-  void _zoom(Size canvasSize, Offset canvasLocation, bool zoomIn) {
+  void zoomOnLocation(Offset locationOnCanvas, bool zoomIn) {
+    if (_lastCanvasSize != null) {
+      _zoom(_lastCanvasSize!, locationOnCanvas, zoomIn);
+      notifyListeners();
+    }
+  }
+
+  void _zoom(Size canvasSize, Offset locationOnCanvas, bool zoomIn) {
     _rebuildSimplifiedGeometry = true;
     double zoom = 1;
     if (zoomIn) {
@@ -218,9 +229,9 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
     }
     double newScale = _scale * zoom;
     Offset refInWorld =
-        MatrixUtils.transformPoint(_canvasToWorld, canvasLocation);
-    _translateX = canvasLocation.dx - (refInWorld.dx * newScale);
-    _translateY = canvasLocation.dy + (refInWorld.dy * newScale);
+        MatrixUtils.transformPoint(_canvasToWorld, locationOnCanvas);
+    _translateX = locationOnCanvas.dx - (refInWorld.dx * newScale);
+    _translateY = locationOnCanvas.dy + (refInWorld.dy * newScale);
     _scale = _scale * zoom;
     _buildMatrices4();
   }

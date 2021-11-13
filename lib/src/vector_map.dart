@@ -272,7 +272,7 @@ class _VectorMapState extends State<VectorMap> {
             _drawBuffers = false;
             _controller.cancelDrawablesUpdate();
             bool zoomIn = event.scrollDelta.dy < 0;
-            _controller.zoom(event.localPosition, zoomIn);
+            _controller.zoomOnLocation(event.localPosition, zoomIn);
             // schedule the drawables build
             _scheduleDrawablesUpdate(delayed: true);
           }
