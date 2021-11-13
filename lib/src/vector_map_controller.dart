@@ -28,12 +28,18 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
       this.contourThickness = 1,
       this.delayToRefreshResolution = 1000,
       VectorMapMode mode = VectorMapMode.panAndZoom,
-      bool debuggerEnabled = false})
+      bool debuggerEnabled = false,
+      this.maxScale = 30000,
+      this.minScale = 0.1})
       : this.debugger = debuggerEnabled ? MapDebugger() : null,
-        this._mode = mode {
+        this._mode = mode,
+        this._scale = minScale {
     layers?.forEach((layer) => _addLayer(layer));
     _afterLayersChange();
     debugger?.updateMode(mode);
+    if (this.maxScale <= this.minScale) {
+      throw new ArgumentError('maxScale must be bigger than minScale');
+    }
   }
 
   VectorMapMode _mode;
@@ -62,7 +68,12 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
   Rect? _worldBounds;
   Rect? get worldBounds => _worldBounds;
 
-  double _scale = 1;
+  double zoomFactor = 0.1;
+
+  final double maxScale;
+  final double minScale;
+
+  double _scale;
   double get scale => _scale;
 
   double _translateX = 0;
@@ -81,8 +92,6 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
 
   MapHighlight? _highlight;
   MapHighlight? get highlight => _highlight;
-
-  double zoomFactor = 0.1;
 
   bool _drawBuffers = false;
   bool get drawBuffers => _drawBuffers;
@@ -169,7 +178,7 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
       // cancel scheduled update
       _nextDrawablesUpdateTicket();
     } else {
-// schedule the drawables build
+      // schedule the drawables build
       _scheduleDrawablesUpdate(delayed: true);
     }
   }
@@ -215,22 +224,22 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
     }
   }
 
-  void _fit(Size canvasSize) {
-    _scale = 1;
-    _translateX = 0;
-    _translateY = 0;
+  double _limitScale(double scale) {
+    scale = math.max(minScale, scale);
+    return math.min(maxScale, scale);
+  }
 
+  void _fit(Size canvasSize) {
     if (_worldBounds != null && canvasSize.isEmpty == false) {
       double scaleX = canvasSize.width / _worldBounds!.width;
       double scaleY = canvasSize.height / _worldBounds!.height;
-      _scale = math.min(scaleX, scaleY);
-
+      _scale = _limitScale(math.min(scaleX, scaleY));
       _translateX =
           (canvasSize.width / 2.0) - (_scale * _worldBounds!.center.dx);
       _translateY =
           (canvasSize.height / 2.0) + (_scale * _worldBounds!.center.dy);
+      _buildMatrices4();
     }
-    _buildMatrices4();
   }
 
   void zoomOnCenter(bool zoomIn) {
@@ -258,12 +267,12 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
     } else {
       zoom -= zoomFactor;
     }
-    double newScale = _scale * zoom;
+    double newScale = _limitScale(_scale * zoom);
     Offset refInWorld =
         MatrixUtils.transformPoint(_canvasToWorld, locationOnCanvas);
     _translateX = locationOnCanvas.dx - (refInWorld.dx * newScale);
     _translateY = locationOnCanvas.dy + (refInWorld.dy * newScale);
-    _scale = _scale * zoom;
+    _scale = newScale;
     _buildMatrices4();
     // schedule the drawables build
     _scheduleDrawablesUpdate(delayed: true);
