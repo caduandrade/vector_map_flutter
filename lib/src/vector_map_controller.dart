@@ -84,6 +84,11 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
 
   double zoomFactor = 0.1;
 
+  bool _drawBuffers = false;
+  bool get drawBuffers => _drawBuffers;
+
+  int _currentDrawablesUpdateTicket = 0;
+
   final double contourThickness;
 
   final int delayToRefreshResolution;
@@ -156,19 +161,45 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
   }
 
   @internal
-  bool setCanvasSize(Size canvasSize) {
-    _rebuildSimplifiedGeometry = _lastCanvasSize != canvasSize;
-    bool first = _lastCanvasSize == null;
-    bool needFit = (first ||
-        (_mode == VectorMapMode.autoFit && _rebuildSimplifiedGeometry));
-    _lastCanvasSize = canvasSize;
-    if (needFit) {
-      _fit(canvasSize);
+  void notifyPanMode({required bool start}) {
+    if (start) {
+      _drawBuffers = false;
+      // cancel running update
+      _cancelDrawablesUpdate();
+      // cancel scheduled update
+      _nextDrawablesUpdateTicket();
+    } else {
+// schedule the drawables build
+      _scheduleDrawablesUpdate(delayed: true);
     }
-    return first;
+  }
+
+  @internal
+  void setCanvasSize(Size canvasSize) {
+    if (_lastCanvasSize != canvasSize) {
+      _rebuildSimplifiedGeometry = _lastCanvasSize != canvasSize;
+      bool first = _lastCanvasSize == null;
+      bool needFit = (first ||
+          (_mode == VectorMapMode.autoFit && _rebuildSimplifiedGeometry));
+      _lastCanvasSize = canvasSize;
+      if (needFit) {
+        _fit(canvasSize);
+      }
+
+      _drawBuffers = false;
+      _cancelDrawablesUpdate();
+      if (first) {
+        // first build without delay
+        _scheduleDrawablesUpdate(delayed: false);
+      } else {
+        // schedule the drawables build
+        _scheduleDrawablesUpdate(delayed: true);
+      }
+    }
   }
 
   void translate(double translateX, double translateY) {
+    _drawBuffers = false;
     _translateX = translateX;
     _translateY = translateY;
     _buildMatrices4();
@@ -178,7 +209,8 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
   void fit() {
     if (_lastCanvasSize != null) {
       _fit(_lastCanvasSize!);
-      updateDrawables();
+      _drawBuffers = false;
+      _scheduleDrawablesUpdate(delayed: true);
       notifyListeners();
     }
   }
@@ -207,19 +239,18 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
           _lastCanvasSize!,
           Offset(_lastCanvasSize!.width / 2, _lastCanvasSize!.height / 2),
           zoomIn);
-      updateDrawables();
-      notifyListeners();
     }
   }
 
   void zoomOnLocation(Offset locationOnCanvas, bool zoomIn) {
     if (_lastCanvasSize != null) {
       _zoom(_lastCanvasSize!, locationOnCanvas, zoomIn);
-      notifyListeners();
     }
   }
 
   void _zoom(Size canvasSize, Offset locationOnCanvas, bool zoomIn) {
+    _drawBuffers = false;
+    _cancelDrawablesUpdate();
     _rebuildSimplifiedGeometry = true;
     double zoom = 1;
     if (zoomIn) {
@@ -234,6 +265,9 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
     _translateY = locationOnCanvas.dy + (refInWorld.dy * newScale);
     _scale = _scale * zoom;
     _buildMatrices4();
+    // schedule the drawables build
+    _scheduleDrawablesUpdate(delayed: true);
+    notifyListeners();
   }
 
   void _buildMatrices4() {
@@ -244,8 +278,7 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
     _canvasToWorld = Matrix4.inverted(_worldToCanvas);
   }
 
-  @internal
-  void cancelDrawablesUpdate() {
+  void _cancelDrawablesUpdate() {
     if (_updateState != _UpdateState.stopped) {
       _updateState = _UpdateState.canceling;
     }
@@ -259,15 +292,36 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
     }
   }
 
-  @internal
-  void updateDrawables() {
-    if (_lastCanvasSize != null) {
-      _clearBuffers();
-      if (_updateState == _UpdateState.stopped) {
-        _updateDrawables();
-      } else {
-        _updateState = _UpdateState.restarting;
+  int _nextDrawablesUpdateTicket() {
+    _currentDrawablesUpdateTicket++;
+    if (_currentDrawablesUpdateTicket == 999999) {
+      _currentDrawablesUpdateTicket = 0;
+    }
+    return _currentDrawablesUpdateTicket;
+  }
+
+  void _scheduleDrawablesUpdate({required bool delayed}) {
+    if (delayed) {
+      int ticket = _nextDrawablesUpdateTicket();
+      Future.delayed(Duration(milliseconds: delayToRefreshResolution),
+          () => _startDrawablesUpdate(ticket: ticket));
+    } else {
+      Future.microtask(
+          () => _startDrawablesUpdate(ticket: _currentDrawablesUpdateTicket));
+    }
+  }
+
+  void _startDrawablesUpdate({required int ticket}) {
+    if (_currentDrawablesUpdateTicket == ticket) {
+      if (_lastCanvasSize != null) {
+        _clearBuffers();
+        if (_updateState == _UpdateState.stopped) {
+          _updateDrawables();
+        } else {
+          _updateState = _UpdateState.restarting;
+        }
       }
+      _drawBuffers = true;
     }
   }
 

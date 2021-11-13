@@ -17,9 +17,8 @@ import 'package:vector_map/src/vector_map_controller.dart';
 
 /// Painter for [VectorMap].
 class MapPainter extends CustomPainter {
-  MapPainter({required this.controller, required this.drawBuffers});
+  MapPainter({required this.controller});
   final VectorMapController controller;
-  final bool drawBuffers;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -33,7 +32,7 @@ class MapPainter extends CustomPainter {
         layerIndex++) {
       DrawableLayer drawableLayer = controller.getDrawableLayer(layerIndex);
       for (DrawableLayerChunk chunk in drawableLayer.chunks) {
-        if (drawBuffers && chunk.buffer != null) {
+        if (controller.drawBuffers && chunk.buffer != null) {
           canvas.drawImage(chunk.buffer!, Offset.zero, Paint());
         } else {
           // resizing, panning or zooming

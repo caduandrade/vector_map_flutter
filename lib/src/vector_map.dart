@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
@@ -63,9 +61,8 @@ class _PanStart {
 /// [VectorMap] state.
 class _VectorMapState extends State<VectorMap> {
   VectorMapController _controller = VectorMapController();
-  bool _drawBuffers = false;
+
   _PanStart? _panStart;
-  int _currentDrawablesUpdateTicket = 0;
 
   @override
   void initState() {
@@ -100,33 +97,6 @@ class _VectorMapState extends State<VectorMap> {
   }
 
   bool get _onPan => _panStart != null;
-
-  void _nextDrawablesUpdateTicket() {
-    _currentDrawablesUpdateTicket++;
-    if (_currentDrawablesUpdateTicket == 999999) {
-      _currentDrawablesUpdateTicket = 0;
-    }
-  }
-
-  void _scheduleDrawablesUpdate({required bool delayed}) {
-    if (delayed) {
-      _nextDrawablesUpdateTicket();
-      int ticket = _currentDrawablesUpdateTicket;
-      Future.delayed(
-          Duration(milliseconds: _controller.delayToRefreshResolution),
-          () => _startDrawablesUpdate(ticket: ticket));
-    } else {
-      Future.microtask(
-          () => _startDrawablesUpdate(ticket: _currentDrawablesUpdateTicket));
-    }
-  }
-
-  void _startDrawablesUpdate({required int ticket}) {
-    if (mounted && _currentDrawablesUpdateTicket == ticket) {
-      _controller.updateDrawables();
-      _drawBuffers = true;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -185,21 +155,9 @@ class _VectorMapState extends State<VectorMap> {
 
       Size canvasSize = Size(constraints.maxWidth, constraints.maxHeight);
 
-      if (_controller.lastCanvasSize != canvasSize) {
-        bool first = _controller.setCanvasSize(canvasSize);
-        _drawBuffers = false;
-        _controller.cancelDrawablesUpdate();
-        if (first) {
-          // first build without delay
-          _scheduleDrawablesUpdate(delayed: false);
-        } else {
-          // schedule the drawables build
-          _scheduleDrawablesUpdate(delayed: true);
-        }
-      }
+      _controller.setCanvasSize(canvasSize);
 
-      MapPainter mapPainter =
-          MapPainter(controller: _controller, drawBuffers: _drawBuffers);
+      MapPainter mapPainter = MapPainter(controller: _controller);
       Widget content = CustomPaint(painter: mapPainter, child: Container());
       content = _wrapWithHoverListener(content);
       if (_controller.mode == VectorMapMode.panAndZoom) {
@@ -233,10 +191,7 @@ class _VectorMapState extends State<VectorMap> {
     return Listener(
         child: content,
         onPointerDown: (event) {
-          // cancel running update
-          _controller.cancelDrawablesUpdate();
-          // cancel scheduled update
-          _nextDrawablesUpdateTicket();
+          _controller.notifyPanMode(start: true);
           if (_controller.highlight != null) {
             _updateHover(null);
           }
@@ -245,12 +200,10 @@ class _VectorMapState extends State<VectorMap> {
                 mouseLocation: event.localPosition,
                 translateX: _controller.translateX,
                 translateY: _controller.translateY);
-            _drawBuffers = false;
           });
         },
         onPointerMove: (event) {
           if (_panStart != null) {
-            _drawBuffers = false;
             double diffX = _panStart!.mouseLocation.dx - event.localPosition.dx;
             double diffY = _panStart!.mouseLocation.dy - event.localPosition.dy;
             _controller.translate(
@@ -258,10 +211,9 @@ class _VectorMapState extends State<VectorMap> {
           }
         },
         onPointerUp: (event) {
+          _controller.notifyPanMode(start: false);
           setState(() {
             _panStart = null;
-            // schedule the drawables build
-            _scheduleDrawablesUpdate(delayed: true);
           });
           _onHover(
               localPosition: event.localPosition,
@@ -269,12 +221,8 @@ class _VectorMapState extends State<VectorMap> {
         },
         onPointerSignal: (event) {
           if (event is PointerScrollEvent) {
-            _drawBuffers = false;
-            _controller.cancelDrawablesUpdate();
             bool zoomIn = event.scrollDelta.dy < 0;
             _controller.zoomOnLocation(event.localPosition, zoomIn);
-            // schedule the drawables build
-            _scheduleDrawablesUpdate(delayed: true);
           }
         });
   }
