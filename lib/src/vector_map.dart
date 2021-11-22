@@ -48,23 +48,24 @@ class VectorMap extends StatefulWidget {
   State<StatefulWidget> createState() => _VectorMapState();
 }
 
-/// Holds the initial mouse location and matrix translate from the start of pan.
-class _PanStart {
-  _PanStart(
-      {required this.mouseLocation,
+/// Holds the initial mouse location and matrix translate from the pan.
+class _Pan {
+  _Pan(
+      {required this.initialMouseLocation,
       required this.translateX,
       required this.translateY});
 
-  final Offset mouseLocation;
+  final Offset initialMouseLocation;
   final translateX;
   final translateY;
+  bool running = false;
 }
 
 /// [VectorMap] state.
 class _VectorMapState extends State<VectorMap> {
   VectorMapController _controller = VectorMapController();
 
-  _PanStart? _panStart;
+  _Pan? _pan;
 
   @override
   void initState() {
@@ -98,7 +99,7 @@ class _VectorMapState extends State<VectorMap> {
     });
   }
 
-  bool get _onPan => _panStart != null;
+  bool get _onPan => _pan != null && _pan!.running;
 
   @override
   Widget build(BuildContext context) {
@@ -193,29 +194,34 @@ class _VectorMapState extends State<VectorMap> {
     return Listener(
         child: content,
         onPointerDown: (event) {
-          _controller.notifyPanMode(start: true);
-          if (_controller.highlight != null) {
-            _updateHover(null);
-          }
-          setState(() {
-            _panStart = _PanStart(
-                mouseLocation: event.localPosition,
-                translateX: _controller.translateX,
-                translateY: _controller.translateY);
-          });
+          _pan = _Pan(
+              initialMouseLocation: event.localPosition,
+              translateX: _controller.translateX,
+              translateY: _controller.translateY);
         },
         onPointerMove: (event) {
-          if (_panStart != null) {
-            double diffX = _panStart!.mouseLocation.dx - event.localPosition.dx;
-            double diffY = _panStart!.mouseLocation.dy - event.localPosition.dy;
+          if (_pan != null) {
+            if (_pan!.running == false) {
+              _controller.notifyPanMode(start: true);
+              if (_controller.highlight != null) {
+                _updateHover(null);
+              }
+              setState(() {
+                _pan!.running = true;
+              });
+            }
+            double diffX =
+                _pan!.initialMouseLocation.dx - event.localPosition.dx;
+            double diffY =
+                _pan!.initialMouseLocation.dy - event.localPosition.dy;
             _controller.translate(
-                _panStart!.translateX - diffX, _panStart!.translateY - diffY);
+                _pan!.translateX - diffX, _pan!.translateY - diffY);
           }
         },
         onPointerUp: (event) {
           _controller.notifyPanMode(start: false);
           setState(() {
-            _panStart = null;
+            _pan = null;
           });
           _onHover(
               localPosition: event.localPosition,
