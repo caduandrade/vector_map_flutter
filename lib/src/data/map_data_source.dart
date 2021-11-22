@@ -73,8 +73,8 @@ class MapDataSource {
   /// The [keys] argument defines which properties must be loaded.
   /// The [parseToNumber] argument defines which properties will have
   /// numeric values in quotes parsed to numbers.
-  static Future<MapDataSource> geoJSON(
-      {required String geojson,
+  static Future<MapDataSource> geoJson(
+      {required String geoJson,
       String? labelKey,
       List<String>? keys,
       List<String>? parseToNumber,
@@ -87,7 +87,7 @@ class MapDataSource {
         colorKey: colorKey,
         colorValueFormat: colorValueFormat);
 
-    List<MapFeature> features = await reader.read(geojson);
+    List<MapFeature> features = await reader.read(geoJson);
     return fromFeatures(features);
   }
 

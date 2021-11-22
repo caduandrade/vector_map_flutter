@@ -1,7 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:vector_map/src/data/map_layer.dart';
 import 'package:vector_map/src/drawable/drawable_layer.dart';
-import 'package:vector_map/src/vector_map_controller.dart';
 import 'package:vector_map/src/vector_map_mode.dart';
 
 class DurationDebugger extends ChangeNotifier {
@@ -88,8 +87,7 @@ class MapDebugger extends ChangeNotifier {
 }
 
 class MapDebuggerWidget extends StatefulWidget {
-  MapDebuggerWidget(VectorMapController? controller)
-      : this.debugger = controller?.debugger;
+  MapDebuggerWidget(this.debugger);
 
   final MapDebugger? debugger;
 
@@ -133,23 +131,27 @@ class MapDebuggerState extends State<MapDebuggerWidget> {
 
     return SingleChildScrollView(
         controller: _controller,
-        child: Column(children: [
-          _title('Quantities'),
-          _int('Layers: ', d._layersCount),
-          _int(' • Chunks: ', d._chunksCount),
-          _int('Features: ', d._featuresCount),
-          _int('Original points: ', d._originalPointsCount),
-          _int('Simplified points: ', d._simplifiedPointsCount),
-          _title('Last durations'),
-          _milliseconds('Drawables build: ', multiResolutionDuration),
-          _milliseconds(' • Simplified geometries: ', drawableBuildDuration),
-          _milliseconds(' • Buffers: ', bufferBuildDuration),
-          _title('Cursor location'),
-          _offset('Canvas: ', d._mouseHoverCanvas),
-          _offset('World: ', d._mouseHoverWorld),
-          _title('Configurations'),
-          _item('Mode: ', d._mode != null ? d._mode! : '')
-        ], crossAxisAlignment: CrossAxisAlignment.start));
+        child: Container(
+            child: Column(children: [
+              _title('Quantities'),
+              _int('Layers: ', d._layersCount),
+              _int(' • Chunks: ', d._chunksCount),
+              _int('Features: ', d._featuresCount),
+              _int('Original points: ', d._originalPointsCount),
+              _int('Simplified points: ', d._simplifiedPointsCount),
+              _title('Last durations'),
+              _milliseconds('Drawables build: ', multiResolutionDuration),
+              _milliseconds(
+                  ' • Simplified geometries: ', drawableBuildDuration),
+              _milliseconds(' • Buffers: ', bufferBuildDuration),
+              _title('Cursor location'),
+              _offset('Canvas: ', d._mouseHoverCanvas),
+              _offset('World: ', d._mouseHoverWorld),
+              _title('Configurations'),
+              _item('Mode: ', d._mode != null ? d._mode! : '')
+            ], crossAxisAlignment: CrossAxisAlignment.start),
+            width: 200,
+            padding: EdgeInsets.all(8)));
   }
 
   Widget _title(String text) {
@@ -210,8 +212,13 @@ class MapDebuggerState extends State<MapDebuggerWidget> {
   }
 
   void _refresh() {
-    setState(() {
-      // rebuild
+    // avoid calling setState during build
+    Future.delayed(Duration.zero, () {
+      if (mounted) {
+        setState(() {
+          // rebuild
+        });
+      }
     });
   }
 }

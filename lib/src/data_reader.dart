@@ -5,7 +5,7 @@ import 'package:vector_map/src/data/map_feature.dart';
 import 'package:vector_map/src/error.dart';
 
 /// Generic GeoJSON reader.
-class _GeoJSONReaderBase {
+class _GeoJsonReaderBase {
   void _checkKeyOn(Map<String, dynamic> map, String key) {
     if (map.containsKey(key) == false) {
       throw VectorMapError.keyNotFound(key);
@@ -145,7 +145,7 @@ class _Properties {
 /// The [keys] argument defines which properties must be loaded.
 /// The [parseToNumber] argument defines which properties will have numeric
 /// values in quotes parsed to numbers.
-class MapFeatureReader extends _GeoJSONReaderBase {
+class MapFeatureReader extends _GeoJsonReaderBase {
   MapFeatureReader(
       {this.labelKey,
       this.keys,
@@ -161,8 +161,8 @@ class MapFeatureReader extends _GeoJSONReaderBase {
   final String? colorKey;
   final ColorValueFormat colorValueFormat;
 
-  Future<List<MapFeature>> read(String geojson) async {
-    Map<String, dynamic> map = json.decode(geojson);
+  Future<List<MapFeature>> read(String geoJson) async {
+    Map<String, dynamic> map = json.decode(geoJson);
     await _readMap(map);
     return _list;
   }
@@ -239,11 +239,11 @@ class MapFeatureReader extends _GeoJSONReaderBase {
 }
 
 /// GeoJSON geometry reader.
-class MapGeometryReader extends _GeoJSONReaderBase {
+class MapGeometryReader extends _GeoJsonReaderBase {
   final List<MapGeometry> _list = [];
 
-  Future<List<MapGeometry>> geoJSON(String geojson) async {
-    Map<String, dynamic> map = json.decode(geojson);
+  Future<List<MapGeometry>> geoJson(String geoJson) async {
+    Map<String, dynamic> map = json.decode(geoJson);
     await _readMap(map);
     return _list;
   }

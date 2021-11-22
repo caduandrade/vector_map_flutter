@@ -28,11 +28,10 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
       this.contourThickness = 1,
       this.delayToRefreshResolution = 1000,
       VectorMapMode mode = VectorMapMode.panAndZoom,
-      bool debuggerEnabled = false,
+      this.debugger,
       this.maxScale = 30000,
       this.minScale = 0.1})
-      : this.debugger = debuggerEnabled ? MapDebugger() : null,
-        this._mode = mode,
+      : this._mode = mode,
         this._scale = minScale {
     layers?.forEach((layer) => _addLayer(layer));
     _afterLayersChange();
@@ -107,7 +106,7 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
   void addLayer(MapLayer layer) {
     _addLayer(layer);
     _afterLayersChange();
-    //TODO notify?
+    notifyListeners();
   }
 
   void _addLayer(MapLayer layer) {
