@@ -28,6 +28,7 @@ class VectorMap extends StatefulWidget {
       this.hoverListener,
       this.clickListener,
       this.addons,
+      this.placeHolder,
       this.lowQualityMode})
       : super(key: key);
 
@@ -35,6 +36,7 @@ class VectorMap extends StatefulWidget {
   final Color? color;
   final Color? borderColor;
   final double? borderThickness;
+  final Widget? placeHolder;
   final EdgeInsetsGeometry? layersPadding;
   final HoverRule? hoverRule;
   final HoverListener? hoverListener;
@@ -126,8 +128,8 @@ class _VectorMapState extends State<VectorMap> {
       } else {
         content = mapCanvas;
       }
-    } else {
-      content = Center();
+    } else if (widget.placeHolder != null) {
+      content = widget.placeHolder;
     }
 
     BoxBorder? border;
