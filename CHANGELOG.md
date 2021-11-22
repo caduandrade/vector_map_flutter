@@ -1,6 +1,7 @@
 ## 0.6.0
 
 * Placeholder for map without layers
+* `MapDataSource.geoJSON` renamed to `MapDataSource.geoJson`
 
 ## 0.5.0
 
