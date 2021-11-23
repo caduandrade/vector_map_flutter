@@ -110,7 +110,7 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
   }
 
   void _addLayer(MapLayer layer) {
-    if (_layerIdAndLayer.containsKey(layer.id) == false) {
+    if (_layerIdAndLayer.containsKey(layer.id)) {
       throw VectorMapError('Duplicated layer id: ' + layer.id.toString());
     }
     _layerIdAndLayer[layer.id] = layer;
