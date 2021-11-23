@@ -307,11 +307,9 @@ Used by addons and cursor hover to highlight layer features on the map.
 ### Contour color
 
 ```dart
-    MapLayer layer = MapLayer(
-        dataSource: polygons,
-        highlightTheme: MapHighlightTheme(contourColor: Colors.red));
-
-    VectorMap map = VectorMap(layers: [layer]);
+  MapLayer layer = MapLayer(
+      dataSource: polygons,
+      highlightTheme: MapHighlightTheme(contourColor: Colors.red));
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/hover_contour_v1.png)
@@ -319,16 +317,14 @@ Used by addons and cursor hover to highlight layer features on the map.
 ### Label
 
 ```dart
-    MapDataSource polygons =
-        await MapDataSource.geoJSON(geojson: polygonsGeoJSON, labelKey: 'Name');
+  MapDataSource polygons =
+      await MapDataSource.geoJson(geoJson: geoJson, labelKey: 'Name');
 ```
 
 ```dart
-    MapLayer layer = MapLayer(
-        dataSource: polygons,
-        highlightTheme: MapHighlightTheme(labelVisibility: (feature) => true));
-
-    VectorMap map = VectorMap(layers: [layer]);
+  MapLayer layer = MapLayer(
+      dataSource: polygons,
+      highlightTheme: MapHighlightTheme(labelVisibility: (feature) => true));
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/label_hover_v1.png)
@@ -336,8 +332,7 @@ Used by addons and cursor hover to highlight layer features on the map.
 ## Contour thickness
 
 ```dart
-    VectorMap map = VectorMap(
-        layers: [MapLayer(dataSource: polygons)], contourThickness: 3);
+  VectorMapController _controller = VectorMapController(contourThickness: 3);
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/contour_thickness_v1.png)
@@ -347,23 +342,25 @@ Used by addons and cursor hover to highlight layer features on the map.
 ### Enabling hover by property value
 
 ```dart
-    MapDataSource polygons =
-        await MapDataSource.geoJSON(geojson: polygonsGeoJSON, keys: ['Seq']);
+  MapDataSource polygons =
+      await MapDataSource.geoJson(geoJson: geoJson, keys: ['Seq']);
 ```
 
 ```dart
-    // coloring only the 'Darwin' feature
-    MapLayer layer = MapLayer(
-        dataSource: polygons,
-        theme: MapValueTheme(key: 'Seq', colors: {4: Colors.green}),
-        highlightTheme: MapHighlightTheme(color: Colors.green[900]!));
+  // coloring only the 'Darwin' feature
+  MapLayer layer = MapLayer(
+      dataSource: polygons,
+      theme: MapValueTheme(key: 'Seq', colors: {4: Colors.green}),
+      highlightTheme: MapHighlightTheme(color: Colors.green[900]!));
+```
 
-    // enabling hover only for the 'Darwin' feature
-    VectorMap map = VectorMap(
-        layers: [layer],
-        hoverRule: (feature) {
-          return feature.getValue('Seq') == 4;
-        });
+```dart
+  // enabling hover only for the 'Darwin' feature
+  VectorMap map = VectorMap(
+      controller: _controller,
+      hoverRule: (feature) {
+        return feature.getValue('Seq') == 4;
+      });
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/enable_hover_by_value_v1.gif)
@@ -371,43 +368,32 @@ Used by addons and cursor hover to highlight layer features on the map.
 ## Cursor hover listener
 
 ```dart
-    MapLayer layer = MapLayer(
-        dataSource: polygons,
-        highlightTheme: MapHighlightTheme(color: Colors.grey[700]));
-
-    VectorMap map = VectorMap(
-        layers: [layer],
-        hoverListener: (MapFeature? feature) {
-          if (feature != null) {
-            int id = feature.id;
-            print('Hover - Feature id: $id');
-          }
-        });
+  VectorMap map = VectorMap(
+      controller: _controller,
+      hoverListener: (MapFeature? feature) {
+        if (feature != null) {
+          int id = feature.id;
+        }
+      });
 ```
 
 ## Layers
 
-Loading multiple data sources:
-
 ```dart
-    MapDataSource polygons =
-        await MapDataSource.geoJSON(geojson: polygonsGeoJSON);
-    MapDataSource points = await MapDataSource.geoJSON(geojson: pointsGeoJSON);
-```
+  MapHighlightTheme highlightTheme = MapHighlightTheme(color: Colors.green);
 
-Creating a map with multiple layers:
+  MapDataSource polygons =
+      await MapDataSource.geoJson(geoJson: polygonsGeoJson);
+  MapLayer polygonLayer =
+      MapLayer(dataSource: polygons, highlightTheme: highlightTheme);
+  _controller.addLayer(polygonLayer);
 
-```dart
-    MapHighlightTheme highlightTheme = MapHighlightTheme(color: Colors.green);
-
-    MapLayer polygonsLayer =
-        MapLayer(dataSource: polygons, highlightTheme: highlightTheme);
-    MapLayer pointsLayer = MapLayer(
-        dataSource: points,
-        theme: MapTheme(color: Colors.black),
-        highlightTheme: highlightTheme);
-
-    VectorMap map = VectorMap(layers: [polygonsLayer, pointsLayer]);
+  MapDataSource points = await MapDataSource.geoJson(geoJson: pointsGeoJson);
+  MapLayer pointsLayer = MapLayer(
+      dataSource: points,
+      theme: MapTheme(color: Colors.black),
+      highlightTheme: highlightTheme);
+  _controller.addLayer(pointsLayer);
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/multiple_layers_v1.gif)
@@ -417,31 +403,31 @@ Creating a map with multiple layers:
 Allows you to draw the contour over all layers
 
 ```dart
-    MapDataSource dataSource1 = MapDataSource.geometries([
-      MapPolygon.coordinates([2, 3, 4, 5, 6, 3, 4, 1, 2, 3])
-    ]);
-    MapDataSource dataSource2 = MapDataSource.geometries([
-      MapPolygon.coordinates([0, 2, 2, 4, 4, 2, 2, 0, 0, 2]),
-      MapPolygon.coordinates([4, 2, 6, 4, 8, 2, 6, 0, 4, 2])
-    ]);
+  MapDataSource dataSource1 = MapDataSource.geometries([
+    MapPolygon.coordinates([2, 3, 4, 5, 6, 3, 4, 1, 2, 3])
+  ]);
+  MapDataSource dataSource2 = MapDataSource.geometries([
+    MapPolygon.coordinates([0, 2, 2, 4, 4, 2, 2, 0, 0, 2]),
+    MapPolygon.coordinates([4, 2, 6, 4, 8, 2, 6, 0, 4, 2])
+  ]);
 ```
 
 Overlay disabled:
 
 ```dart
-    MapHighlightTheme highlightTheme =
-        MapHighlightTheme(color: Colors.black, contourColor: Colors.black);
+  MapHighlightTheme highlightTheme =
+      MapHighlightTheme(color: Colors.black, contourColor: Colors.black);
 
-    MapLayer layer1 = MapLayer(
-        dataSource: dataSource1,
-        theme: MapTheme(color: Colors.yellow, contourColor: Colors.black),
-        highlightTheme: highlightTheme);
-    MapLayer layer2 = MapLayer(
-        dataSource: dataSource2,
-        theme: MapTheme(color: Colors.green, contourColor: Colors.black),
-        highlightTheme: highlightTheme);
+  MapLayer layer1 = MapLayer(
+      dataSource: dataSource1,
+      theme: MapTheme(color: Colors.yellow, contourColor: Colors.black),
+      highlightTheme: highlightTheme);
+  MapLayer layer2 = MapLayer(
+      dataSource: dataSource2,
+      theme: MapTheme(color: Colors.green, contourColor: Colors.black),
+      highlightTheme: highlightTheme);
 
-    VectorMap map = VectorMap(layers: [layer1, layer2]);
+  _controller = VectorMapController(layers: [layer1, layer2]);
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/overlay_contour_off_v1.gif)
@@ -449,20 +435,20 @@ Overlay disabled:
 Overlay enabled:
 
 ```dart
-    MapLayer layer1 = MapLayer(
-        dataSource: dataSource1,
-        theme: MapTheme(color: Colors.yellow, contourColor: Colors.black),
-        highlightTheme: MapHighlightTheme(
-            color: Colors.black,
-            contourColor: Colors.black,
-            overlayContour: true));
-    MapLayer layer2 = MapLayer(
-        dataSource: dataSource2,
-        theme: MapTheme(color: Colors.green, contourColor: Colors.black),
-        highlightTheme:
-            MapHighlightTheme(color: Colors.black, contourColor: Colors.black));
+  MapLayer layer1 = MapLayer(
+      dataSource: dataSource1,
+      theme: MapTheme(color: Colors.yellow, contourColor: Colors.black),
+      highlightTheme: MapHighlightTheme(
+          color: Colors.black,
+          contourColor: Colors.black,
+          overlayContour: true));
+  MapLayer layer2 = MapLayer(
+      dataSource: dataSource2,
+      theme: MapTheme(color: Colors.green, contourColor: Colors.black),
+      highlightTheme:
+          MapHighlightTheme(color: Colors.black, contourColor: Colors.black));
 
-    VectorMap map = VectorMap(layers: [layer1, layer2]);
+  _controller = VectorMapController(layers: [layer1, layer2]);
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/overlay_contour_on_v1.gif)
