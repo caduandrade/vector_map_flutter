@@ -704,7 +704,7 @@ Building the debugger widget
   MapDebuggerWidget debuggerWidget = MapDebuggerWidget(debugger);
 ```
 
-![](https://caduandrade.github.io/vector_map/debugger_v1.png)
+![](https://caduandrade.github.io/vector_map_flutter/debugger_v1.png)
 
 ## ToDo
 
