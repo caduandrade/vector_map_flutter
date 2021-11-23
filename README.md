@@ -43,6 +43,9 @@
       * [Highlight](#gradient-legend---highlight)
       * [Customization](#gradient-legend---customization)
 * [Click listener](#click-listener)
+* Mode
+  * [Auto fit](#auto-fit)
+  * [Pan and zoom](#pan-and-zoom)
 * [Debugger](#debugger)
 
 ## About the examples
