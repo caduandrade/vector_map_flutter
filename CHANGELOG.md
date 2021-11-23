@@ -2,6 +2,9 @@
 
 * Placeholder for map without layers
 * `MapDataSource.geoJSON` renamed to `MapDataSource.geoJson`
+* `contourThickness` parameter moved from `VectorMap` to `VectorMapController`
+* `VectorMapController.getLayer` renamed to `VectorMapController.getLayerByIndex`
+* New method: `VectorMapController.getLayerById`
 
 ## 0.5.0
 

@@ -55,7 +55,7 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
 
   _UpdateState _updateState = _UpdateState.stopped;
 
-  final HashSet<int> _drawableLayerIds = HashSet<int>();
+  final HashMap<int, MapLayer> _layerIdAndLayer = HashMap<int, MapLayer>();
   final List<DrawableLayer> _drawableLayers = [];
 
   bool _rebuildSimplifiedGeometry = true;
@@ -110,9 +110,10 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
   }
 
   void _addLayer(MapLayer layer) {
-    if (_drawableLayerIds.add(layer.id) == false) {
+    if (_layerIdAndLayer.containsKey(layer.id) == false) {
       throw VectorMapError('Duplicated layer id: ' + layer.id.toString());
     }
+    _layerIdAndLayer[layer.id] = layer;
     _drawableLayers.add(DrawableLayer(layer));
   }
 
@@ -132,11 +133,19 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
     return _drawableLayers.isNotEmpty;
   }
 
-  MapLayer getLayer(int index) {
-    if (index > 0 && _drawableLayers.length < index) {
+  MapLayer getLayerByIndex(int index) {
+    if (index >= 0 && index < _drawableLayers.length) {
       return _drawableLayers[index].layer;
     }
     throw VectorMapError('Invalid layer index: $index');
+  }
+
+  MapLayer getLayerById(int id) {
+    MapLayer? layer = _layerIdAndLayer[id];
+    if (layer == null) {
+      throw VectorMapError('Invalid layer id: $id');
+    }
+    return layer;
   }
 
   bool get hoverDrawable {
