@@ -83,8 +83,7 @@ Name | AN
 Reading the geometries only.
 
 ```dart
-    MapDataSource polygons =
-        await MapDataSource.geoJSON(geojson: polygonsGeoJSON);
+  MapDataSource polygons = await MapDataSource.geoJson(geoJson: geoJson);
 ```
 
 ## Reading GeoJSON properties
@@ -94,19 +93,27 @@ The `parseToNumber` argument defines which properties will have numeric values i
 The `labelKey` defines which property will be used to display its values as feature labels.
 
 ```dart
-    MapDataSource polygons = await MapDataSource.geoJSON(
-        geojson: polygonsGeoJSON,
-        keys: ['Seq', 'Rnd'],
-        parseToNumber: ['Rnd'],
-        labelKey: 'Rnd');
+  MapDataSource polygons = await MapDataSource.geoJson(
+      geoJson: geoJson,
+      keys: ['Seq', 'Rnd'],
+      parseToNumber: ['Rnd'],
+      labelKey: 'Rnd');
 ```
 
 ## Creating the Widget
 
 ```dart
-    MapLayer layer = MapLayer(dataSource: polygons);
+  VectorMapController _controller = VectorMapController();
+```
 
-    VectorMap map = VectorMap(layers: [layer]);
+```dart
+  MapDataSource polygons = await MapDataSource.geoJson(geoJson: geoJson);
+  MapLayer layer = MapLayer(dataSource: polygons);
+  _controller.addLayer(layer);
+```
+
+```dart
+  VectorMap map = VectorMap(controller: _controller);
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/get_started_v1.png)
@@ -115,11 +122,9 @@ The `labelKey` defines which property will be used to display its values as feat
 ## Theme
 
 ```dart
-    MapLayer layer = MapLayer(
-        dataSource: polygons,
-        theme: MapTheme(color: Colors.yellow, contourColor: Colors.red));
-
-    VectorMap map = VectorMap(layers: [layer]);
+  MapLayer layer = MapLayer(
+      dataSource: polygons,
+      theme: MapTheme(color: Colors.yellow, contourColor: Colors.red));
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/default_colors_v1.png)
@@ -127,27 +132,22 @@ The `labelKey` defines which property will be used to display its values as feat
 ### Label visibility
 
 ```dart
-    MapDataSource polygons =
-        await MapDataSource.geoJSON(geojson: polygonsGeoJSON, labelKey: 'Name');
+  MapDataSource polygons =
+      await MapDataSource.geoJson(geoJson: geoJson, labelKey: 'Name');
 ```
 
 ```dart
-    MapLayer layer = MapLayer(
-        dataSource: polygons,
-        theme: MapTheme(labelVisibility: (feature) => true));
-
-    VectorMap map = VectorMap(layers: [layer]);
+  MapLayer layer = MapLayer(
+      dataSource: polygons,
+      theme: MapTheme(labelVisibility: (feature) => true));
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/label_visible_v1.png)
 
 ```dart
-    MapLayer layer = MapLayer(
-        dataSource: polygons,
-        theme:
-            MapTheme(labelVisibility: (feature) => feature.label == 'Darwin'));
-
-    VectorMap map = VectorMap(layers: [layer]);
+  MapLayer layer = MapLayer(
+      dataSource: polygons,
+      theme: MapTheme(labelVisibility: (feature) => feature.label == 'Darwin'));
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/label_rule_v1.png)
@@ -155,25 +155,23 @@ The `labelKey` defines which property will be used to display its values as feat
 ### Label style
 
 ```dart
-    MapLayer layer = MapLayer(
-        dataSource: polygons,
-        theme: MapTheme(
-            labelVisibility: (feature) => true,
-            labelStyleBuilder: (feature, featureColor, labelColor) {
-              if (feature.label == 'Darwin') {
-                return TextStyle(
-                  color: labelColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 11,
-                );
-              }
+  MapLayer layer = MapLayer(
+      dataSource: polygons,
+      theme: MapTheme(
+          labelVisibility: (feature) => true,
+          labelStyleBuilder: (feature, featureColor, labelColor) {
+            if (feature.label == 'Darwin') {
               return TextStyle(
                 color: labelColor,
+                fontWeight: FontWeight.bold,
                 fontSize: 11,
               );
-            }));
-
-    VectorMap map = VectorMap(layers: [layer]);
+            }
+            return TextStyle(
+              color: labelColor,
+              fontSize: 11,
+            );
+          }));
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/label_style_v1.png)
