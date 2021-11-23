@@ -466,22 +466,19 @@ Default marker.
 Sets a fixed size radius.
 
 ```dart
-    MapDataSource polygons =
-        await MapDataSource.geoJSON(geojson: polygonsGeoJSON);
-    MapDataSource points =
-        await MapDataSource.geoJSON(geojson: pointsGeoJSON, keys: ['AN']);
-```
+  MapDataSource polygons =
+      await MapDataSource.geoJson(geoJson: polygonsGeoJson);
+  MapLayer polygonsLayer = MapLayer(dataSource: polygons);
+  _controller.addLayer(polygonsLayer);
 
-```dart
-    MapLayer polygonsLayer = MapLayer(dataSource: polygons);
-
-    MapLayer pointsLayer = MapLayer(
-        dataSource: points,
-        theme: MapTheme(
-            color: Colors.black,
-            markerBuilder: CircleMakerBuilder.fixed(radius: 15)));
-
-    VectorMap map = VectorMap(layers: [polygonsLayer, pointsLayer]);
+  MapDataSource points = await MapDataSource.geoJson(
+      geoJson: pointsGeoJson, keys: ['AN'], labelKey: 'AN');
+  MapLayer pointsLayer = MapLayer(
+      dataSource: points,
+      theme: MapTheme(
+          color: Colors.black,
+          markerBuilder: CircleMakerBuilder.fixed(radius: 15)));
+  _controller.addLayer(pointsLayer);
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/circle_marker_fixed_v1.png)
@@ -491,24 +488,21 @@ Sets a fixed size radius.
 Maps property values to radius values.
 
 ```dart
-    MapDataSource polygons =
-        await MapDataSource.geoJSON(geojson: polygonsGeoJSON);
-    MapDataSource points = await MapDataSource.geoJSON(
-        geojson: pointsGeoJSON, keys: ['AN'], labelKey: 'AN');
-```
+  MapDataSource polygons =
+      await MapDataSource.geoJson(geoJson: polygonsGeoJson);
+  MapLayer polygonsLayer = MapLayer(dataSource: polygons);
+  _controller.addLayer(polygonsLayer);
 
-```dart
-    MapLayer polygonsLayer = MapLayer(dataSource: polygons);
-
-    MapLayer pointsLayer = MapLayer(
-        dataSource: points,
-        theme: MapTheme(
-            color: Colors.black,
-            labelVisibility: (feature) => true,
-            markerBuilder: CircleMakerBuilder.map(
-                key: 'AN', radiuses: {41: 25, 22: 20, 14: 10, 10: 10})));
-
-    VectorMap map = VectorMap(layers: [polygonsLayer, pointsLayer]);
+  MapDataSource points = await MapDataSource.geoJson(
+      geoJson: pointsGeoJson, keys: ['AN'], labelKey: 'AN');
+  MapLayer pointsLayer = MapLayer(
+      dataSource: points,
+      theme: MapTheme(
+          color: Colors.black,
+          labelVisibility: (feature) => true,
+          markerBuilder: CircleMakerBuilder.map(
+              key: 'AN', radiuses: {41: 25, 22: 20, 14: 10, 10: 10})));
+  _controller.addLayer(pointsLayer);
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/circle_marker_map_v2.png)
@@ -518,23 +512,20 @@ Maps property values to radius values.
 Uses the property values as radius values.
 
 ```dart
-    MapDataSource polygons =
-        await MapDataSource.geoJSON(geojson: polygonsGeoJSON);
-    MapDataSource points = await MapDataSource.geoJSON(
-        geojson: pointsGeoJSON, keys: ['AN'], labelKey: 'AN');
-```
+  MapDataSource polygons =
+      await MapDataSource.geoJson(geoJson: polygonsGeoJson);
+  MapLayer polygonsLayer = MapLayer(dataSource: polygons);
+  _controller.addLayer(polygonsLayer);
 
-```dart
-    MapLayer polygonsLayer = MapLayer(dataSource: polygons);
-
-    MapLayer pointsLayer = MapLayer(
-        dataSource: points,
-        theme: MapTheme(
-            color: Colors.black,
-            labelVisibility: (feature) => true,
-            markerBuilder: CircleMakerBuilder.property(key: 'AN')));
-
-    VectorMap map = VectorMap(layers: [polygonsLayer, pointsLayer]);
+  MapDataSource points = await MapDataSource.geoJson(
+      geoJson: pointsGeoJson, keys: ['AN'], labelKey: 'AN');
+  MapLayer pointsLayer = MapLayer(
+      dataSource: points,
+      theme: MapTheme(
+          color: Colors.black,
+          labelVisibility: (feature) => true,
+          markerBuilder: CircleMakerBuilder.property(key: 'AN')));
+  _controller.addLayer(pointsLayer);
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/circle_marker_property_v2.png)
@@ -542,31 +533,28 @@ Uses the property values as radius values.
 #### Radius in proportion to property values
 
 ```dart
-    MapDataSource polygons =
-        await MapDataSource.geoJSON(geojson: polygonsGeoJSON);
-    MapDataSource points = await MapDataSource.geoJSON(
-        geojson: pointsGeoJSON, keys: ['AN'], labelKey: 'AN');
-```
+  MapDataSource polygons =
+      await MapDataSource.geoJson(geoJson: polygonsGeoJson);
+  MapLayer polygonsLayer = MapLayer(dataSource: polygons);
+  _controller.addLayer(polygonsLayer);
 
-```dart
-    MapLayer polygonsLayer = MapLayer(dataSource: polygons);
-
-    MapLayer pointsLayer = MapLayer(
-        dataSource: points,
-        theme: MapTheme(
-            color: Colors.black,
-            labelVisibility: (feature) => true,
-            markerBuilder: CircleMakerBuilder.proportion(
-                key: 'AN', minRadius: 8, maxRadius: 30)));
-
-    VectorMap map = VectorMap(layers: [polygonsLayer, pointsLayer]);
+  MapDataSource points = await MapDataSource.geoJson(
+      geoJson: pointsGeoJson, keys: ['AN'], labelKey: 'AN');
+  MapLayer pointsLayer = MapLayer(
+      dataSource: points,
+      theme: MapTheme(
+          color: Colors.black,
+          labelVisibility: (feature) => true,
+          markerBuilder: CircleMakerBuilder.proportion(
+              key: 'AN', minRadius: 8, maxRadius: 30)));
+  _controller.addLayer(pointsLayer);
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/circle_marker_proportion_v2.png)
 
 ## Addons
 
-Allows to add components on the map.
+Allows adding components on the map.
 
 ### Legend
 
@@ -581,23 +569,31 @@ Available customizations:
 Legend for gradient themes.
 
 ```dart
-    MapDataSource polygons = await MapDataSource.geoJSON(
-        geojson: polygonsGeoJSON, keys: ['Seq'], labelKey: 'Seq');
+  MapDataSource polygons = await MapDataSource.geoJson(
+      geoJson: geoJson, keys: ['Gts'], labelKey: 'Gts');
 ```
 
 ```dart
-    MapLayer layer = MapLayer(
-        dataSource: polygons,
-        theme: MapGradientTheme(
-            contourColor: Colors.white,
-            labelVisibility: (feature) => true,
-            key: 'Gts',
-            colors: [Colors.blue, Colors.yellow, Colors.red]));
+  MapLayer layer = MapLayer(
+      id: 1,
+      dataSource: polygons,
+      theme: MapGradientTheme(
+          contourColor: Colors.white,
+          labelVisibility: (feature) => true,
+          key: 'Gts',
+          colors: [Colors.blue, Colors.yellow, Colors.red]));
+  _controller.addLayer(layer);
+```
 
-    VectorMap map = VectorMap(
-        layersPadding: EdgeInsets.fromLTRB(8, 8, 56, 8),
-        layers: [layer],
-        addons: [GradientLegend(layer: layer)]);
+```dart
+  _addons = [GradientLegend(layer: layer)];
+```
+
+```dart
+  VectorMap map = VectorMap(
+      controller: _controller,
+      layersPadding: EdgeInsets.fromLTRB(8, 8, 56, 8),
+      addons: _addons);
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/gradient_legend_v2.png)
@@ -605,20 +601,16 @@ Legend for gradient themes.
 ##### Gradient legend - Setting min and max values
 
 ```dart
-    MapLayer layer = MapLayer(
-        dataSource: polygons,
-        theme: MapGradientTheme(
-            contourColor: Colors.white,
-            labelVisibility: (feature) => true,
-            key: 'Gts',
-            min: 7500,
-            max: 25000,
-            colors: [Colors.blue, Colors.yellow, Colors.red]));
-
-    VectorMap map = VectorMap(
-        layersPadding: EdgeInsets.fromLTRB(8, 8, 56, 8),
-        layers: [layer],
-        addons: [GradientLegend(layer: layer)]);
+  MapLayer layer = MapLayer(
+      id: 1,
+      dataSource: polygons,
+      theme: MapGradientTheme(
+          contourColor: Colors.white,
+          labelVisibility: (feature) => true,
+          key: 'Gts',
+          min: 7500,
+          max: 25000,
+          colors: [Colors.blue, Colors.yellow, Colors.red]));
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/gradient_legend_min_max_v1.png)
@@ -626,26 +618,17 @@ Legend for gradient themes.
 ##### Gradient legend - Highlight
 
 ```dart
-    MapDataSource polygons = await MapDataSource.geoJSON(
-        geojson: polygonsGeoJSON, keys: ['Seq'], labelKey: 'Seq');
-```
-
-```dart
-    MapLayer layer = MapLayer(
-        dataSource: polygons,
-        theme: MapGradientTheme(
-            contourColor: Colors.white,
-            labelVisibility: (feature) => true,
-            key: 'Gts',
-            min: 7500,
-            max: 25000,
-            colors: [Colors.blue, Colors.yellow, Colors.red]),
-        highlightTheme: MapHighlightTheme(color: Colors.brown[900]));
-
-    VectorMap map = VectorMap(
-        layersPadding: EdgeInsets.fromLTRB(8, 8, 56, 8),
-        layers: [layer],
-        addons: [GradientLegend(layer: layer)]);
+  MapLayer layer = MapLayer(
+      id: 1,
+      dataSource: polygons,
+      theme: MapGradientTheme(
+          contourColor: Colors.white,
+          labelVisibility: (feature) => true,
+          key: 'Gts',
+          min: 7500,
+          max: 25000,
+          colors: [Colors.blue, Colors.yellow, Colors.red]),
+      highlightTheme: MapHighlightTheme(color: Colors.brown[900]));
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/gradient_legend_highlight_fill_v1.png)
@@ -661,29 +644,31 @@ Available customizations:
 * gap between bar and values
 
 ```dart
-    MapDataSource polygons = await MapDataSource.geoJSON(
-        geojson: polygonsGeoJSON, keys: ['Seq'], labelKey: 'Seq');
+  MapLayer layer = MapLayer(
+      id: 1,
+      dataSource: polygons,
+      theme: MapGradientTheme(
+          contourColor: Colors.white,
+          labelVisibility: (feature) => true,
+          key: 'Gts',
+          colors: [Colors.blue, Colors.yellow, Colors.red]));
 ```
 
 ```dart
-    MapLayer layer = MapLayer(
-        dataSource: polygons,
-        theme: MapGradientTheme(
-            contourColor: Colors.white,
-            labelVisibility: (feature) => true,
-            key: 'Gts',
-            colors: [Colors.blue, Colors.yellow, Colors.red]));
+  _addons = [
+    GradientLegend(
+        layer: layer,
+        barBorder: Border.all(width: 2),
+        barHeight: 50,
+        barWidth: 30)
+  ];
+```
 
-    VectorMap map =
-        VectorMap(layersPadding: EdgeInsets.fromLTRB(8, 8, 56, 8), layers: [
-      layer
-    ], addons: [
-      GradientLegend(
-          layer: layer,
-          barBorder: Border.all(width: 2),
-          barHeight: 50,
-          barWidth: 30)
-    ]);
+```dart
+  VectorMap map = VectorMap(
+      controller: _controller,
+      layersPadding: EdgeInsets.fromLTRB(8, 8, 56, 8),
+      addons: _addons);
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/gradient_legend_custom_v1.png)
