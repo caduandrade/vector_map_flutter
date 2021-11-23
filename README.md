@@ -183,27 +183,25 @@ Sets a color for each property value in GeoJSON. If a color is not set, the defa
 Mapping the property key:
 
 ```dart
-    MapDataSource polygons = await MapDataSource.geoJSON(
-        geojson: polygonsGeoJSON, keys: ['Seq'], labelKey: 'Seq');
+  MapDataSource polygons = await MapDataSource.geoJson(
+      geoJson: geoJson, keys: ['Seq'], labelKey: 'Seq');
 ```
 
 Setting the colors for the property values:
 
 ```dart
-    MapLayer layer = MapLayer(
-        dataSource: polygons,
-        theme: MapValueTheme(
-            contourColor: Colors.white,
-            labelVisibility: (feature) => true,
-            key: 'Seq',
-            colors: {
-              2: Colors.green,
-              4: Colors.red,
-              6: Colors.orange,
-              8: Colors.blue
-            }));
-
-    VectorMap map = VectorMap(layers: [layer]);
+  MapLayer layer = MapLayer(
+      dataSource: polygons,
+      theme: MapValueTheme(
+          contourColor: Colors.white,
+          labelVisibility: (feature) => true,
+          key: 'Seq',
+          colors: {
+            2: Colors.green,
+            4: Colors.red,
+            6: Colors.orange,
+            8: Colors.blue
+          }));
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/color_by_value_v2.png)
@@ -215,31 +213,29 @@ The feature color is obtained from the first rule that returns a non-null color.
 Mapping the property key:
 
 ```dart
-    MapDataSource polygons = await MapDataSource.geoJSON(
-        geojson: polygonsGeoJSON, keys: ['Name', 'Seq']);
+  MapDataSource polygons =
+      await MapDataSource.geoJson(geoJson: geoJson, keys: ['Name', 'Seq']);
 ```
 
 Setting the rules:
 
 ```dart
-    MapLayer layer = MapLayer(
-        dataSource: polygons,
-        theme: MapRuleTheme(contourColor: Colors.white, colorRules: [
-          (feature) {
-            String? value = feature.getValue('Name');
-            return value == 'Faraday' ? Colors.red : null;
-          },
-          (feature) {
-            double? value = feature.getDoubleValue('Seq');
-            return value != null && value < 3 ? Colors.green : null;
-          },
-          (feature) {
-            double? value = feature.getDoubleValue('Seq');
-            return value != null && value > 9 ? Colors.blue : null;
-          }
-        ]));
-
-    VectorMap map = VectorMap(layers: [layer]);
+  MapLayer layer = MapLayer(
+      dataSource: polygons,
+      theme: MapRuleTheme(contourColor: Colors.white, colorRules: [
+        (feature) {
+          String? value = feature.getValue('Name');
+          return value == 'Faraday' ? Colors.red : null;
+        },
+        (feature) {
+          double? value = feature.getDoubleValue('Seq');
+          return value != null && value < 3 ? Colors.green : null;
+        },
+        (feature) {
+          double? value = feature.getDoubleValue('Seq');
+          return value != null && value > 9 ? Colors.blue : null;
+        }
+      ]));
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/color_by_rule_v1.png)
@@ -254,20 +250,18 @@ The property must have numeric values.
 Uses the min and max values read from data source.
 
 ```dart
-    MapDataSource polygons = await MapDataSource.geoJSON(
-        geojson: polygonsGeoJSON, keys: ['Seq'], labelKey: 'Seq');
+  MapDataSource polygons = await MapDataSource.geoJson(
+      geoJson: geoJson, keys: ['Seq'], labelKey: 'Seq');
 ```
 
 ```dart
-    MapLayer layer = MapLayer(
-        dataSource: polygons,
-        theme: MapGradientTheme(
-            contourColor: Colors.white,
-            labelVisibility: (feature) => true,
-            key: 'Seq',
-            colors: [Colors.blue, Colors.yellow, Colors.red]));
-
-    VectorMap map = VectorMap(layers: [layer]);
+  MapLayer layer = MapLayer(
+      dataSource: polygons,
+      theme: MapGradientTheme(
+          contourColor: Colors.white,
+          labelVisibility: (feature) => true,
+          key: 'Seq',
+          colors: [Colors.blue, Colors.yellow, Colors.red]));
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/gradient_auto_v2.png)
@@ -278,22 +272,20 @@ If the `min` value is set, all lower values will be displayed using the first gr
 If the `max` value is set, all higher values will be displayed using the last gradient color.
 
 ```dart
-    MapDataSource polygons = await MapDataSource.geoJSON(
-        geojson: polygonsGeoJSON, keys: ['Seq'], labelKey: 'Seq');
+  MapDataSource polygons = await MapDataSource.geoJson(
+      geoJson: geoJson, keys: ['Seq'], labelKey: 'Seq');
 ```
 
 ```dart
-    MapLayer layer = MapLayer(
-        dataSource: polygons,
-        theme: MapGradientTheme(
-            contourColor: Colors.white,
-            labelVisibility: (feature) => true,
-            key: 'Seq',
-            min: 3,
-            max: 9,
-            colors: [Colors.blue, Colors.yellow, Colors.red]));
-
-    VectorMap map = VectorMap(layers: [layer]);
+  MapLayer layer = MapLayer(
+      dataSource: polygons,
+      theme: MapGradientTheme(
+          contourColor: Colors.white,
+          labelVisibility: (feature) => true,
+          key: 'Seq',
+          min: 3,
+          max: 9,
+          colors: [Colors.blue, Colors.yellow, Colors.red]));
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/gradient_min_max_v2.png)
@@ -305,11 +297,9 @@ Used by addons and cursor hover to highlight layer features on the map.
 ### Color
 
 ```dart
-    MapLayer layer = MapLayer(
-        dataSource: polygons,
-        highlightTheme: MapHighlightTheme(color: Colors.green));
-
-    VectorMap map = VectorMap(layers: [layer]);
+  MapLayer layer = MapLayer(
+      dataSource: polygons,
+      highlightTheme: MapHighlightTheme(color: Colors.green));
 ```
 
 ![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/hover_color_v1.png)
