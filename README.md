@@ -677,15 +677,11 @@ Available customizations:
 ## Click listener
 
 ```dart
-    MapLayer layer = MapLayer(
-        dataSource: polygons,
-        highlightTheme: MapHighlightTheme(color: Colors.grey[800]!));
-
-    VectorMap map = VectorMap(
-        layers: [layer],
-        clickListener: (feature) {
-          print(feature.id);
-        });
+  VectorMap map = VectorMap(
+      controller: _controller,
+      clickListener: (feature) {
+        print('feature id: ${feature.id}');
+      });
 ```
 
 ## Debugger
@@ -693,27 +689,26 @@ Available customizations:
 Building a debugger
 
 ```dart
-    MapDebugger debugger = MapDebugger();
+  MapDebugger debugger = MapDebugger();
 ```
 
 Binding the debugger on the map
 
 ```dart
-    VectorMap map = VectorMap(debugger: debugger, layers: [layer]);
+  _controller = VectorMapController(debugger: widget.debugger);
 ```
 
 Building the debugger widget
 
 ```dart
-    MapDebuggerWidget debuggerWidget = MapDebuggerWidget(debugger);
+  MapDebuggerWidget debuggerWidget = MapDebuggerWidget(debugger);
 ```
 
-![](https://raw.githubusercontent.com/caduandrade/images/main/vector_map/debugger_v1.png)
+![](https://caduandrade.github.io/vector_map/debugger_v1.png)
 
-## Agenda for the next few days
+## ToDo
 
 * More theming features
-* Zoom / Pan
 * More legends
   * More gradient legend customizations
 * More addons
