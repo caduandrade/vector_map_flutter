@@ -684,6 +684,25 @@ Available customizations:
       });
 ```
 
+## Mode
+
+### Auto fit
+
+This is the default mode
+
+```dart
+  VectorMapController _controller =
+      VectorMapController(mode: VectorMapMode.autoFit);
+```
+
+### Pan and zoom
+
+```dart
+  VectorMapController _controller =
+      VectorMapController(mode: VectorMapMode.panAndZoom);
+```
+
+
 ## Debugger
 
 Building a debugger
