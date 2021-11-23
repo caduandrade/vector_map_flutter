@@ -148,6 +148,10 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
     return layer;
   }
 
+  bool hasLayerId(int id) {
+    return _layerIdAndLayer.containsKey(id);
+  }
+
   bool get hoverDrawable {
     for (DrawableLayer drawableLayer in _drawableLayers) {
       if (drawableLayer.layer.hoverDrawable) {
