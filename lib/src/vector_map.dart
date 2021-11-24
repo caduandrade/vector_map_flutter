@@ -49,23 +49,41 @@ class VectorMap extends StatefulWidget {
 }
 
 /// Holds the initial mouse location and matrix translate from the pan.
-class _Pan {
-  _Pan(
+class _PanZoom {
+  _PanZoom(
       {required this.initialMouseLocation,
+      required this.initialMapScale,
       required this.translateX,
-      required this.translateY});
+      required this.translateY})
+      : this.lastLocalPosition = initialMouseLocation;
 
+  final double initialMapScale;
   final Offset initialMouseLocation;
   final translateX;
   final translateY;
-  bool running = false;
+  Offset lastLocalPosition;
+  bool _rebuildSimplifiedGeometry = false;
+  bool get rebuildSimplifiedGeometry => _rebuildSimplifiedGeometry;
+
+  double newScale(
+      {required double currentMapScale, required double mouseScale}) {
+    if (mouseScale != 1) {
+      double newScale = initialMapScale * mouseScale;
+      double delta = (1 - (newScale / currentMapScale)).abs();
+      if (delta > 0.05) {
+        _rebuildSimplifiedGeometry = true;
+        return newScale;
+      }
+    }
+    return currentMapScale;
+  }
 }
 
 /// [VectorMap] state.
 class _VectorMapState extends State<VectorMap> {
   VectorMapController _controller = VectorMapController();
 
-  _Pan? _pan;
+  _PanZoom? _panZoom;
 
   @override
   void initState() {
@@ -99,7 +117,7 @@ class _VectorMapState extends State<VectorMap> {
     });
   }
 
-  bool get _onPan => _pan != null && _pan!.running;
+  bool get _onPanAndZoom => _panZoom != null;
 
   @override
   Widget build(BuildContext context) {
@@ -163,11 +181,68 @@ class _VectorMapState extends State<VectorMap> {
       MapPainter mapPainter = MapPainter(controller: _controller);
       Widget content = CustomPaint(painter: mapPainter, child: Container());
       content = _wrapWithHoverListener(content);
+      content = GestureDetector(
+          child: content,
+          onTap: () => _onClick(),
+          onScaleStart: (details) {
+            if (_controller.mode == VectorMapMode.panAndZoom) {
+              if (_controller.highlight != null) {
+                _updateHover(null);
+              }
+              _controller.notifyPanZoomMode(start: true);
+              setState(() {
+                _panZoom = _PanZoom(
+                    initialMouseLocation: details.localFocalPoint,
+                    initialMapScale: _controller.scale,
+                    translateX: _controller.translateX,
+                    translateY: _controller.translateY);
+              });
+            }
+          },
+          onScaleUpdate: (details) {
+            if (_panZoom != null) {
+              if (details.pointerCount == 1) {
+                // pan only
+                _panZoom!.lastLocalPosition = details.localFocalPoint;
+                double diffX = _panZoom!.initialMouseLocation.dx -
+                    details.localFocalPoint.dx;
+                double diffY = _panZoom!.initialMouseLocation.dy -
+                    details.localFocalPoint.dy;
+                _controller.translate(
+                    _panZoom!.translateX - diffX, _panZoom!.translateY - diffY);
+              } else if (details.pointerCount > 1) {
+                // zoom
+                double newScale = _panZoom!.newScale(
+                    currentMapScale: _controller.scale,
+                    mouseScale: details.scale);
+                _controller.zoom(details.localFocalPoint, newScale);
+              }
+            }
+          },
+          onScaleEnd: (details) {
+            if (_panZoom != null) {
+              _controller.notifyPanZoomMode(
+                  start: false,
+                  rebuildSimplifiedGeometry:
+                      _panZoom!.rebuildSimplifiedGeometry);
+              final Offset localPosition = _panZoom!.lastLocalPosition;
+              setState(() {
+                _panZoom = null;
+              });
+              _onHover(
+                  localPosition: localPosition,
+                  canvasToWorld: _controller.canvasToWorld);
+            }
+          });
       if (_controller.mode == VectorMapMode.panAndZoom) {
-        content = _wrapWithPanAndZoomListener(content);
-      }
-      if (widget.clickListener != null) {
-        content = GestureDetector(child: content, onTap: () => _onClick());
+        content = Listener(
+            child: content,
+            onPointerSignal: (event) {
+              if (event is PointerScrollEvent) {
+                bool zoomIn = event.scrollDelta.dy < 0;
+                _controller.zoomOnLocation(event.localPosition, zoomIn);
+              }
+            });
       }
       return ClipRect(child: content);
     });
@@ -190,51 +265,6 @@ class _VectorMapState extends State<VectorMap> {
     );
   }
 
-  Widget _wrapWithPanAndZoomListener(Widget content) {
-    return Listener(
-        child: content,
-        onPointerDown: (event) {
-          _pan = _Pan(
-              initialMouseLocation: event.localPosition,
-              translateX: _controller.translateX,
-              translateY: _controller.translateY);
-        },
-        onPointerMove: (event) {
-          if (_pan != null) {
-            if (_pan!.running == false) {
-              _controller.notifyPanMode(start: true);
-              if (_controller.highlight != null) {
-                _updateHover(null);
-              }
-              setState(() {
-                _pan!.running = true;
-              });
-            }
-            double diffX =
-                _pan!.initialMouseLocation.dx - event.localPosition.dx;
-            double diffY =
-                _pan!.initialMouseLocation.dy - event.localPosition.dy;
-            _controller.translate(
-                _pan!.translateX - diffX, _pan!.translateY - diffY);
-          }
-        },
-        onPointerUp: (event) {
-          _controller.notifyPanMode(start: false);
-          setState(() {
-            _pan = null;
-          });
-          _onHover(
-              localPosition: event.localPosition,
-              canvasToWorld: _controller.canvasToWorld);
-        },
-        onPointerSignal: (event) {
-          if (event is PointerScrollEvent) {
-            bool zoomIn = event.scrollDelta.dy < 0;
-            _controller.zoomOnLocation(event.localPosition, zoomIn);
-          }
-        });
-  }
-
   void _onClick() {
     MapHighlight? highlight = _controller.highlight;
     if (highlight != null &&
@@ -249,7 +279,7 @@ class _VectorMapState extends State<VectorMap> {
   /// Triggered when a pointer moves over the map.
   void _onHover(
       {required Offset localPosition, required Matrix4 canvasToWorld}) {
-    if (_onPan) {
+    if (_onPanAndZoom) {
       return;
     }
     Offset worldCoordinate =

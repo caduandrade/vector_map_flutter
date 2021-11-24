@@ -182,7 +182,8 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
   }
 
   @internal
-  void notifyPanMode({required bool start}) {
+  void notifyPanZoomMode(
+      {required bool start, bool rebuildSimplifiedGeometry = false}) {
     if (start) {
       _drawBuffers = false;
       // cancel running update
@@ -190,6 +191,11 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
       // cancel scheduled update
       _nextDrawablesUpdateTicket();
     } else {
+      if (rebuildSimplifiedGeometry) {
+        // only turn on if true. Avoid last false due pan after zoom generated
+        // by gesture
+        _rebuildSimplifiedGeometry = true;
+      }
       // schedule the drawables build
       _scheduleDrawablesUpdate(delayed: true);
     }
@@ -219,6 +225,7 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
     }
   }
 
+  @internal
   void translate(double translateX, double translateY) {
     _drawBuffers = false;
     _translateX = translateX;
@@ -289,6 +296,22 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
     // schedule the drawables build
     _scheduleDrawablesUpdate(delayed: true);
     notifyListeners();
+  }
+
+  @internal
+  void zoom(Offset locationOnCanvas, double newScale) {
+    if (_scale != newScale) {
+      newScale = _limitScale(newScale);
+      if (_scale != newScale) {
+        Offset refInWorld =
+            MatrixUtils.transformPoint(_canvasToWorld, locationOnCanvas);
+        _translateX = locationOnCanvas.dx - (refInWorld.dx * newScale);
+        _translateY = locationOnCanvas.dy + (refInWorld.dy * newScale);
+        _scale = newScale;
+        _buildMatrices4();
+        notifyListeners();
+      }
+    }
   }
 
   void _buildMatrices4() {
