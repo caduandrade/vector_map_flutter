@@ -9,6 +9,7 @@ import 'package:vector_map/src/drawable/drawable_layer_chunk.dart';
 import 'package:vector_map/src/map_highlight.dart';
 import 'package:vector_map/src/theme/map_theme.dart';
 
+/// Draw utils for [VectorMap].
 class DrawUtils {
   /// Draws the features on a given canvas.
   ///

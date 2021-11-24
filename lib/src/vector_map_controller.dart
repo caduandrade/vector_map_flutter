@@ -21,13 +21,15 @@ import 'package:vector_map/src/theme/map_theme.dart';
 import 'package:vector_map/src/vector_map_api.dart';
 import 'package:vector_map/src/vector_map_mode.dart';
 
+/// Controller for [VectorMap]
 class VectorMapController extends ChangeNotifier implements VectorMapApi {
   /// The default [contourThickness] value is 1.
+  /// The default [mode] value is [autoFit].
   VectorMapController(
       {List<MapLayer>? layers,
       this.contourThickness = 1,
       this.delayToRefreshResolution = 1000,
-      VectorMapMode mode = VectorMapMode.panAndZoom,
+      VectorMapMode mode = VectorMapMode.autoFit,
       this.debugger,
       this.maxScale = 30000,
       this.minScale = 0.1})
@@ -103,6 +105,9 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
 
   final MapDebugger? debugger;
 
+  /// Adds a layer.
+  ///
+  /// Listeners will be notified.
   void addLayer(MapLayer layer) {
     _addLayer(layer);
     _afterLayersChange();
@@ -125,14 +130,17 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
     debugger?.updateLayers(_drawableLayers, chunksCount);
   }
 
+  /// Gets the count of layers.
   int get layersCount {
     return _drawableLayers.length;
   }
 
+  /// Check if there is any layer.
   bool get hasLayer {
     return _drawableLayers.isNotEmpty;
   }
 
+  /// Gets a layer given an index
   MapLayer getLayerByIndex(int index) {
     if (index >= 0 && index < _drawableLayers.length) {
       return _drawableLayers[index].layer;
@@ -140,6 +148,7 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
     throw VectorMapError('Invalid layer index: $index');
   }
 
+  /// Gets a layer given an id.
   MapLayer getLayerById(int id) {
     MapLayer? layer = _layerIdAndLayer[id];
     if (layer == null) {
@@ -234,6 +243,9 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
     notifyListeners();
   }
 
+  /// Fits all layers to canvas size.
+  ///
+  /// Listeners will be notified.
   void fit() {
     if (_lastCanvasSize != null) {
       _fit(_lastCanvasSize!);
@@ -261,6 +273,9 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
     }
   }
 
+  /// Zooms on the canvas center.
+  ///
+  /// Listeners will be notified.
   void zoomOnCenter(bool zoomIn) {
     if (_lastCanvasSize != null) {
       _zoom(
@@ -270,6 +285,9 @@ class VectorMapController extends ChangeNotifier implements VectorMapApi {
     }
   }
 
+  /// Zooms on the given canvas location.
+  ///
+  /// Listeners will be notified.
   void zoomOnLocation(Offset locationOnCanvas, bool zoomIn) {
     if (_lastCanvasSize != null) {
       _zoom(_lastCanvasSize!, locationOnCanvas, zoomIn);
