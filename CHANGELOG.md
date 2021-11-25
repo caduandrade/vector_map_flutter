@@ -1,10 +1,13 @@
 ## 0.6.0
 
+* Pan and zoom mode
 * Placeholder for map without layers
 * `MapDataSource.geoJSON` renamed to `MapDataSource.geoJson`
 * `contourThickness` parameter moved from `VectorMap` to `VectorMapController`
 * `VectorMapController.getLayer` renamed to `VectorMapController.getLayerByIndex`
-* New method: `VectorMapController.getLayerById`
+* New methods
+  * `VectorMapController.getLayerById`
+  * `VectorMapController.hasLayerId`
 
 ## 0.5.0
 
