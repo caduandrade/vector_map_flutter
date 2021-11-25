@@ -14,61 +14,101 @@ class ExampleWidget extends StatefulWidget {
 
 class ExampleState extends State<ExampleWidget> {
   VectorMapController? _controller;
+  MapDebugger debugger = MapDebugger();
 
   @override
   void initState() {
     super.initState();
     String asset = 'assets/south_america.json';
-    rootBundle.loadString(asset).then((geojson) {
-      _loadDataSource(geojson);
+    rootBundle.loadString(asset).then((geoJson) {
+      _loadDataSource(geoJson);
     });
   }
 
-  _loadDataSource(String geojson) async {
-    MapDataSource dataSource = await MapDataSource.geoJSON(geojson: geojson);
+  _loadDataSource(String geoJson) async {
+    MapDataSource dataSource = await MapDataSource.geoJson(geoJson: geoJson);
     setState(() {
       _controller = VectorMapController(layers: [
         MapLayer(
             dataSource: dataSource,
             highlightTheme: MapHighlightTheme(color: Colors.green[900]))
-      ]);
+      ], debugger: debugger);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    Widget? map;
+    Widget? content;
     if (_controller != null) {
-      map = VectorMap(controller: _controller);
+      VectorMap map = VectorMap(controller: _controller);
+      Widget buttons = SingleChildScrollView(
+          child: Row(children: [
+        _buildFitButton(),
+        SizedBox(width: 8),
+        _buildModeButton(),
+        SizedBox(width: 8),
+        _buildZoomInButton(),
+        SizedBox(width: 8),
+        _buildZoomOutButton()
+      ]));
+
+      Widget buttonsAndMap = Column(children: [
+        Padding(child: buttons, padding: EdgeInsets.only(bottom: 8)),
+        Expanded(child: map)
+      ]);
+
+      content = Row(children: [
+        Expanded(child: buttonsAndMap),
+        SizedBox(
+            child: Padding(
+                child: MapDebuggerWidget(debugger),
+                padding: EdgeInsets.all(16)),
+            width: 200)
+      ]);
     } else {
-      map = Center(child: Text('Loading...'));
+      content = Center(child: Text('Loading...'));
     }
-
-    Widget buttons =
-        SingleChildScrollView(child: Row(children: [_buildFitButton()]));
-
-    Widget content = Column(children: [
-      Padding(child: buttons, padding: EdgeInsets.only(bottom: 8)),
-      Expanded(child: map)
-    ]);
 
     return MaterialApp(
         debugShowCheckedModeBanner: false,
         theme: ThemeData(scaffoldBackgroundColor: Colors.white),
         home: Scaffold(
-            body: Padding(child: content, padding: EdgeInsets.all(8))));
-  }
-
-  bool _isButtonsEnabled() {
-    return _controller != null;
+            body: SafeArea(
+                child: Padding(child: content, padding: EdgeInsets.all(8)))));
   }
 
   Widget _buildFitButton() {
-    return ElevatedButton(
-        child: Text('Fit'), onPressed: _isButtonsEnabled() ? _onFit : null);
+    return ElevatedButton(child: Text('Fit'), onPressed: _onFit);
   }
 
   void _onFit() {
     _controller?.fit();
+  }
+
+  Widget _buildModeButton() {
+    return ElevatedButton(child: Text('Change mode'), onPressed: _onMode);
+  }
+
+  void _onMode() {
+    VectorMapMode mode = _controller!.mode == VectorMapMode.autoFit
+        ? VectorMapMode.panAndZoom
+        : VectorMapMode.autoFit;
+    _controller!.mode = mode;
+  }
+
+  Widget _buildZoomInButton() {
+    return ElevatedButton(child: Text('Zoom in'), onPressed: _onZoomIn);
+  }
+
+  void _onZoomIn() {
+    _controller!.zoomOnCenter(true);
+  }
+
+  Widget _buildZoomOutButton() {
+    return ElevatedButton(child: Text('Zoom out'), onPressed: _onZoomOut);
+  }
+
+  void _onZoomOut() {
+    _controller!.zoomOnCenter(false);
   }
 }
