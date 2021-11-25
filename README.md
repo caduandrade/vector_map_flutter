@@ -728,10 +728,13 @@ Building the debugger widget
 
 ![](https://caduandrade.github.io/vector_map_flutter/debugger_v1.png)
 
-## ToDo
+## I'm working on
 
 * More theming features
 * More legends
   * More gradient legend customizations
 * More addons
+* Handle line type geometries (still in beta)
+* Improve the performance of heavy geometries (over 500k points) on mobile devices
+* Pan limits?
 * Release the final version (1.0.0). The API may have some small changes.
