@@ -263,6 +263,7 @@ class _VectorMapState extends State<VectorMap> {
     return Container(child: mapCanvas, padding: widget.layersPadding);
   }
 
+  /// Triggered when a pointer tap on the map.
   void _onClick(
       {required Offset localPosition, required Matrix4 canvasToWorld}) {
     if (widget.clickListener != null) {
@@ -272,9 +273,9 @@ class _VectorMapState extends State<VectorMap> {
       for (int layerIndex = _controller.layersCount - 1;
           layerIndex >= 0;
           layerIndex--) {
-        DrawableLayer drawablelayer = _controller.getDrawableLayer(layerIndex);
+        DrawableLayer drawableLayer = _controller.getDrawableLayer(layerIndex);
         DrawableFeature? drawableFeature =
-            _hoverFindDrawableFeature(drawablelayer, worldCoordinate);
+            _findDrawableFeature(drawableLayer, worldCoordinate);
         if (drawableFeature != null) {
           feature = drawableFeature.feature;
           break;
@@ -304,7 +305,7 @@ class _VectorMapState extends State<VectorMap> {
         layerIndex--) {
       DrawableLayer drawableLayer = _controller.getDrawableLayer(layerIndex);
       DrawableFeature? drawableFeature =
-          _hoverFindDrawableFeature(drawableLayer, worldCoordinate);
+          _findDrawableFeature(drawableLayer, worldCoordinate);
       if (drawableFeature != null) {
         MapLayer layer = drawableLayer.layer;
         hoverHighlightRule = MapSingleHighlight(
@@ -319,7 +320,7 @@ class _VectorMapState extends State<VectorMap> {
   }
 
   /// Finds the first feature that contains a coordinate.
-  DrawableFeature? _hoverFindDrawableFeature(
+  DrawableFeature? _findDrawableFeature(
       DrawableLayer drawableLayer, Offset worldCoordinate) {
     for (DrawableLayerChunk chunk in drawableLayer.chunks) {
       for (int index = 0; index < chunk.length; index++) {
