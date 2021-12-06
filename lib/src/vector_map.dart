@@ -198,6 +198,8 @@ class _VectorMapState extends State<VectorMap> {
     mapCanvas = GestureDetector(
         child: mapCanvas,
         onTapDown: (details) => _onClick(
+            localPosition: details.localPosition,
+            canvasToWorld: _controller.canvasToWorld),
         onScaleStart: (details) {
           if (_controller.mode == VectorMapMode.panAndZoom) {
             if (_controller.highlight != null) {
@@ -261,9 +263,6 @@ class _VectorMapState extends State<VectorMap> {
     return Container(child: mapCanvas, padding: widget.layersPadding);
   }
 
-  void _onClick() {
-    MapHighlight? highlight = _controller.highlight;
-    if (highlight != null &&
   void _onClick(
       {required Offset localPosition, required Matrix4 canvasToWorld}) {
     if (widget.clickListener != null) {
