@@ -197,7 +197,9 @@ class _VectorMapState extends State<VectorMap> {
 
     mapCanvas = GestureDetector(
         child: mapCanvas,
-        onTap: () => _onClick(),
+        onTapDown: (details) => _onClick(
+            localPosition: details.localPosition,
+            canvasToWorld: _controller.canvasToWorld),
         onScaleStart: (details) {
           if (_controller.mode == VectorMapMode.panAndZoom) {
             if (_controller.highlight != null) {
@@ -261,13 +263,25 @@ class _VectorMapState extends State<VectorMap> {
     return Container(child: mapCanvas, padding: widget.layersPadding);
   }
 
-  void _onClick() {
-    MapHighlight? highlight = _controller.highlight;
-    if (highlight != null &&
-        highlight is MapSingleHighlight &&
-        widget.clickListener != null) {
-      if (highlight.drawableFeature != null) {
-        widget.clickListener!(highlight.drawableFeature!.feature);
+  void _onClick(
+      {required Offset localPosition, required Matrix4 canvasToWorld}) {
+    if (widget.clickListener != null) {
+      Offset worldCoordinate =
+          MatrixUtils.transformPoint(canvasToWorld, localPosition);
+      MapFeature? feature;
+      for (int layerIndex = _controller.layersCount - 1;
+          layerIndex >= 0;
+          layerIndex--) {
+        DrawableLayer drawablelayer = _controller.getDrawableLayer(layerIndex);
+        DrawableFeature? drawableFeature =
+            _hoverFindDrawableFeature(drawablelayer, worldCoordinate);
+        if (drawableFeature != null) {
+          feature = drawableFeature.feature;
+          break;
+        }
+      }
+      if (feature != null) {
+        widget.clickListener!(feature);
       }
     }
   }
