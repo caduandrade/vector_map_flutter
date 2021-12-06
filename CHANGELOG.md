@@ -1,3 +1,8 @@
+## 0.6.1
+
+* Bugfix mobile
+  * Wrong feature on click listener
+
 ## 0.6.0
 
 * Pan and zoom mode
