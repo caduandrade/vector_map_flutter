@@ -3,7 +3,6 @@ import 'dart:typed_data';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
 
-import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:meta/meta.dart';
 import 'package:vector_map/src/data/map_data_source.dart';

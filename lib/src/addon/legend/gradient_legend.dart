@@ -1,9 +1,7 @@
 import 'dart:math' as math;
 
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import 'package:flutter/widgets.dart';
 import 'package:vector_map/src/addon/legend/legend.dart';
 import 'package:vector_map/src/data/map_feature.dart';
 import 'package:vector_map/src/data/map_layer.dart';

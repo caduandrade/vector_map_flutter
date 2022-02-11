@@ -1,3 +1,7 @@
+## 0.6.1+1
+
+* Removing unnecessary imports
+
 ## 0.6.1
 
 * Bugfix mobile

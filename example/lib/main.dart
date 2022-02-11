@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:vector_map/vector_map.dart';
@@ -19,20 +18,43 @@ class ExampleState extends State<ExampleWidget> {
   @override
   void initState() {
     super.initState();
-    String asset = 'assets/south_america.json';
-    rootBundle.loadString(asset).then((geoJson) {
-      _loadDataSource(geoJson);
-    });
+    //String asset = 'assets/south_america.json';
+    //String asset = 'assets/rooms.geojson';
+    //String asset = 'assets/brazil_counties.json';
+    //String asset = 'assets/polygons.json';
+    //rootBundle.loadString(asset).then((geoJson) {
+    _loadDataSources();
   }
 
-  _loadDataSource(String geoJson) async {
-    MapDataSource dataSource = await MapDataSource.geoJson(geoJson: geoJson);
+  void _loadDataSources() async {
+    /*
+    String roomsGeoJson = await rootBundle.loadString('assets/rooms.geojson');
+    MapDataSource rooms = await MapDataSource.geoJson(geoJson: roomsGeoJson);
+    MapLayer roomsLayer = MapLayer(dataSource: rooms, theme: MapTheme(color: Colors.blue));
+
+    String levelGeoJson = await rootBundle.loadString('assets/level.geojson');
+    MapDataSource level = await MapDataSource.geoJson(geoJson: levelGeoJson);
+
+    MapLayer levelLayer = MapLayer(
+        dataSource: level,
+        theme: MapTheme(color: Colors.black, contourColor: Colors.white));
+
+    String workplacesGeoJson =
+        await rootBundle.loadString('assets/workplaces.geojson');
+    MapDataSource workplaces =
+        await MapDataSource.geoJson(geoJson: workplacesGeoJson);
+    MapLayer workplacesLayer = MapLayer(
+        dataSource: workplaces,
+        theme: MapTheme(color: Colors.white, contourColor: Colors.white));
+    */
+    String geoJson = await rootBundle.loadString('assets/polygons.json');
+    MapDataSource ds = await MapDataSource.geoJson(geoJson: geoJson);
+    MapLayer layer = MapLayer(dataSource: ds);
+
     setState(() {
-      _controller = VectorMapController(layers: [
-        MapLayer(
-            dataSource: dataSource,
-            highlightTheme: MapHighlightTheme(color: Colors.green[900]))
-      ], debugger: debugger);
+      _controller =
+          VectorMapController(layers: [layer], delayToRefreshResolution: 0);
+      //_controller= VectorMapController(layers: [roomsLayer, levelLayer, workplacesLayer]);
     });
   }
 
@@ -40,7 +62,10 @@ class ExampleState extends State<ExampleWidget> {
   Widget build(BuildContext context) {
     Widget? content;
     if (_controller != null) {
-      VectorMap map = VectorMap(controller: _controller);
+      VectorMap map = VectorMap(
+        controller: _controller,
+        clickListener: (feature) => print(feature.id),
+      );
       Widget buttons = SingleChildScrollView(
           child: Row(children: [
         _buildFitButton(),
@@ -57,6 +82,8 @@ class ExampleState extends State<ExampleWidget> {
         Expanded(child: map)
       ]);
 
+      content = buttonsAndMap;
+      /*
       content = Row(children: [
         Expanded(child: buttonsAndMap),
         SizedBox(
@@ -65,13 +92,15 @@ class ExampleState extends State<ExampleWidget> {
                 padding: EdgeInsets.all(16)),
             width: 200)
       ]);
+
+       */
     } else {
       content = Center(child: Text('Loading...'));
     }
 
     return MaterialApp(
         debugShowCheckedModeBanner: false,
-        theme: ThemeData(scaffoldBackgroundColor: Colors.white),
+        theme: ThemeData(scaffoldBackgroundColor: Colors.blue[800]!),
         home: Scaffold(
             body: SafeArea(
                 child: Padding(child: content, padding: EdgeInsets.all(8)))));

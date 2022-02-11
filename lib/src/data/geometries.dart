@@ -1,6 +1,5 @@
 import 'dart:collection';
 import 'dart:math' as math;
-import 'dart:ui';
 
 import 'package:flutter/rendering.dart';
 import 'package:vector_map/src/data/simplified_path.dart';

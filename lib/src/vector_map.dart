@@ -1,7 +1,5 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/painting.dart';
-import 'package:flutter/widgets.dart';
 import 'package:vector_map/src/addon/map_addon.dart';
 import 'package:vector_map/src/data/map_feature.dart';
 import 'package:vector_map/src/data/map_layer.dart';
@@ -335,6 +333,7 @@ class _VectorMapState extends State<VectorMap> {
         }
       }
     }
+    return null;
   }
 
   void _updateHover(MapSingleHighlight? hoverHighlightRule) {

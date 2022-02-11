@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/rendering.dart';
 import 'package:vector_map/src/data/geometries.dart';
 import 'package:vector_map/src/data/map_data_source.dart';
