@@ -1,4 +1,4 @@
-[![pub](https://img.shields.io/pub/v/vector_map.svg)](https://pub.dev/packages/vector_map) [![pub2](https://img.shields.io/badge/Flutter-%E2%9D%A4-red)](https://flutter.dev/) ![pub3](https://img.shields.io/badge/final%20version-as%20soon%20as%20possible-blue)
+[![pub](https://img.shields.io/pub/v/vector_map.svg)](https://pub.dev/packages/vector_map) [![pub2](https://img.shields.io/badge/Flutter-%E2%9D%A4-red)](https://flutter.dev/) ![pub3](https://img.shields.io/badge/final%20version-as%20soon%20as%20possible-blue) [![](https://img.shields.io/badge/donate-crypto-green)](#support-this-project)
 
 # Vector Map
 
@@ -47,6 +47,7 @@
   * [Auto fit](#auto-fit)
   * [Pan and zoom](#pan-and-zoom)
 * [Debugger](#debugger)
+* [Support this project](#support-this-project)
 
 ## About the examples
 
@@ -738,3 +739,23 @@ Building the debugger widget
 * Improve the performance of heavy geometries (over 500k points) on mobile devices
 * Pan limits?
 * Release the final version (1.0.0). The API may have some small changes.
+
+## Support this project
+
+### Bitcoin
+
+[bc1qhqy84y45gya58gtfkvrvass38k4mcyqnav803h](https://www.blockchain.com/pt/btc/address/bc1qhqy84y45gya58gtfkvrvass38k4mcyqnav803h)
+
+![](https://dev.caduandrade.net/bitcoin.png)
+
+### Ethereum (ERC-20) or Binance Smart Chain (BEP-20)
+
+[0x9eB815FD4c88A53322304143A9Aa8733D3369985](https://etherscan.io/address/0x9eb815fd4c88a53322304143a9aa8733d3369985)
+
+![](https://dev.caduandrade.net/ethandbsc.png)
+
+### Helium
+
+[13A2fDqoApT9VnoxFjHWcy8kPQgVFiVnzps32MRAdpTzvs3rq68](https://explorer.helium.com/accounts/13A2fDqoApT9VnoxFjHWcy8kPQgVFiVnzps32MRAdpTzvs3rq68)
+
+![](https://dev.caduandrade.net/helium.png)
