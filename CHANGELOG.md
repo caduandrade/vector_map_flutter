@@ -1,3 +1,7 @@
+## 0.6.1+2
+
+* Updating the README
+
 ## 0.6.1+1
 
 * Removing unnecessary imports
