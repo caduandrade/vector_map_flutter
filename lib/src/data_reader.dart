@@ -24,7 +24,7 @@ class _GeoJsonReaderBase {
       case 'LineString':
         return _readLineString(map);
       case 'MultiLineString':
-        throw UnimplementedError();
+        return _readMultiLineString(map);
       case 'Polygon':
         return _readPolygon(map);
       case 'MultiPolygon':
@@ -61,6 +61,22 @@ class _GeoJsonReaderBase {
       points.add(MapPoint(x, y));
     }
     return MapLineString(points);
+  }
+
+  MapGeometry _readMultiLineString(Map<String, dynamic> map) {
+    _checkKeyOn(map, 'coordinates');
+    List coordinates = map['coordinates'];
+    List<MapLineString> lineString = [];
+    for (List coords in coordinates) {
+      List<MapPoint> points = [];
+      for (List xy in coords) {
+        double x = _toDouble(xy[0]);
+        double y = _toDouble(xy[1]);
+        points.add(MapPoint(x, y));
+      }
+      lineString.add(MapLineString(points));
+    }
+    return MapMultiLineString(lineString);
   }
 
   MapGeometry _readPolygon(Map<String, dynamic> map) {
