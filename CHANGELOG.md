@@ -1,3 +1,7 @@
+## 0.7.0
+
+* Multiline reader
+
 ## 0.6.1+2
 
 * Updating the README

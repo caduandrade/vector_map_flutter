@@ -735,7 +735,8 @@ Building the debugger widget
 * More legends
   * More gradient legend customizations
 * More addons
-* Handle line type geometries (still in beta)
+* Handle line type geometries
+  * Click and mouse hover (need geometry buffer)
 * Improve the performance of heavy geometries (over 500k points) on mobile devices
 * Pan limits?
 * Release the final version (1.0.0). The API may have some small changes.
