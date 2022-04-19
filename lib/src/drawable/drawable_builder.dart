@@ -42,6 +42,13 @@ class DrawableBuilder {
           theme: theme,
           worldToCanvas: worldToCanvas,
           simplifier: simplifier);
+    } else if (geometry is MapMultiLineString) {
+      return _multiLineString(
+          feature: feature,
+          multiLineString: geometry,
+          theme: theme,
+          worldToCanvas: worldToCanvas,
+          simplifier: simplifier);
     } else if (geometry is MapPolygon) {
       return _polygon(
           feature: feature,
@@ -85,6 +92,23 @@ class DrawableBuilder {
     SimplifiedPath simplifiedPath =
         lineString.toSimplifiedPath(worldToCanvas, simplifier);
     return DrawableLine(simplifiedPath.path, simplifiedPath.pointsCount);
+  }
+
+  static Drawable _multiLineString(
+      {required MapFeature feature,
+      required MapMultiLineString multiLineString,
+      required MapTheme theme,
+      required Matrix4 worldToCanvas,
+      required GeometrySimplifier simplifier}) {
+    Path path = Path();
+    int pointsCount = 0;
+    for (MapLineString lineString in multiLineString.linesString) {
+      SimplifiedPath simplifiedPath =
+          lineString.toSimplifiedPath(worldToCanvas, simplifier);
+      pointsCount += simplifiedPath.pointsCount;
+      path.addPath(simplifiedPath.path, Offset.zero);
+    }
+    return DrawableLine(path, pointsCount);
   }
 
   static Drawable _linearRing(

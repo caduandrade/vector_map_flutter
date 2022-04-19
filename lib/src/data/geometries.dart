@@ -90,6 +90,35 @@ class MapLineString with MapGeometry {
   }
 }
 
+/// Multi line string geometry.
+class MapMultiLineString with MapGeometry {
+  final UnmodifiableListView<MapLineString> linesString;
+  final Rect bounds;
+
+  MapMultiLineString._(this.linesString, this.bounds);
+
+  factory MapMultiLineString(List<MapLineString> linesString) {
+    Rect bounds = linesString.first.bounds;
+    for (int i = 1; i < linesString.length; i++) {
+      bounds = bounds.expandToInclude(linesString[i].bounds);
+    }
+    return MapMultiLineString._(
+        UnmodifiableListView<MapLineString>(linesString), bounds);
+  }
+
+  @override
+  int get pointsCount => _getPointsCount();
+
+  /// Gets the count of points.
+  int _getPointsCount() {
+    int count = 0;
+    for (MapLineString line in linesString) {
+      count += line.pointsCount;
+    }
+    return count;
+  }
+}
+
 /// Line ring geometry.
 class MapLinearRing with MapGeometry {
   final UnmodifiableListView<MapPoint> points;
